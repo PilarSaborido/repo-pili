@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Rincón de la Seño Pili • Portal de Juegos de Primaria</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka para estilo infantil, alegre y súper legible en Pizarra Digital -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fae8ff 50%, #fef3c7 100%);
+        }
+
+        /* Patrón de fondo suave tipo cuaderno escolar / puntos */
+        .bg-classroom-pattern {
+            background-image: radial-gradient(rgba(99, 102, 241, 0.14) 2px, transparent 2px);
+            background-size: 28px 28px;
+        }
+
+        /* Botones estilo arcade 3D para pizarra digital */
+        .btn-3d {
+            transition: all 0.14s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+        .btn-3d:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0 0 rgba(0,0,0,0.2) !important;
+        }
+
+        /* Diseño de Carpetas 3D de Cursos */
+        .folder-wrapper {
+            transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .folder-wrapper:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+        .folder-wrapper:active {
+            transform: translateY(4px) scale(0.99);
+        }
+
+        .folder-tab {
+            width: 48%;
+            height: 26px;
+            border-top-left-radius: 18px;
+            border-top-right-radius: 22px;
+            margin-bottom: -4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Hoja de papel que asoma de la carpeta al pasar el ratón */
+        .folder-paper {
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .folder-wrapper:hover .folder-paper {
+            transform: translateY(-10px) rotate(-1.5deg);
+        }
+
+        /* Animaciones suaves */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-7px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: floatSlow 3.2s ease-in-out infinite;
+        }
+
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        .view-animate {
+            animation: fadeInScale 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-800 bg-classroom-pattern">
+
+    <!-- ================= BARRA SUPERIOR FIJA (HEADER SEÑO PILI) ================= -->
+    <header class="bg-white/95 backdrop-blur-md border-b-4 border-indigo-200 px-4 py-3 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            
+            <!-- Perfil Seño Pili + Título Principal -->
+            <div class="flex items-center gap-3.5 cursor-pointer group" onclick="goHome()">
+                <!-- Avatar Circular de Seño Pili (Permite clic para cambiar por la foto descargada) -->
+                <div class="relative" onclick="event.stopPropagation(); triggerAvatarUpload();" title="Haz clic para poner tu foto de perfil">
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-amber-400 to-indigo-500 shadow-lg group-hover:scale-105 transition-transform">
+                        <div class="w-full h-full rounded-full bg-amber-50 overflow-hidden flex items-center justify-center border-2 border-white relative">
+                            <!-- Imagen personalizada o perfil.png si existe en GitHub -->
+                            <img id="custom-avatar-img" src="perfil.png" alt="Seño Pili" class="w-full h-full object-cover hidden" onload="showCustomAvatar()" onerror="hideCustomAvatar()">
+                            
+                            <!-- Ilustración SVG integrada de Seño Pili con sus alumnos (Fallback por defecto) -->
+                            <svg id="default-avatar-svg" viewBox="0 0 120 120" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stop-color="#fef3c7"/>
+                                        <stop offset="50%" stop-color="#fce7f3"/>
+                                        <stop offset="100%" stop-color="#e0e7ff"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle cx="60" cy="60" r="60" fill="url(#bgGrad)"/>
+                                <!-- Estrellitas decorativas -->
+                                <circle cx="22" cy="28" r="3" fill="#f59e0b"/>
+                                <circle cx="98" cy="26" r="3.5" fill="#ec4899"/>
+                                <!-- Arcoíris de jersey -->
+                                <path d="M28 118 C28 86 92 86 92 118 Z" fill="#6366f1"/>
+                                <path d="M35 118 C35 93 85 93 85 118 Z" fill="#f59e0b"/>
+                                <path d="M42 118 C42 100 78 100 78 118 Z" fill="#ec4899"/>
+                                <!-- Pelo castaño largo Seño Pili -->
+                                <path d="M32 62 C30 30 90 30 88 62 C90 85 86 98 80 102 C75 90 45 90 40 102 C34 98 30 85 32 62 Z" fill="#451a03"/>
+                                <!-- Cara sonriente -->
+                                <circle cx="60" cy="58" r="21" fill="#fed7aa"/>
+                                <!-- Coloretes -->
+                                <ellipse cx="47" cy="62" rx="4" ry="2.5" fill="#fb7185" opacity="0.55"/>
+                                <ellipse cx="73" cy="62" rx="4" ry="2.5" fill="#fb7185" opacity="0.55"/>
+                                <!-- Ojos brillantes -->
+                                <circle cx="51" cy="55" r="3.2" fill="#292524"/>
+                                <circle cx="50" cy="54" r="1.1" fill="#ffffff"/>
+                                <circle cx="69" cy="55" r="3.2" fill="#292524"/>
+                                <circle cx="68" cy="54" r="1.1" fill="#ffffff"/>
+                                <!-- Cejas -->
+                                <path d="M46 49 Q51 46 55 49" stroke="#451a03" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                                <path d="M65 49 Q69 46 74 49" stroke="#451a03" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                                <!-- Sonrisa -->
+                                <path d="M51 64 Q60 73 69 64 Z" fill="#ffffff"/>
+                                <path d="M51 64 Q60 73 69 64" stroke="#be123c" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                                <!-- Flequillo / Pelo superior -->
+                                <path d="M38 52 Q50 35 60 44 Q70 35 82 52 Q78 34 60 34 Q42 34 38 52 Z" fill="#451a03"/>
+                                <!-- Dos cabecitas de peques abrazando a los lados -->
+                                <circle cx="26" cy="84" r="12" fill="#fde68a"/>
+                                <path d="M15 80 Q26 68 37 80" fill="#78350f"/>
+                                <circle cx="94" cy="84" r="12" fill="#fed7aa"/>
+                                <path d="M83 80 Q94 68 105 80" fill="#3b82f6"/>
+                                <!-- Letrero superior SEÑO PILI -->
+                                <rect x="22" y="6" width="76" height="18" rx="9" fill="#ffffff" stroke="#6366f1" stroke-width="2"/>
+                                <text x="60" y="18.5" text-anchor="middle" fill="#4f46e5" font-size="10.5" font-weight="800" font-family="Fredoka, sans-serif">SEÑO PILI</text>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Botoncito flotante de cámara -->
+                    <span class="absolute -bottom-1 -right-1 bg-white border-2 border-indigo-300 text-xs rounded-full w-7 h-7 flex items-center justify-center shadow-sm" title="Cambiar foto de perfil">
+                        📸
+                    </span>
+                    <input type="file" id="avatar-file-input" accept="image/*" class="hidden" onchange="handleAvatarUpload(event)">
+                </div>
+
+                <!-- Texto del Título -->
+                <div>
+                    <div class="inline-flex items-center gap-1.5 bg-pink-100 text-pink-700 text-xs font-bold px-2.5 py-0.5 rounded-full border border-pink-200 mb-0.5">
+                        <span>💖</span> Portal de Aula • Primaria
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight">
+                        El Rincón de la Seño Pili
+                    </h1>
+                    <p class="text-xs md:text-sm text-slate-500 font-medium">
+                        ¡Elige la carpeta de tu curso para jugar en la pizarra digital!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Herramientas Superiores (Buscador + Botones de Aula) -->
+            <div class="flex items-center gap-2.5 flex-wrap w-full lg:w-auto justify-end">
+                
+                <!-- Buscador Rápido de Juegos -->
+                <div class="relative flex-grow sm:flex-grow-0 sm:w-64">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">🔍</span>
+                    <input 
+                        type="text" 
+                        id="global-search-input" 
+                        oninput="handleGlobalSearch(this.value)"
+                        placeholder="Buscar juego o tema..." 
+                        class="w-full bg-slate-100 hover:bg-white focus:bg-white pl-10 pr-8 py-2.5 rounded-2xl border-2 border-indigo-200 focus:border-indigo-500 focus:outline-none font-semibold text-sm text-slate-700 transition shadow-inner"
+                    >
+                    <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 font-bold">
+                        ✖
+                    </button>
+                </div>
+
+                <!-- Botón Añadir Juego -->
+                <button onclick="openAddGameModal()" class="btn-3d bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-4 py-2.5 rounded-2xl border-2 border-emerald-600 shadow-[0_5px_0_0_#059669] flex items-center gap-1.5 text-sm md:text-base">
+                    <span class="text-lg">➕</span>
+                    <span>Añadir Juego</span>
+                </button>
+
+                <!-- Botón Guía GitHub -->
+                <button onclick="openGithubModal()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold px-4 py-2.5 rounded-2xl border-2 border-amber-600 shadow-[0_5px_0_0_#d97706] flex items-center gap-1.5 text-sm md:text-base">
+                    <span class="text-lg">🐙</span>
+                    <span class="hidden sm:inline">Guía GitHub</span>
+                </button>
+
+                <!-- Botón Pantalla Completa (Pizarra Digital) -->
+                <button onclick="toggleFullScreen()" class="btn-3d bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold p-2.5 rounded-2xl border-2 border-indigo-300 shadow-[0_5px_0_0_#818cf8] text-lg" title="Pantalla Completa para Pizarra Digital">
+                    🖥️
+                </button>
+
+                <!-- Botón Sonido -->
+                <button id="sound-btn" onclick="toggleSound()" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold p-2.5 rounded-2xl border-2 border-slate-300 shadow-[0_5px_0_0_#94a3b8] text-lg" title="Activar/Silenciar sonidos">
+                    🔊
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= CONTENIDO PRINCIPAL ================= -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6 md:py-8 flex flex-col">
+
+        <!-- =========================================================
+             VISTA 1: PORTADA CON LAS CARPETAS DE CADA CURSO
+             ========================================================= -->
+        <section id="view-folders" class="view-animate flex flex-col gap-6">
+            
+            <!-- Banner de Bienvenida de la Seño Pili -->
+            <div class="bg-white/95 rounded-3xl p-6 md:p-8 border-4 border-indigo-200 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="max-w-2xl z-10">
+                    <div class="inline-flex items-center gap-2 bg-amber-100 text-amber-900 px-4 py-1 rounded-full font-bold text-sm border-2 border-amber-300 mb-3">
+                        <span>🌟</span> ¡Bienvenidos a nuestra clase digital!
+                    </div>
+                    <h2 class="text-2xl md:text-4xl font-extrabold text-slate-800 mb-2 leading-tight">
+                        ¿En qué carpeta vamos a jugar hoy? 📁✨
+                    </h2>
+                    <p class="text-slate-600 text-base md:text-lg font-medium">
+                        Toca la carpeta de tu curso en la pizarra digital para abrir todos sus juegos de <strong>Lengua, Mates, Ciencias e Inglés</strong>.
+                    </p>
+                </div>
+
+                <!-- Acceso directo rápido a 3º de Primaria (Su clase de 22 alumnos) -->
+                <div class="bg-gradient-to-br from-purple-600 via-indigo-600 to-pink-500 p-1 rounded-3xl shadow-lg shrink-0 w-full md:w-auto z-10">
+                    <div class="bg-white/95 rounded-[20px] p-4 flex items-center gap-4">
+                        <div class="text-5xl animate-float">🔬</div>
+                        <div>
+                            <span class="bg-purple-100 text-purple-800 text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-full border border-purple-300">
+                                ⭐ Acceso Directo Favorito
+                            </span>
+                            <h3 class="font-extrabold text-slate-800 text-lg mt-0.5">Clase de 3º Primaria (22 Alumnos)</h3>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button onclick="openFolder('3primaria')" class="btn-3d bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold px-4 py-2 rounded-xl border-2 border-purple-800 shadow-[0_4px_0_0_#3b0764]">
+                                    📂 Abrir Carpeta 3º
+                                </button>
+                                <a href="juego_aumentativos_diminutivos.html" onclick="playSound('fanfare')" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 text-sm font-bold px-4 py-2 rounded-xl border-2 border-amber-600 shadow-[0_4px_0_0_#b45309] inline-flex items-center gap-1">
+                                    🚀 Superlaboratorio
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cabecera de sección de Carpetas -->
+            <div class="flex items-center justify-between px-1">
+                <div class="flex items-center gap-2.5">
+                    <span class="text-3xl">🗂️</span>
+                    <h3 class="text-xl md:text-2xl font-extrabold text-slate-800">Carpetas por Cursos de Primaria</h3>
+                </div>
+                <span class="text-sm font-bold text-indigo-700 bg-indigo-100 px-3.5 py-1 rounded-full border border-indigo-200">
+                    Haz clic en una carpeta para abrirla 👇
+                </span>
+            </div>
+
+            <!-- Grid de Carpetas 3D (1º a 6º de Primaria) -->
+            <div id="folders-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 pt-2">
+                <!-- Se genera dinámicamente por JS -->
+            </div>
+
+        </section>
+
+        <!-- =========================================================
+             VISTA 2: PÁGINA INTERNA DE UN CURSO (AL ABRIR SU CARPETA)
+             ========================================================= -->
+        <section id="view-course" class="hidden view-animate flex-col gap-6">
+            
+            <!-- Barra de navegación superior de la carpeta abierta -->
+            <div class="flex flex-wrap items-center justify-between gap-4 bg-white/90 px-5 py-3.5 rounded-3xl border-4 border-indigo-200 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <button onclick="goHome()" class="btn-3d bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-5 py-2.5 rounded-2xl border-2 border-indigo-800 shadow-[0_5px_0_0_#312e81] flex items-center gap-2 text-base">
+                        <span>⬅️</span>
+                        <span>Volver a todas las Carpetas</span>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-2 text-slate-400 font-bold text-sm">
+                        <span>/</span>
+                        <span>🏠 Inicio</span>
+                        <span>/</span>
+                        <span id="breadcrumb-course-name" class="text-indigo-600 font-extrabold">📂 3º de Primaria</span>
+                    </div>
+                </div>
+
+                <button onclick="openAddGameModal(currentFolderId)" class="btn-3d bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-4 py-2.5 rounded-2xl border-2 border-emerald-600 shadow-[0_4px_0_0_#059669] flex items-center gap-2 text-sm">
+                    <span>➕</span> Añadir Juego a esta Carpeta
+                </button>
+            </div>
+
+            <!-- Cabecera Temática del Curso Abierto (Mismo estilo que la carpeta) -->
+            <div id="course-header-banner" class="rounded-3xl p-6 md:p-8 border-4 shadow-xl text-white relative overflow-hidden">
+                <!-- Rellenado dinámicamente con el color y mascota del curso -->
+            </div>
+
+            <!-- Pestañas de Asignaturas dentro de la Carpeta -->
+            <div class="flex items-center gap-2.5 overflow-x-auto pb-2" id="subject-tabs-container">
+                <button onclick="filterBySubject('Todas')" data-subj="Todas" class="subj-tab-btn btn-3d bg-slate-900 text-white font-bold px-5 py-3 rounded-2xl border-2 border-slate-950 shadow-[0_4px_0_0_#0f172a] flex items-center gap-2 shrink-0">
+                    <span>🌟</span> Todas las Asignaturas
+                </button>
+                <button onclick="filterBySubject('Lengua')" data-subj="Lengua" class="subj-tab-btn btn-3d bg-white hover:bg-rose-50 text-slate-700 font-bold px-5 py-3 rounded-2xl border-2 border-slate-300 shadow-[0_4px_0_0_#cbd5e1] flex items-center gap-2 shrink-0">
+                    <span>📖</span> Lengua
+                </button>
+                <button onclick="filterBySubject('Mates')" data-subj="Mates" class="subj-tab-btn btn-3d bg-white hover:bg-amber-50 text-slate-700 font-bold px-5 py-3 rounded-2xl border-2 border-slate-300 shadow-[0_4px_0_0_#cbd5e1] flex items-center gap-2 shrink-0">
+                    <span>🔢</span> Matemáticas
+                </button>
+                <button onclick="filterBySubject('Ciencias')" data-subj="Ciencias" class="subj-tab-btn btn-3d bg-white hover:bg-emerald-50 text-slate-700 font-bold px-5 py-3 rounded-2xl border-2 border-slate-300 shadow-[0_4px_0_0_#cbd5e1] flex items-center gap-2 shrink-0">
+                    <span>🌍</span> Ciencias
+                </button>
+                <button onclick="filterBySubject('Inglés')" data-subj="Inglés" class="subj-tab-btn btn-3d bg-white hover:bg-sky-50 text-slate-700 font-bold px-5 py-3 rounded-2xl border-2 border-slate-300 shadow-[0_4px_0_0_#cbd5e1] flex items-center gap-2 shrink-0">
+                    <span>🇬🇧</span> Inglés
+                </button>
+                <button onclick="filterBySubject('Aula')" data-subj="Aula" class="subj-tab-btn btn-3d bg-white hover:bg-purple-50 text-slate-700 font-bold px-5 py-3 rounded-2xl border-2 border-slate-300 shadow-[0_4px_0_0_#cbd5e1] flex items-center gap-2 shrink-0">
+                    <span>🎡</span> Herramientas de Aula
+                </button>
+            </div>
+
+            <!-- Grid de Tarjetas de Juegos del Curso -->
+            <div id="course-games-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Generado dinámicamente por JS -->
+            </div>
+
+        </section>
+
+        <!-- =========================================================
+             VISTA 3: RESULTADOS DE BÚSQUEDA GLOBAL
+             ========================================================= -->
+        <section id="view-search" class="hidden view-animate flex-col gap-6">
+            <div class="flex items-center justify-between bg-white p-5 rounded-3xl border-4 border-indigo-200 shadow-sm">
+                <div>
+                    <h3 class="text-2xl font-extrabold text-slate-800">🔍 Resultados de búsqueda</h3>
+                    <p id="search-results-subtitle" class="text-slate-500 text-sm font-medium">Mostrando juegos encontrados en todas las carpetas</p>
+                </div>
+                <button onclick="clearSearch()" class="btn-3d bg-indigo-600 text-white font-bold px-5 py-2.5 rounded-2xl border-2 border-indigo-800 shadow-[0_4px_0_0_#312e81]">
+                    ⬅ Volver a las Carpetas
+                </button>
+            </div>
+            <div id="search-games-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </section>
+
+    </main>
+
+    <!-- ================= PIE DE PÁGINA ================= -->
+    <footer class="bg-white/80 backdrop-blur-sm border-t-4 border-indigo-100 py-5 px-4 mt-12">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left text-sm text-slate-500 font-medium">
+            <div class="flex items-center gap-2">
+                <span class="text-xl">🍎</span>
+                <span><strong>El Rincón de la Seño Pili</strong> • Creado con cariño para aprender jugando en Primaria</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openGithubModal()" class="text-indigo-600 hover:underline font-bold">
+                    📘 ¿Cómo subo un juego nuevo a GitHub?
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ================= MODAL 1: AÑADIR NUEVO JUEGO A UNA CARPETA ================= -->
+    <div id="modal-add-game" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto p-6 md:p-8 border-4 border-emerald-400 shadow-2xl">
+            <div class="flex justify-between items-center border-b-2 border-slate-100 pb-4 mb-5">
+                <div class="flex items-center gap-3">
+                    <span class="text-4xl">🎮</span>
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-800">Añadir Juego a una Carpeta</h3>
+                        <p class="text-xs md:text-sm text-slate-500">Crea una tarjeta nueva para enlazar cualquier archivo HTML que subas a tu GitHub.</p>
+                    </div>
+                </div>
+                <button onclick="closeAddGameModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">✖</button>
+            </div>
+
+            <form onsubmit="saveNewGameCard(event)" class="space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">📂 Carpeta del Curso:</label>
+                        <select id="new-game-folder" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-3.5 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <option value="1primaria">1º de Primaria</option>
+                            <option value="2primaria">2º de Primaria</option>
+                            <option value="3primaria" selected>3º de Primaria (Mi Clase)</option>
+                            <option value="4primaria">4º de Primaria</option>
+                            <option value="5primaria">5º de Primaria</option>
+                            <option value="6primaria">6º de Primaria</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">📚 Asignatura:</label>
+                        <select id="new-game-subject" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-3.5 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-emerald-500">
+                            <option value="Lengua">📖 Lengua</option>
+                            <option value="Mates">🔢 Matemáticas</option>
+                            <option value="Ciencias">🌍 Ciencias</option>
+                            <option value="Inglés">🇬🇧 Inglés</option>
+                            <option value="Aula">🎡 Herramientas de Aula</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-3">
+                    <div class="col-span-1">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">🎨 Icono:</label>
+                        <input type="text" id="new-game-emoji" value="🚀" maxlength="4" class="w-full text-center text-2xl bg-slate-50 border-2 border-slate-300 rounded-xl py-2 focus:outline-none focus:border-emerald-500">
+                    </div>
+                    <div class="col-span-3">
+                        <label class="block text-sm font-bold text-slate-700 mb-1">✨ Nombre del Juego:</label>
+                        <input type="text" id="new-game-title" required placeholder="Ej: La Carrera de las Multiplicaciones" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-3.5 py-2.5 font-bold text-slate-800 focus:outline-none focus:border-emerald-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">📝 Descripción corta para los niños:</label>
+                    <input type="text" id="new-game-desc" required placeholder="Ej: Practica las tablas del 2 al 9 por equipos en la pizarra." class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-3.5 py-2.5 font-medium text-slate-700 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">🔗 Nombre del archivo HTML en tu GitHub:</label>
+                    <input type="text" id="new-game-url" required placeholder="Ej: juego_multiplicaciones.html" class="w-full bg-indigo-50 border-2 border-indigo-300 rounded-xl px-3.5 py-2.5 font-mono text-sm font-bold text-indigo-900 focus:outline-none focus:border-indigo-500">
+                    <p class="text-xs text-slate-500 mt-1">💡 Cuando me pidas un juego nuevo, ponle ese nombre al archivo `.html` y súbelo junto a este `index.html`.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">🏷️ Etiquetas (separadas por coma):</label>
+                    <input type="text" id="new-game-tags" placeholder="Ej: Equipos, Pizarra Digital, Cálculo" class="w-full bg-slate-50 border-2 border-slate-300 rounded-xl px-3.5 py-2 font-medium text-sm text-slate-700 focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div class="flex justify-end gap-3 pt-3 border-t">
+                    <button type="button" onclick="closeAddGameModal()" class="btn-3d bg-slate-200 text-slate-700 font-bold px-5 py-2.5 rounded-xl border-2 border-slate-300">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-6 py-2.5 rounded-xl border-2 border-emerald-700 shadow-[0_4px_0_0_#047857]">
+                        💾 Guardar en la Carpeta
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: GUÍA PASO A PASO PARA SUBIR A GITHUB PAGES ================= -->
+    <div id="modal-github" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 border-4 border-amber-400 shadow-2xl">
+            <div class="flex justify-between items-center border-b-2 border-slate-100 pb-4 mb-5">
+                <div class="flex items-center gap-3">
+                    <span class="text-4xl">🐙</span>
+                    <div>
+                        <h3 class="text-2xl font-extrabold text-slate-800">Guía Fácil: Tu Web en GitHub Pages</h3>
+                        <p class="text-sm text-slate-500">Cómo tener "El Rincón de la Seño Pili" funcionando en internet gratis</p>
+                    </div>
+                </div>
+                <button onclick="closeGithubModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">✖</button>
+            </div>
+
+            <div class="space-y-4 text-slate-700">
+                <div class="bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 flex gap-3.5 items-start">
+                    <span class="bg-indigo-600 text-white font-extrabold w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5">1</span>
+                    <div>
+                        <h4 class="font-extrabold text-indigo-950 text-lg">Crea tu repositorio en GitHub</h4>
+                        <p class="text-sm mt-1">Entra en <strong>github.com</strong>, dale al botón <strong>"New repository"</strong>, ponle de nombre por ejemplo <code class="bg-white px-2 py-0.5 rounded border font-bold">rincon-seno-pili</code>, márcalo como <strong>Public</strong> y dale a <em>Create repository</em>.</p>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-4 flex gap-3.5 items-start">
+                    <span class="bg-purple-600 text-white font-extrabold w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5">2</span>
+                    <div>
+                        <h4 class="font-extrabold text-purple-950 text-lg">Sube tus archivos (¡Así de fácil!)</h4>
+                        <p class="text-sm mt-1">Pulsa en <strong>"Add file" ➔ "Upload files"</strong> y arrastra juntos estos archivos:</p>
+                        <ul class="mt-2 space-y-1.5 text-sm font-semibold">
+                            <li class="flex items-center gap-2">📄 <code class="bg-white px-2 py-0.5 rounded border text-indigo-700 font-bold">index.html</code> (Esta página principal con todas las carpetas)</li>
+                            <li class="flex items-center gap-2">🔬 <code class="bg-white px-2 py-0.5 rounded border text-purple-700 font-bold">juego_aumentativos_diminutivos.html</code> (El juego del Superlaboratorio de 3º)</li>
+                            <li class="flex items-center gap-2">🖼️ <code class="bg-white px-2 py-0.5 rounded border text-pink-700 font-bold">perfil.png</code> (La foto de perfil de "Seño Pili" que te acabo de generar; si la llamas <code class="font-bold">perfil.png</code> saldrá sola automáticamente arriba a la izquierda).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4 flex gap-3.5 items-start">
+                    <span class="bg-emerald-600 text-white font-extrabold w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5">3</span>
+                    <div>
+                        <h4 class="font-extrabold text-emerald-950 text-lg">Activa GitHub Pages</h4>
+                        <p class="text-sm mt-1">Ve arriba a <strong>Settings ⚙️</strong> ➔ en el menú izquierdo entra en <strong>Pages</strong> ➔ donde pone <em>Branch</em> elige <strong>main</strong> y dale a <strong>Save</strong>. ¡En 1 minuto te dará tu enlace web para abrirlo en la pizarra digital del cole!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <button onclick="closeGithubModal()" class="btn-3d bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-lg px-8 py-3 rounded-2xl border-2 border-indigo-800 shadow-[0_5px_0_0_#312e81]">
+                    ¡Genial, entendido! 👍
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: RULETA RÁPIDA DE 22 ALUMNOS (HERRAMIENTA INTEGRADA) ================= -->
+    <div id="modal-quick-roulette" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 md:p-8 border-4 border-amber-400 shadow-2xl text-center">
+            <div class="flex justify-between items-center mb-3">
+                <span class="bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full text-xs">
+                    Herramienta de Aula • 22 Alumnos
+                </span>
+                <button onclick="closeQuickRoulette()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">✖</button>
+            </div>
+            <div class="text-5xl mb-2">🎡</div>
+            <h3 class="text-2xl font-extrabold text-slate-800 mb-1">Sorteo Rápido de Pizarra</h3>
+            <p class="text-slate-500 text-sm mb-5">Elige al azar quién sale de los 22 alumnos</p>
+
+            <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-1.5 rounded-3xl mb-6">
+                <div class="bg-white rounded-2xl py-7 px-4">
+                    <div id="quick-roulette-result" class="text-3xl font-extrabold text-indigo-900">
+                        ¿Quién saldrá?
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center gap-3">
+                <button onclick="spinQuickRoulette()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 font-extrabold text-lg px-7 py-3.5 rounded-2xl border-2 border-amber-600 shadow-[0_5px_0_0_#b45309]">
+                    🎰 ¡Sacar Alumno!
+                </button>
+                <button onclick="closeQuickRoulette()" class="btn-3d bg-slate-200 text-slate-700 font-bold px-5 py-3.5 rounded-2xl border-2 border-slate-300">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT DEL PORTAL ================= -->
+    <script>
+        /**************************************************************
+         * 1. SONIDOS INTERACTIVOS SINTETIZADOS (Web Audio API)
+         **************************************************************/
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-btn').textContent = soundEnabled ? '🔊' : '🔇';
+            if (soundEnabled) playSound('pop');
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+                if (type === 'pop') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(820, now + 0.08);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (type === 'folder') {
+                    const notes = [392.00, 523.25, 659.25];
+                    notes.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.06);
+                        gain.gain.setValueAtTime(0.18, now + i * 0.06);
+                        gain.gain.exponentialRampToValueAtTime(0.008, now + i * 0.06 + 0.16);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + i * 0.06);
+                        osc.stop(now + i * 0.06 + 0.17);
+                    });
+                } else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                        gain.gain.setValueAtTime(0.22, now + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.25);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + i * 0.08);
+                        osc.stop(now + i * 0.08 + 0.26);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        /**************************************************************
+         * 2. CONFIGURACIÓN DE LAS CARPETAS DE CADA CURSO
+         **************************************************************/
+        const COURSE_FOLDERS = [
+            {
+                id: '1primaria',
+                title: '1º de Primaria',
+                subtitle: 'Los Exploradores de las Letras',
+                mascot: '🐣',
+                badge: '6 - 7 años',
+                tabBg: 'bg-rose-400',
+                bodyGrad: 'from-rose-400 to-red-500',
+                borderCol: 'border-rose-600',
+                shadowHex: '#be123c',
+                lightBg: 'bg-rose-50',
+                lightText: 'text-rose-900',
+                description: 'Juegos de lectoescritura, sílabas, sumas sencillas y primeros descubrimientos.'
+            },
+            {
+                id: '2primaria',
+                title: '2º de Primaria',
+                subtitle: 'Detectives de los Números',
+                mascot: '🦊',
+                badge: '7 - 8 años',
+                tabBg: 'bg-amber-400',
+                bodyGrad: 'from-amber-400 to-orange-500',
+                borderCol: 'border-amber-600',
+                shadowHex: '#b45309',
+                lightBg: 'bg-amber-50',
+                lightText: 'text-amber-900',
+                description: 'Retos de comprensión lectora, restas llevando, acertijos y vocabulario.'
+            },
+            {
+                id: '3primaria',
+                title: '3º de Primaria',
+                subtitle: 'Supercientíficos de 3º',
+                mascot: '🔬',
+                badge: '⭐ ¡Nuestra Clase (22)!',
+                featured: true,
+                tabBg: 'bg-purple-500',
+                bodyGrad: 'from-purple-600 via-indigo-600 to-pink-500',
+                borderCol: 'border-indigo-900',
+                shadowHex: '#312e81',
+                lightBg: 'bg-purple-50',
+                lightText: 'text-purple-900',
+                description: '¡La carpeta oficial de nuestra clase de 22 alumnos! Lengua, Mates, Ciencias y concursos de pizarra.'
+            },
+            {
+                id: '4primaria',
+                title: '4º de Primaria',
+                subtitle: 'Viajeros del Tiempo',
+                mascot: '🦖',
+                badge: '9 - 10 años',
+                tabBg: 'bg-emerald-400',
+                bodyGrad: 'from-emerald-400 to-teal-600',
+                borderCol: 'border-emerald-700',
+                shadowHex: '#047857',
+                lightBg: 'bg-emerald-50',
+                lightText: 'text-emerald-900',
+                description: 'Acentuación, divisiones, historia, naturaleza y retos por equipos.'
+            },
+            {
+                id: '5primaria',
+                title: '5º de Primaria',
+                subtitle: 'Guardianes del Planeta',
+                mascot: '🚀',
+                badge: '10 - 11 años',
+                tabBg: 'bg-sky-400',
+                bodyGrad: 'from-sky-400 to-blue-600',
+                borderCol: 'border-blue-700',
+                shadowHex: '#1d4ed8',
+                lightBg: 'bg-sky-50',
+                lightText: 'text-sky-900',
+                description: 'Fracciones, análisis morfológico, ecosistemas, universo y proyectos.'
+            },
+            {
+                id: '6primaria',
+                title: '6º de Primaria',
+                subtitle: 'Maestros del Saber',
+                mascot: '🦄',
+                badge: '11 - 12 años',
+                tabBg: 'bg-pink-400',
+                bodyGrad: 'from-pink-500 to-fuchsia-600',
+                borderCol: 'border-fuchsia-800',
+                shadowHex: '#86198f',
+                lightBg: 'bg-pink-50',
+                lightText: 'text-pink-900',
+                description: 'Gran trivial de primaria, porcentajes, sintaxis y preparación para la ESO.'
+            }
+        ];
+
+        /**************************************************************
+         * 3. JUEGOS INICIALES DENTRO DE LAS CARPETAS
+         **************************************************************/
+        const DEFAULT_GAMES = [
+            // 3º DE PRIMARIA (Incluye el juego real recién creado)
+            {
+                id: 'superlaboratorio-tamanos',
+                folderId: '3primaria',
+                subject: 'Lengua',
+                emoji: '🔬',
+                title: 'El Superlaboratorio de los Tamaños',
+                desc: 'Concurso para los 22 alumnos: repasa los aumentativos (-ón, -ona, -azo, -aza, -ote, -ota) y diminutivos (-ito, -ita, -illo, -illa).',
+                url: 'juego_aumentativos_diminutivos.html',
+                tags: ['⭐ Estrella', '22 Alumnos', 'Aumentativos y Diminutivos', 'Pizarra Digital'],
+                isReady: true
+            },
+            {
+                id: 'ruleta-22-aula',
+                folderId: '3primaria',
+                subject: 'Aula',
+                emoji: '🎡',
+                title: 'Ruleta Rápida de los 22 Alumnos',
+                desc: 'Saca al azar a un alumno o alumna a la pizarra digital en cualquier asignatura.',
+                url: '#quick-roulette',
+                tags: ['Sorteo', '22 Alumnos', 'Herramienta'],
+                isInternalTool: true
+            },
+            {
+                id: 'tablas-cohete-3',
+                folderId: '3primaria',
+                subject: 'Mates',
+                emoji: '🚀',
+                title: 'Misión Espacial: Las Tablas de Multiplicar',
+                desc: 'Próximo juego para 3º: Carrera espacial por equipos repasando las tablas del 2 al 9.',
+                url: 'juego_multiplicaciones.html',
+                tags: ['Matemáticas', 'Cálculo Mental', 'Próximamente'],
+                isReady: false
+            },
+            // Ejemplos en otros cursos para que todas las carpetas tengan vida al abrirlas
+            {
+                id: 'exploradores-silabas-1',
+                folderId: '1primaria',
+                subject: 'Lengua',
+                emoji: '🚂',
+                title: 'El Tren de las Sílabas',
+                desc: 'Ordena los vagones del tren para formar palabras con P, M, L y S en la pizarra.',
+                url: 'juego_silabas_1primaria.html',
+                tags: ['Lectoescritura', '1º Primaria'],
+                isReady: false
+            },
+            {
+                id: 'detectives-sumas-2',
+                folderId: '2primaria',
+                subject: 'Mates',
+                emoji: '🕵️‍♀️',
+                title: 'El Misterio de las Sumas Llevando',
+                desc: 'Resuelve las pistas matemáticas para abrir la caja fuerte de la clase.',
+                url: 'juego_sumas_2primaria.html',
+                tags: ['Cálculo', '2º Primaria'],
+                isReady: false
+            },
+            {
+                id: 'dino-agudas-4',
+                folderId: '4primaria',
+                subject: 'Lengua',
+                emoji: '🦕',
+                title: 'Dino-Acentos: Agudas, Llanas y Esdrújulas',
+                desc: 'Clasifica los huevos de dinosaurio según dónde lleven la sílaba tónica y la tilde.',
+                url: 'juego_acentos_4primaria.html',
+                tags: ['Ortografía', '4º Primaria'],
+                isReady: false
+            },
+            {
+                id: 'planeta-ecosistemas-5',
+                folderId: '5primaria',
+                subject: 'Ciencias',
+                emoji: '🌍',
+                title: 'Guardianes de los Ecosistemas',
+                desc: 'Concurso de preguntas sobre seres vivos, cadenas alimentarias y cuidado del planeta.',
+                url: 'juego_ecosistemas_5primaria.html',
+                tags: ['Naturaleza', '5º Primaria'],
+                isReady: false
+            },
+            {
+                id: 'trivial-6primaria',
+                folderId: '6primaria',
+                subject: 'Aula',
+                emoji: '🏆',
+                title: 'El Gran Rosco de 6º de Primaria',
+                desc: 'Pasapalabra especial con definiciones de Lengua, Mates, Ciencias e Inglés.',
+                url: 'juego_rosco_6primaria.html',
+                tags: ['Concurso', '6º Primaria'],
+                isReady: false
+            }
+        ];
+
+        let allGames = [];
+        let currentFolderId = '3primaria';
+        let currentSubjectFilter = 'Todas';
+
+        function loadGamesData() {
+            const savedCustom = localStorage.getItem('seno_pili_custom_games');
+            let customList = [];
+            if (savedCustom) {
+                try {
+                    customList = JSON.parse(savedCustom);
+                } catch (e) {
+                    customList = [];
+                }
+            }
+            allGames = [...DEFAULT_GAMES, ...customList];
+        }
+
+        /**************************************************************
+         * 4. RENDERIZADO DE LAS CARPETAS 3D EN LA PORTADA
+         **************************************************************/
+        function renderFoldersGrid() {
+            const grid = document.getElementById('folders-grid');
+            grid.innerHTML = '';
+
+            COURSE_FOLDERS.forEach(folder => {
+                const gamesInFolder = allGames.filter(g => g.folderId === folder.id);
+                const count = gamesInFolder.length;
+
+                const card = document.createElement('div');
+                card.className = 'folder-wrapper cursor-pointer select-none flex flex-col';
+                card.onclick = () => openFolder(folder.id);
+
+                card.innerHTML = `
+                    <!-- Pestaña superior de la Carpeta -->
+                    <div class="flex items-end justify-between pr-3">
+                        <div class="folder-tab ${folder.tabBg} border-t-4 border-l-4 border-r-4 ${folder.borderCol} px-4 pt-1 flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-white/80"></span>
+                            <span class="text-xs font-extrabold text-white uppercase tracking-wider truncate">${folder.title}</span>
+                        </div>
+                        ${folder.featured ? `
+                            <span class="bg-amber-400 text-amber-950 text-xs font-extrabold px-3 py-1 rounded-t-xl border-t-2 border-x-2 border-amber-600 shadow-sm animate-bounce">
+                                ⭐ ¡TU CLASE!
+                            </span>
+                        ` : ''}
+                    </div>
+
+                    <!-- Cuerpo 3D de la Carpeta -->
+                    <div class="bg-gradient-to-br ${folder.bodyGrad} rounded-b-3xl rounded-tr-3xl p-5 border-4 ${folder.borderCol} relative overflow-hidden flex-grow flex flex-col justify-between"
+                         style="box-shadow: 0 9px 0 0 ${folder.shadowHex};">
+                        
+                        <!-- Hoja blanca asomando de la carpeta -->
+                        <div class="folder-paper bg-white/95 rounded-2xl p-4 border-2 border-white shadow-md mb-4 text-slate-800 relative">
+                            <div class="flex items-start justify-between gap-2">
+                                <div>
+                                    <span class="inline-block text-xs font-extrabold px-2.5 py-0.5 rounded-full ${folder.lightBg} ${folder.lightText} mb-1">
+                                        ${folder.badge}
+                                    </span>
+                                    <h4 class="text-2xl font-extrabold text-slate-800 leading-tight">${folder.title}</h4>
+                                    <p class="text-sm font-bold text-indigo-600">${folder.subtitle}</p>
+                                </div>
+                                <div class="text-5xl shrink-0 animate-float">${folder.mascot}</div>
+                            </div>
+                            <p class="text-xs text-slate-500 font-medium mt-2 line-clamp-2">
+                                ${folder.description}
+                            </p>
+                        </div>
+
+                        <!-- Pie de la carpeta con contador y botón -->
+                        <div class="flex items-center justify-between text-white pt-1">
+                            <div class="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-xl text-xs font-bold">
+                                <span>🎮</span>
+                                <span>${count} ${count === 1 ? 'actividad' : 'actividades'}</span>
+                            </div>
+                            <div class="bg-white text-slate-900 font-extrabold text-sm px-4 py-1.5 rounded-xl shadow flex items-center gap-1">
+                                <span>Abrir Carpeta</span>
+                                <span>➡️</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        /**************************************************************
+         * 5. NAVEGACIÓN INTERNA: ABRIR LA PÁGINA DE UN CURSO
+         **************************************************************/
+        function openFolder(folderId, pushHash = true) {
+            playSound('folder');
+            currentFolderId = folderId;
+            currentSubjectFilter = 'Todas';
+
+            const folder = COURSE_FOLDERS.find(f => f.id === folderId) || COURSE_FOLDERS[2];
+
+            // Actualizar URL hash para poder compartir enlace directo al curso en GitHub Pages
+            if (pushHash) {
+                history.replaceState(null, null, `#${folderId}`);
+            }
+
+            // Ocultar portada y mostrar vista de curso
+            document.getElementById('view-folders').classList.add('hidden');
+            document.getElementById('view-search').classList.add('hidden');
+            const courseView = document.getElementById('view-course');
+            courseView.classList.remove('hidden');
+            courseView.classList.add('flex');
+
+            // Actualizar miga de pan
+            document.getElementById('breadcrumb-course-name').textContent = `📂 ${folder.title}`;
+
+            // Renderizar el Banner de Cabecera del Curso
+            const banner = document.getElementById('course-header-banner');
+            banner.className = `rounded-3xl p-6 md:p-8 border-4 ${folder.borderCol} bg-gradient-to-r ${folder.bodyGrad} shadow-xl text-white relative overflow-hidden`;
+            banner.innerHTML = `
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+                    <div class="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+                        <div class="w-24 h-24 rounded-3xl bg-white/95 flex items-center justify-center text-6xl shadow-lg border-4 border-white shrink-0 animate-float">
+                            ${folder.mascot}
+                        </div>
+                        <div>
+                            <div class="inline-flex items-center gap-2 bg-black/25 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2">
+                                <span>📂 Carpeta Abierta</span> • <span>${folder.badge}</span>
+                            </div>
+                            <h2 class="text-3xl md:text-5xl font-extrabold leading-tight">${folder.title}: ${folder.subtitle}</h2>
+                            <p class="text-white/90 text-base md:text-lg font-medium max-w-2xl mt-1">${folder.description}</p>
+                        </div>
+                    </div>
+                    ${folder.id === '3primaria' ? `
+                        <button onclick="openQuickRoulette()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 font-extrabold px-5 py-3.5 rounded-2xl border-2 border-amber-600 shadow-[0_5px_0_0_#b45309] shrink-0 flex items-center gap-2 text-base">
+                            <span class="text-2xl">🎡</span>
+                            <span>Sorteo 22 Alumnos</span>
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+
+            updateSubjectTabsUI();
+            renderCourseGames();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goHome() {
+            playSound('pop');
+            history.replaceState(null, null, ' ');
+            document.getElementById('view-course').classList.add('hidden');
+            document.getElementById('view-course').classList.remove('flex');
+            document.getElementById('view-search').classList.add('hidden');
+            document.getElementById('view-folders').classList.remove('hidden');
+            renderFoldersGrid();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function filterBySubject(subject) {
+            playSound('pop');
+            currentSubjectFilter = subject;
+            updateSubjectTabsUI();
+            renderCourseGames();
+        }
+
+        function updateSubjectTabsUI() {
+            document.querySelectorAll('.subj-tab-btn').forEach(btn => {
+                const isSelected = btn.dataset.subj === currentSubjectFilter;
+                if (isSelected) {
+                    btn.className = 'subj-tab-btn btn-3d bg-indigo-600 text-white font-bold px-5 py-3 rounded-2xl border-2 border-indigo-800 shadow-[0_4px_0_0_#312e81] flex items-center gap-2 shrink-0';
+                } else {
+                    btn.className = 'subj-tab-btn btn-3d bg-white hover:bg-indigo-50 text-slate-700 font-bold px-5 py-3 rounded-2xl border-2 border-slate-300 shadow-[0_4px_0_0_#cbd5e1] flex items-center gap-2 shrink-0';
+                }
+            });
+        }
+
+        function renderCourseGames() {
+            const grid = document.getElementById('course-games-grid');
+            grid.innerHTML = '';
+
+            const filtered = allGames.filter(g => {
+                const sameFolder = g.folderId === currentFolderId;
+                const matchesSubj = currentSubjectFilter === 'Todas' || g.subject === currentSubjectFilter;
+                return sameFolder && matchesSubj;
+            });
+
+            filtered.forEach(game => {
+                grid.appendChild(createGameCardElement(game));
+            });
+
+            // Tarjeta final para añadir un juego nuevo fácilmente a esta carpeta
+            const addCard = document.createElement('div');
+            addCard.onclick = () => openAddGameModal(currentFolderId);
+            addCard.className = 'cursor-pointer bg-white/60 hover:bg-white rounded-3xl p-6 border-4 border-dashed border-indigo-300 hover:border-indigo-500 transition flex flex-col items-center justify-center text-center min-h-[260px] group';
+            addCard.innerHTML = `
+                <div class="w-16 h-16 rounded-2xl bg-indigo-100 group-hover:bg-indigo-600 group-hover:text-white text-indigo-600 flex items-center justify-center text-3xl mb-3 transition">
+                    ➕
+                </div>
+                <h4 class="text-xl font-extrabold text-slate-700 group-hover:text-indigo-700">Añadir Nuevo Juego aquí</h4>
+                <p class="text-sm text-slate-500 mt-1 max-w-xs">
+                    Conecta otro archivo <code class="font-bold">.html</code> que subas a tu repositorio de GitHub.
+                </p>
+            `;
+            grid.appendChild(addCard);
+        }
+
+        function createGameCardElement(game) {
+            const subjectColors = {
+                'Lengua': 'bg-rose-100 text-rose-800 border-rose-300',
+                'Mates': 'bg-amber-100 text-amber-900 border-amber-300',
+                'Ciencias': 'bg-emerald-100 text-emerald-900 border-emerald-300',
+                'Inglés': 'bg-sky-100 text-sky-900 border-sky-300',
+                'Aula': 'bg-purple-100 text-purple-900 border-purple-300'
+            };
+            const badgeStyle = subjectColors[game.subject] || 'bg-indigo-100 text-indigo-800 border-indigo-300';
+
+            const card = document.createElement('div');
+            card.className = `bg-white rounded-3xl p-6 border-4 ${game.isReady ? 'border-indigo-300 ring-4 ring-amber-200/60' : 'border-slate-200'} shadow-xl flex flex-col justify-between relative overflow-hidden`;
+
+            const tagsHtml = (game.tags || []).map(t => `
+                <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-200">${t}</span>
+            `).join('');
+
+            let actionButtonHtml = '';
+            if (game.isInternalTool) {
+                actionButtonHtml = `
+                    <button onclick="openQuickRoulette()" class="btn-3d w-full bg-purple-600 hover:bg-purple-500 text-white font-extrabold text-lg py-3.5 px-5 rounded-2xl border-2 border-purple-800 shadow-[0_5px_0_0_#3b0764] flex items-center justify-center gap-2">
+                        <span>🎡</span> ¡Abrir Ruleta Ahora!
+                    </button>
+                `;
+            } else {
+                actionButtonHtml = `
+                    <div class="flex flex-col gap-2">
+                        <a href="${game.url}" onclick="playSound('fanfare')" class="btn-3d w-full ${game.isReady ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white border-indigo-900 shadow-[0_6px_0_0_#312e81]' : 'bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-800 shadow-[0_5px_0_0_#312e81]'} font-extrabold text-lg py-3.5 px-5 rounded-2xl border-2 flex items-center justify-center gap-2 text-center">
+                            <span>🚀</span> ¡Jugar en la Pizarra!
+                        </a>
+                        <div class="flex items-center justify-between text-xs text-slate-400 px-1 pt-1">
+                            <span class="font-mono truncate max-w-[180px]" title="${game.url}">📄 ${game.url}</span>
+                            ${game.isCustom ? `<button onclick="deleteCustomGame('${game.id}')" class="text-rose-500 hover:underline font-bold">Eliminar</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div>
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div class="w-16 h-16 rounded-2xl bg-indigo-50 border-2 border-indigo-200 flex items-center justify-center text-4xl shadow-inner shrink-0">
+                            ${game.emoji}
+                        </div>
+                        <span class="text-xs font-extrabold px-3 py-1 rounded-full border ${badgeStyle}">
+                            ${game.subject}
+                        </span>
+                    </div>
+
+                    <h4 class="text-xl md:text-2xl font-extrabold text-slate-800 leading-snug mb-2">
+                        ${game.title}
+                    </h4>
+                    <p class="text-sm text-slate-600 font-medium mb-4">
+                        ${game.desc}
+                    </p>
+
+                    <div class="flex flex-wrap gap-1.5 mb-6">
+                        ${tagsHtml}
+                    </div>
+                </div>
+
+                ${actionButtonHtml}
+            `;
+
+            return card;
+        }
+
+        /**************************************************************
+         * 6. BUSCADOR GLOBAL DE JUEGOS
+         **************************************************************/
+        function handleGlobalSearch(query) {
+            const clean = query.trim().toLowerCase();
+            const clearBtn = document.getElementById('clear-search-btn');
+
+            if (!clean) {
+                clearBtn.classList.add('hidden');
+                goHome();
+                return;
+            }
+
+            clearBtn.classList.remove('hidden');
+            document.getElementById('view-folders').classList.add('hidden');
+            document.getElementById('view-course').classList.add('hidden');
+            document.getElementById('view-course').classList.remove('flex');
+
+            const searchView = document.getElementById('view-search');
+            searchView.classList.remove('hidden');
+            searchView.classList.add('flex');
+
+            const matches = allGames.filter(g => 
+                g.title.toLowerCase().includes(clean) ||
+                g.desc.toLowerCase().includes(clean) ||
+                g.subject.toLowerCase().includes(clean) ||
+                (g.tags && g.tags.some(t => t.toLowerCase().includes(clean)))
+            );
+
+            document.getElementById('search-results-subtitle').textContent = 
+                `Se han encontrado ${matches.length} juegos para "${query}"`;
+
+            const grid = document.getElementById('search-games-grid');
+            grid.innerHTML = '';
+            matches.forEach(g => grid.appendChild(createGameCardElement(g)));
+        }
+
+        function clearSearch() {
+            document.getElementById('global-search-input').value = '';
+            document.getElementById('clear-search-btn').classList.add('hidden');
+            goHome();
+        }
+
+        /**************************************************************
+         * 7. AÑADIR JUEGOS NUEVOS Y PERSONALIZAR FOTO DE PERFIL
+         **************************************************************/
+        function openAddGameModal(preselectFolder) {
+            playSound('pop');
+            if (preselectFolder) {
+                document.getElementById('new-game-folder').value = preselectFolder;
+            }
+            document.getElementById('modal-add-game').classList.remove('hidden');
+        }
+
+        function closeAddGameModal() {
+            document.getElementById('modal-add-game').classList.add('hidden');
+        }
+
+        function saveNewGameCard(e) {
+            e.preventDefault();
+            playSound('fanfare');
+
+            const folderId = document.getElementById('new-game-folder').value;
+            const subject = document.getElementById('new-game-subject').value;
+            const emoji = document.getElementById('new-game-emoji').value.trim() || '🎮';
+            const title = document.getElementById('new-game-title').value.trim();
+            const desc = document.getElementById('new-game-desc').value.trim();
+            const url = document.getElementById('new-game-url').value.trim();
+            const tagsRaw = document.getElementById('new-game-tags').value;
+            const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [subject, 'Pizarra Digital'];
+
+            const newGame = {
+                id: 'custom-' + Date.now(),
+                folderId,
+                subject,
+                emoji,
+                title,
+                desc,
+                url,
+                tags,
+                isReady: true,
+                isCustom: true
+            };
+
+            const savedCustom = JSON.parse(localStorage.getItem('seno_pili_custom_games') || '[]');
+            savedCustom.push(newGame);
+            localStorage.setItem('seno_pili_custom_games', JSON.stringify(savedCustom));
+
+            loadGamesData();
+            closeAddGameModal();
+            e.target.reset();
+            openFolder(folderId);
+
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+            }
+        }
+
+        function deleteCustomGame(id) {
+            playSound('pop');
+            const savedCustom = JSON.parse(localStorage.getItem('seno_pili_custom_games') || '[]');
+            const updated = savedCustom.filter(g => g.id !== id);
+            localStorage.setItem('seno_pili_custom_games', JSON.stringify(updated));
+            loadGamesData();
+            renderCourseGames();
+        }
+
+        // Subida / Cambio de foto de perfil de Seño Pili
+        function triggerAvatarUpload() {
+            document.getElementById('avatar-file-input').click();
+        }
+
+        function handleAvatarUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                localStorage.setItem('seno_pili_avatar', dataUrl);
+                const img = document.getElementById('custom-avatar-img');
+                img.src = dataUrl;
+                showCustomAvatar();
+                playSound('fanfare');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showCustomAvatar() {
+            document.getElementById('custom-avatar-img').classList.remove('hidden');
+            document.getElementById('default-avatar-svg').classList.add('hidden');
+        }
+
+        function hideCustomAvatar() {
+            const saved = localStorage.getItem('seno_pili_avatar');
+            if (saved) {
+                const img = document.getElementById('custom-avatar-img');
+                img.src = saved;
+                showCustomAvatar();
+            } else {
+                document.getElementById('custom-avatar-img').classList.add('hidden');
+                document.getElementById('default-avatar-svg').classList.remove('hidden');
+            }
+        }
+
+        // Modales extra (GitHub, Pantalla Completa y Ruleta Rápida)
+        function openGithubModal() {
+            playSound('pop');
+            document.getElementById('modal-github').classList.remove('hidden');
+        }
+        function closeGithubModal() {
+            document.getElementById('modal-github').classList.add('hidden');
+        }
+
+        function openQuickRoulette() {
+            playSound('pop');
+            document.getElementById('modal-quick-roulette').classList.remove('hidden');
+        }
+        function closeQuickRoulette() {
+            document.getElementById('modal-quick-roulette').classList.add('hidden');
+        }
+
+        function spinQuickRoulette() {
+            const res = document.getElementById('quick-roulette-result');
+            let savedStudents = [];
+            try {
+                savedStudents = JSON.parse(localStorage.getItem('primaria3_students_22') || '[]');
+            } catch (e) {}
+            if (!savedStudents || savedStudents.length !== 22) {
+                savedStudents = Array.from({ length: 22 }, (_, i) => `Alumno/a Nº ${i + 1}`);
+            }
+
+            let ticks = 0;
+            const timer = setInterval(() => {
+                playSound('pop');
+                res.textContent = savedStudents[Math.floor(Math.random() * 22)];
+                ticks++;
+                if (ticks > 12) {
+                    clearInterval(timer);
+                    const winner = savedStudents[Math.floor(Math.random() * 22)];
+                    res.textContent = `🌟 ${winner} 🌟`;
+                    playSound('fanfare');
+                }
+            }, 65);
+        }
+
+        function toggleFullScreen() {
+            playSound('pop');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // Inicialización al cargar
+        window.onload = function() {
+            loadGamesData();
+            hideCustomAvatar();
+            renderFoldersGrid();
+
+            // Si la URL viene con #3primaria (o cualquier curso), abre esa carpeta directamente
+            const hash = window.location.hash.replace('#', '');
+            if (COURSE_FOLDERS.some(f => f.id === hash)) {
+                openFolder(hash, false);
+            }
+        };
+    </script>
+</body>
+</html>
