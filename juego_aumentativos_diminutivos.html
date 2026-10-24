@@ -1,0 +1,1557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Superlaboratorio de los Tamaños - 3º Primaria</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka para un look infantil, redondeado y súper legible en pizarra -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fae8ff 50%, #fef3c7 100%);
+        }
+
+        /* Botones estilo arcade 3D para pizarra digital */
+        .btn-3d {
+            transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(6px);
+            box-shadow: 0 0px 0 0 rgba(0,0,0,0.2) !important;
+        }
+
+        /* Animaciones divertidas */
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        .animate-float {
+            animation: floatSlow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+        .animate-pulse-slow {
+            animation: pulseGlow 2.2s infinite;
+        }
+
+        /* Efectos del Laboratorio al transformar el emoji */
+        .emoji-stage {
+            transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .scale-giant {
+            transform: scale(1.85) rotate(6deg) !important;
+        }
+        .scale-tiny {
+            transform: scale(0.38) rotate(-8deg) !important;
+        }
+        .scale-normal {
+            transform: scale(1) rotate(0deg);
+        }
+
+        /* Scrollbar personalizada */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between text-slate-800">
+
+    <!-- ================= BARRA SUPERIOR FIJA (PARA LA PROFESORA) ================= -->
+    <header class="bg-white/90 backdrop-blur-md border-b-4 border-indigo-200 px-4 py-3 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Logo / Título -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="confirmGoHome()">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center text-white text-2xl shadow-md">
+                    🔬
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-600 bg-clip-text text-transparent leading-tight">
+                        Superlaboratorio de Tamaños
+                    </h1>
+                    <p class="text-xs md:text-sm text-slate-500 font-medium">3º de Primaria • Aumentativos y Diminutivos</p>
+                </div>
+            </div>
+
+            <!-- Botones rápidos de aula -->
+            <div class="flex items-center gap-2 md:gap-3 flex-wrap">
+                <!-- Botón Ruleta de los 22 alumnos -->
+                <button onclick="openRouletteModal()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold px-4 py-2.5 rounded-2xl border-2 border-amber-500 shadow-[0_5px_0_0_#d97706] flex items-center gap-2 text-sm md:text-base">
+                    <span class="text-xl">🎡</span>
+                    <span>Sacar Alumno (<span id="remaining-students-badge">22</span>/22)</span>
+                </button>
+
+                <!-- Botón Chuleta / Repaso Visual -->
+                <button onclick="openCheatSheetModal()" class="btn-3d bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-4 py-2.5 rounded-2xl border-2 border-emerald-500 shadow-[0_5px_0_0_#059669] flex items-center gap-2 text-sm md:text-base">
+                    <span class="text-xl">📘</span>
+                    <span>Pizarra de Repaso</span>
+                </button>
+
+                <!-- Botón Lista de 22 Alumnos -->
+                <button onclick="openStudentListModal()" class="btn-3d bg-sky-400 hover:bg-sky-300 text-sky-950 font-bold px-3.5 py-2.5 rounded-2xl border-2 border-sky-500 shadow-[0_5px_0_0_#0284c7] flex items-center gap-1.5 text-sm md:text-base" title="Editar nombres de los 22 alumnos">
+                    <span class="text-xl">👧👦</span>
+                    <span class="hidden sm:inline">22 Alumnos</span>
+                </button>
+
+                <!-- Botón Sonido -->
+                <button id="sound-btn" onclick="toggleSound()" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold p-2.5 rounded-2xl border-2 border-slate-300 shadow-[0_5px_0_0_#94a3b8] text-xl" title="Activar/Silenciar sonidos">
+                    🔊
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ================= CONTENEDOR PRINCIPAL ================= -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 md:p-6 max-w-7xl w-full mx-auto">
+
+        <!-- 1. PANTALLA DE INICIO / CONFIGURACIÓN DEL JUEGO -->
+        <section id="screen-home" class="w-full max-w-5xl bg-white/95 rounded-3xl p-6 md:p-10 shadow-2xl border-4 border-indigo-200 text-center">
+            <div class="inline-flex items-center gap-2 bg-indigo-100 text-indigo-800 px-4 py-1.5 rounded-full font-bold text-sm md:text-base mb-4">
+                ✨ ¡Especial para Pizarra Digital! • 22 Alumnos ✨
+            </div>
+
+            <h2 class="text-3xl md:text-5xl font-bold text-slate-800 mb-3">
+                ¡Bienvenidos al Concurso de los Sufijos!
+            </h2>
+            <p class="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto mb-8">
+                Usa el rayo agrandador <span class="font-bold text-orange-600">(-ón, -ona, -azo, -aza, -ote, -ota)</span> o el rayo encogedor <span class="font-bold text-sky-600">(-ito, -ita, -illo, -illa)</span> para ganar puntos con tu equipo.
+            </p>
+
+            <!-- Configuración en 3 columnas para pizarra -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-left">
+                
+                <!-- Paso 1: Equipos -->
+                <div class="bg-indigo-50/80 p-5 rounded-3xl border-2 border-indigo-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 text-indigo-900 font-bold text-xl mb-2">
+                            <span class="bg-indigo-600 text-white w-8 h-8 rounded-full inline-flex items-center justify-center text-base">1</span>
+                            ¿Cuántos equipos?
+                        </div>
+                        <p class="text-sm text-slate-600 mb-4">Divide a los 22 alumnos en equipos o jugad toda la clase junta.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5" id="team-count-selector">
+                        <button onclick="selectTeamCount(2)" data-teams="2" class="team-opt-btn bg-white border-2 border-indigo-300 rounded-2xl p-3 font-bold text-center hover:bg-indigo-100 transition">
+                            <span class="text-2xl block">⚡⚡</span>
+                            2 Equipos<br><span class="text-xs font-normal text-slate-500">(11 vs 11)</span>
+                        </button>
+                        <button onclick="selectTeamCount(3)" data-teams="3" class="team-opt-btn bg-white border-2 border-indigo-300 rounded-2xl p-3 font-bold text-center hover:bg-indigo-100 transition">
+                            <span class="text-2xl block">🚀🦖🦄</span>
+                            3 Equipos<br><span class="text-xs font-normal text-slate-500">(7-7-8 alum.)</span>
+                        </button>
+                        <button onclick="selectTeamCount(4)" data-teams="4" class="team-opt-btn bg-indigo-600 text-white border-2 border-indigo-700 rounded-2xl p-3 font-bold text-center shadow-md transition">
+                            <span class="text-2xl block">🦁🐬🐉🦅</span>
+                            4 Equipos<br><span class="text-xs font-normal text-indigo-100">(5-5-6-6 alum.)</span>
+                        </button>
+                        <button onclick="selectTeamCount(1)" data-teams="1" class="team-opt-btn bg-white border-2 border-indigo-300 rounded-2xl p-3 font-bold text-center hover:bg-indigo-100 transition">
+                            <span class="text-2xl block">🏫</span>
+                            Toda la Clase<br><span class="text-xs font-normal text-slate-500">(22 juntos)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Paso 2: Modo de Juego -->
+                <div class="bg-purple-50/80 p-5 rounded-3xl border-2 border-purple-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 text-purple-900 font-bold text-xl mb-2">
+                            <span class="bg-purple-600 text-white w-8 h-8 rounded-full inline-flex items-center justify-center text-base">2</span>
+                            Modo de Juego
+                        </div>
+                        <p class="text-sm text-slate-600 mb-4">Elige qué prueba queréis jugar en la pizarra.</p>
+                    </div>
+                    <div class="flex flex-col gap-2.5" id="mode-selector">
+                        <button onclick="selectGameMode('mixed')" data-mode="mixed" class="mode-opt-btn bg-purple-600 text-white border-2 border-purple-700 rounded-2xl p-3 font-bold text-left flex items-center gap-3 shadow-md transition">
+                            <span class="text-3xl">🌟</span>
+                            <div>
+                                <div class="leading-tight">Superconcurso Mixto</div>
+                                <div class="text-xs font-normal text-purple-100">¡Combina todas las pruebas!</div>
+                            </div>
+                        </button>
+                        <button onclick="selectGameMode('lab')" data-mode="lab" class="mode-opt-btn bg-white text-slate-800 border-2 border-purple-300 rounded-2xl p-3 font-bold text-left flex items-center gap-3 hover:bg-purple-100 transition">
+                            <span class="text-3xl">🔬</span>
+                            <div>
+                                <div class="leading-tight">Laboratorio Transformador</div>
+                                <div class="text-xs font-normal text-slate-500">Haz las palabras gigantes o pequeñitas</div>
+                            </div>
+                        </button>
+                        <button onclick="selectGameMode('classifier')" data-mode="classifier" class="mode-opt-btn bg-white text-slate-800 border-2 border-purple-300 rounded-2xl p-3 font-bold text-left flex items-center gap-3 hover:bg-purple-100 transition">
+                            <span class="text-3xl">⚡</span>
+                            <div>
+                                <div class="leading-tight">El Rayo Clasificador (+ Trampas)</div>
+                                <div class="text-xs font-normal text-slate-500">¿Aumentativo, Diminutivo o Trampa?</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Paso 3: Número de Preguntas -->
+                <div class="bg-amber-50/80 p-5 rounded-3xl border-2 border-amber-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 text-amber-900 font-bold text-xl mb-2">
+                            <span class="bg-amber-500 text-white w-8 h-8 rounded-full inline-flex items-center justify-center text-base">3</span>
+                            Duración / Rondas
+                        </div>
+                        <p class="text-sm text-slate-600 mb-4">¡Con 22 preguntas salen exactamente los 22 alumnos a la pizarra!</p>
+                    </div>
+                    <div class="flex flex-col gap-2.5" id="rounds-selector">
+                        <button onclick="selectRounds(22)" data-rounds="22" class="round-opt-btn bg-amber-500 text-white border-2 border-amber-600 rounded-2xl p-3 font-bold text-left flex items-center justify-between shadow-md transition">
+                            <div>
+                                <div class="text-lg">22 Preguntas (Ideal)</div>
+                                <div class="text-xs font-normal text-amber-100">1 turno para cada alumno de clase</div>
+                            </div>
+                            <span class="text-2xl">🏆</span>
+                        </button>
+                        <button onclick="selectRounds(12)" data-rounds="12" class="round-opt-btn bg-white text-slate-800 border-2 border-amber-300 rounded-2xl p-3 font-bold text-left flex items-center justify-between hover:bg-amber-100 transition">
+                            <div>
+                                <div class="text-lg">12 Preguntas</div>
+                                <div class="text-xs font-normal text-slate-500">Partida rápida (10 min)</div>
+                            </div>
+                            <span class="text-2xl">⏱️</span>
+                        </button>
+                        <button onclick="selectRounds(30)" data-rounds="30" class="round-opt-btn bg-white text-slate-800 border-2 border-amber-300 rounded-2xl p-3 font-bold text-left flex items-center justify-between hover:bg-amber-100 transition">
+                            <div>
+                                <div class="text-lg">30 Preguntas</div>
+                                <div class="text-xs font-normal text-slate-500">Supermaratón de Lengua</div>
+                            </div>
+                            <span class="text-2xl">🔥</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón Gigante de Empezar -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button onclick="openCheatSheetModal()" class="btn-3d w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-white text-xl font-bold px-8 py-5 rounded-3xl border-2 border-emerald-600 shadow-[0_8px_0_0_#047857] flex items-center justify-center gap-3">
+                    <span>📖</span> 1º Ver Explicación en Pizarra
+                </button>
+                <button onclick="startGame()" class="btn-3d w-full sm:w-auto bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white text-2xl md:text-3xl font-bold px-12 py-5 rounded-3xl border-2 border-indigo-800 shadow-[0_8px_0_0_#312e81] animate-pulse-slow flex items-center justify-center gap-3">
+                    <span>🚀</span> ¡EMPEZAR EL JUEGO!
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. PANTALLA DE JUEGO -->
+        <section id="screen-game" class="hidden w-full max-w-6xl flex-col gap-4">
+            
+            <!-- Marcador de Equipos y Turno Actual -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+                <!-- Tarjetas de Puntuación de Equipos -->
+                <div id="scoreboard-container" class="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <!-- Generado dinámicamente -->
+                </div>
+
+                <!-- Indicador de Alumno en Pizarra + Progreso -->
+                <div class="lg:col-span-4 bg-white rounded-3xl p-3.5 border-4 border-amber-300 shadow-md flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-100 border-2 border-amber-400 flex items-center justify-center text-2xl shrink-0">
+                            🙋‍♂️
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold uppercase tracking-wider text-amber-700">Sale a la pizarra:</div>
+                            <div id="current-student-display" class="text-lg md:text-xl font-bold text-slate-900 truncate max-w-[170px]">
+                                Alumno #1
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="pickRandomStudentForTurn()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold px-3 py-2 rounded-xl border-2 border-amber-500 shadow-[0_4px_0_0_#d97706] text-xs md:text-sm shrink-0">
+                        🎲 Cambiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de ronda y tipo de prueba -->
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-white/80 px-5 py-2.5 rounded-2xl border-2 border-indigo-100">
+                <div class="flex items-center gap-3">
+                    <span id="round-type-badge" class="bg-purple-600 text-white text-sm md:text-base font-bold px-4 py-1 rounded-full">
+                        🔬 Laboratorio de Tamaños
+                    </span>
+                    <span id="current-team-turn-badge" class="bg-indigo-100 text-indigo-900 text-sm md:text-base font-bold px-4 py-1 rounded-full">
+                        Turno: Equipo 1
+                    </span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="font-bold text-slate-600 text-base md:text-lg">
+                        Pregunta <span id="question-counter" class="text-indigo-600 font-extrabold">1 / 22</span>
+                    </span>
+                    <div class="w-32 md:w-48 h-4 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
+                        <div id="progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-pink-500 transition-all duration-500" style="width: 5%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escenario Central de la Pregunta -->
+            <div class="bg-white rounded-3xl p-6 md:p-8 shadow-2xl border-4 border-indigo-200 relative overflow-hidden flex flex-col items-center justify-between min-h-[430px]">
+                
+                <!-- Instrucción de la pregunta -->
+                <div id="question-prompt" class="text-center text-2xl md:text-3xl font-bold text-slate-800 mb-2 max-w-3xl">
+                    ¡Transforma esta palabra!
+                </div>
+
+                <!-- Subtítulo / Pista de sufijo -->
+                <div id="question-subprompt" class="text-center text-base md:text-xl font-semibold px-5 py-1.5 rounded-full mb-4">
+                    Elige la opción correcta
+                </div>
+
+                <!-- Zona Visual del Dibujo / Emoji y Palabra -->
+                <div class="my-4 flex flex-col items-center justify-center relative py-4">
+                    <!-- Círculo de energía de fondo -->
+                    <div id="energy-ring" class="w-40 h-40 md:w-48 md:h-48 rounded-full bg-gradient-to-tr from-indigo-100 via-purple-100 to-amber-100 flex items-center justify-center border-4 border-dashed border-indigo-300 shadow-inner">
+                        <div id="main-emoji" class="emoji-stage text-7xl md:text-8xl select-none">
+                            🐶
+                        </div>
+                    </div>
+
+                    <!-- Cartel con la palabra actual -->
+                    <div id="word-card" class="mt-4 bg-slate-900 text-white px-8 py-3 rounded-2xl text-3xl md:text-4xl font-extrabold tracking-wide shadow-lg border-4 border-slate-700">
+                        PERRO
+                    </div>
+                </div>
+
+                <!-- Botones de Opciones (Grandes para tocar en la Pizarra Digital) -->
+                <div id="options-grid" class="w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                    <!-- Botones generados por JS -->
+                </div>
+
+                <!-- Mensaje de Feedback tras responder -->
+                <div id="feedback-banner" class="hidden w-full max-w-4xl mt-6 p-4 md:p-5 rounded-3xl border-4 items-center justify-between gap-4 flex-col sm:flex-row shadow-lg">
+                    <div class="flex items-center gap-4 text-left">
+                        <span id="feedback-icon" class="text-4xl md:text-5xl">🎉</span>
+                        <div>
+                            <h4 id="feedback-title" class="text-xl md:text-2xl font-extrabold">¡Genial!</h4>
+                            <p id="feedback-explanation" class="text-base md:text-lg font-medium"></p>
+                        </div>
+                    </div>
+                    <button onclick="nextQuestion()" class="btn-3d bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xl px-8 py-4 rounded-2xl border-2 border-indigo-800 shadow-[0_6px_0_0_#312e81] shrink-0 flex items-center gap-2">
+                        <span>Siguiente Turno</span> ➡️
+                    </button>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 3. PANTALLA DE PODIO FINAL -->
+        <section id="screen-podium" class="hidden w-full max-w-5xl bg-white rounded-3xl p-6 md:p-10 shadow-2xl border-4 border-amber-300 text-center">
+            <div class="text-6xl mb-3 animate-bounce">🏆🎉🥳</div>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-slate-800 mb-2">
+                ¡Fin del Superconcurso de 3º!
+            </h2>
+            <p class="text-lg md:text-xl text-slate-600 mb-8">
+                ¡Habéis dominado todos los aumentativos y diminutivos como auténticos científicos del lenguaje!
+            </p>
+
+            <!-- Contenedor del Podio -->
+            <div id="podium-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <!-- Generado por JS -->
+            </div>
+
+            <!-- Resumen de sufijos practicados -->
+            <div class="bg-indigo-50 rounded-3xl p-5 border-2 border-indigo-200 mb-8 max-w-3xl mx-auto">
+                <h3 class="font-bold text-indigo-900 text-lg mb-2">🌟 Sufijos superados hoy en clase:</h3>
+                <div class="flex flex-wrap justify-center gap-2">
+                    <span class="bg-orange-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-ón</span>
+                    <span class="bg-orange-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-ona</span>
+                    <span class="bg-orange-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-azo</span>
+                    <span class="bg-orange-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-aza</span>
+                    <span class="bg-orange-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-ote</span>
+                    <span class="bg-orange-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-ota</span>
+                    <span class="bg-sky-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-ito</span>
+                    <span class="bg-sky-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-ita</span>
+                    <span class="bg-sky-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-illo</span>
+                    <span class="bg-sky-500 text-white px-3.5 py-1.5 rounded-xl font-bold">-illa</span>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-4">
+                <button onclick="celebrateAgain()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold text-xl px-8 py-4 rounded-2xl border-2 border-amber-500 shadow-[0_6px_0_0_#d97706] flex items-center gap-2">
+                    <span>🎊</span> ¡Más Confeti y Aplausos!
+                </button>
+                <button onclick="resetToHome()" class="btn-3d bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xl px-8 py-4 rounded-2xl border-2 border-indigo-800 shadow-[0_6px_0_0_#312e81] flex items-center gap-2">
+                    <span>🔄</span> Jugar Otra Partida
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ================= MODAL 1: CHULETA / PIZARRA DE REPASO VISUAL ================= -->
+    <div id="modal-cheatsheet" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-3 md:p-6">
+        <div class="bg-white rounded-3xl max-w-6xl w-full max-h-[92vh] overflow-y-auto p-6 md:p-8 border-4 border-emerald-400 shadow-2xl">
+            <div class="flex items-center justify-between border-b-2 border-slate-200 pb-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="text-4xl">📘</span>
+                    <div>
+                        <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800">Pizarra de Repaso: Aumentativos y Diminutivos</h2>
+                        <p class="text-slate-500 text-sm md:text-base">Son sufijos (terminaciones) que añadimos al final de las palabras para cambiar su tamaño.</p>
+                    </div>
+                </div>
+                <button onclick="closeCheatSheetModal()" class="btn-3d bg-rose-500 hover:bg-rose-400 text-white font-bold px-5 py-2.5 rounded-2xl border-2 border-rose-700 shadow-[0_4px_0_0_#9f1239] text-lg">
+                    ✖ Cerrar
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Columna Aumentativos -->
+                <div class="bg-orange-50 rounded-3xl p-6 border-4 border-orange-300">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <span class="bg-orange-500 text-white text-xs font-extrabold uppercase px-3 py-1 rounded-full">Rayo Agrandador</span>
+                            <h3 class="text-2xl md:text-3xl font-extrabold text-orange-900 mt-1">LOS AUMENTATIVOS</h3>
+                            <p class="text-orange-800 font-medium">Indican que algo es <strong>MUY GRANDE</strong> o intenso.</p>
+                        </div>
+                        <div class="text-6xl animate-float">🐘</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div class="bg-white p-3.5 rounded-2xl border-2 border-orange-200 text-center shadow-sm">
+                            <div class="text-2xl font-extrabold text-orange-600 mb-1">-ón</div>
+                            <div class="text-sm text-slate-500">Cuchara ➡️</div>
+                            <div class="text-lg font-bold text-slate-800">Cuchar<span class="text-orange-600 underline">ón</span> 🥄</div>
+                        </div>
+                        <div class="bg-white p-3.5 rounded-2xl border-2 border-orange-200 text-center shadow-sm">
+                            <div class="text-2xl font-extrabold text-orange-600 mb-1">-ona</div>
+                            <div class="text-sm text-slate-500">Casa ➡️</div>
+                            <div class="text-lg font-bold text-slate-800">Cas<span class="text-orange-600 underline">ona</span> 🏰</div>
+                        </div>
+                        <div class="bg-white p-3.5 rounded-2xl border-2 border-orange-200 text-center shadow-sm">
+                            <div class="text-2xl font-extrabold text-orange-600 mb-1">-azo</div>
+                            <div class="text-sm text-slate-500">Gol ➡️</div>
+                            <div class="text-lg font-bold text-slate-800">Gol<span class="text-orange-600 underline">azo</span> ⚽</div>
+                        </div>
+                        <div class="bg-white p-3.5 rounded-2xl border-2 border-orange-200 text-center shadow-sm">
+                            <div class="text-2xl font-extrabold text-orange-600 mb-1">-aza</div>
+                            <div class="text-sm text-slate-500">Mano ➡️</div>
+                            <div class="text-lg font-bold text-slate-800">Man<span class="text-orange-600 underline">aza</span> 🖐️</div>
+                        </div>
+                        <div class="bg-white p-3.5 rounded-2xl border-2 border-orange-200 text-center shadow-sm">
+                            <div class="text-2xl font-extrabold text-orange-600 mb-1">-ote</div>
+                            <div class="text-sm text-slate-500">Libro ➡️</div>
+                            <div class="text-lg font-bold text-slate-800">Libr<span class="text-orange-600 underline">ote</span> 📚</div>
+                        </div>
+                        <div class="bg-white p-3.5 rounded-2xl border-2 border-orange-200 text-center shadow-sm">
+                            <div class="text-2xl font-extrabold text-orange-600 mb-1">-ota</div>
+                            <div class="text-sm text-slate-500">Cabeza ➡️</div>
+                            <div class="text-lg font-bold text-slate-800">Cabez<span class="text-orange-600 underline">ota</span> 🗿</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Diminutivos -->
+                <div class="bg-sky-50 rounded-3xl p-6 border-4 border-sky-300 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <span class="bg-sky-500 text-white text-xs font-extrabold uppercase px-3 py-1 rounded-full">Rayo Encogedor</span>
+                                <h3 class="text-2xl md:text-3xl font-extrabold text-sky-900 mt-1">LOS DIMINUTIVOS</h3>
+                                <p class="text-sky-800 font-medium">Indican que algo es <strong>PEQUEÑITO</strong> o cariñoso.</p>
+                            </div>
+                            <div class="text-5xl animate-float">🐭</div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <div class="bg-white p-3.5 rounded-2xl border-2 border-sky-200 text-center shadow-sm">
+                                <div class="text-2xl font-extrabold text-sky-600 mb-1">-ito</div>
+                                <div class="text-sm text-slate-500">Perro ➡️</div>
+                                <div class="text-lg font-bold text-slate-800">Perr<span class="text-sky-600 underline">ito</span> 🐶</div>
+                            </div>
+                            <div class="bg-white p-3.5 rounded-2xl border-2 border-sky-200 text-center shadow-sm">
+                                <div class="text-2xl font-extrabold text-sky-600 mb-1">-ita</div>
+                                <div class="text-sm text-slate-500">Casa ➡️</div>
+                                <div class="text-lg font-bold text-slate-800">Cas<span class="text-sky-600 underline">ita</span> 🏠</div>
+                            </div>
+                            <div class="bg-white p-3.5 rounded-2xl border-2 border-sky-200 text-center shadow-sm">
+                                <div class="text-2xl font-extrabold text-sky-600 mb-1">-illo</div>
+                                <div class="text-sm text-slate-500">Pájaro ➡️</div>
+                                <div class="text-lg font-bold text-slate-800">Pajar<span class="text-sky-600 underline">illo</span> 🐦</div>
+                            </div>
+                            <div class="bg-white p-3.5 rounded-2xl border-2 border-sky-200 text-center shadow-sm">
+                                <div class="text-2xl font-extrabold text-sky-600 mb-1">-illa</div>
+                                <div class="text-sm text-slate-500">Mesa ➡️</div>
+                                <div class="text-lg font-bold text-slate-800">Mes<span class="text-sky-600 underline">illa</span> 🪑</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aviso de palabras trampa -->
+                    <div class="bg-amber-100 border-2 border-amber-400 rounded-2xl p-3.5 flex items-center gap-3">
+                        <span class="text-3xl">🕵️‍♂️</span>
+                        <div class="text-xs md:text-sm text-amber-950">
+                            <strong>¡Cuidado con las palabras trampa!</strong> Palabras como <strong>Corazón</strong>, <strong>Limón</strong>, <strong>Tortilla</strong> o <strong>Anillo</strong> terminan igual, pero <u>NO</u> son aumentativos ni diminutivos.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button onclick="closeCheatSheetModal()" class="btn-3d bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xl px-10 py-4 rounded-2xl border-2 border-emerald-700 shadow-[0_6px_0_0_#047857]">
+                    ¡Entendido! Volver al Juego 👍
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: RULETA DE LOS 22 ALUMNOS ================= -->
+    <div id="modal-roulette" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 md:p-8 border-4 border-amber-400 shadow-2xl text-center">
+            <div class="flex justify-between items-center mb-4">
+                <span class="bg-amber-100 text-amber-900 font-bold px-3 py-1 rounded-full text-sm">
+                    Sin repetir hasta que salgan los 22
+                </span>
+                <button onclick="closeRouletteModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">✖</button>
+            </div>
+
+            <div class="text-5xl mb-2">🎡</div>
+            <h3 class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-2">Ruleta de la Clase (22 Alumnos)</h3>
+            <p class="text-slate-600 text-sm md:text-base mb-6">
+                Quedan <strong id="roulette-remaining-count" class="text-indigo-600">22</strong> alumnos por salir en esta vuelta.
+            </p>
+
+            <!-- Caja de sorteo animada -->
+            <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-1.5 rounded-3xl shadow-inner mb-6">
+                <div class="bg-white rounded-2xl py-8 px-4">
+                    <div id="roulette-display-name" class="text-3xl md:text-4xl font-extrabold text-indigo-900 tracking-wide">
+                        ¿Quién saldrá?
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-3">
+                <button id="btn-spin-roulette" onclick="spinStudentRoulette()" class="btn-3d bg-amber-400 hover:bg-amber-300 text-amber-950 font-extrabold text-xl px-8 py-4 rounded-2xl border-2 border-amber-600 shadow-[0_6px_0_0_#b45309] flex items-center gap-2">
+                    <span>🎰</span> ¡Girar Ruleta!
+                </button>
+                <button onclick="resetStudentBag()" class="btn-3d bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-4 rounded-2xl border-2 border-slate-400 shadow-[0_6px_0_0_#64748b] text-sm">
+                    🔄 Reiniciar los 22
+                </button>
+                <button onclick="closeRouletteModal()" class="btn-3d bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-6 py-4 rounded-2xl border-2 border-indigo-800 shadow-[0_6px_0_0_#312e81]">
+                    Listo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: EDITAR LISTA DE 22 ALUMNOS ================= -->
+    <div id="modal-students" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 border-4 border-sky-400 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-3 mb-4">
+                <div>
+                    <h3 class="text-2xl font-extrabold text-slate-800">👧👦 Lista de los 22 Alumnos de Clase</h3>
+                    <p class="text-sm text-slate-500">Puedes dejar los números de lista (Alumno 1 a 22) o pegar los nombres de tus alumnos.</p>
+                </div>
+                <button onclick="closeStudentListModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">✖</button>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-6" id="student-inputs-container">
+                <!-- 22 inputs generados por JS -->
+            </div>
+
+            <div class="flex flex-wrap justify-between items-center gap-3 border-t pt-4">
+                <button onclick="resetDefaultStudentNames()" class="text-sm font-bold text-rose-600 hover:underline">
+                    Restaurar Nº 1 al 22 por defecto
+                </button>
+                <div class="flex gap-3">
+                    <button onclick="closeStudentListModal()" class="btn-3d bg-slate-200 text-slate-700 font-bold px-5 py-2.5 rounded-xl border-2 border-slate-300">
+                        Cancelar
+                    </button>
+                    <button onclick="saveStudentNames()" class="btn-3d bg-sky-500 hover:bg-sky-400 text-white font-bold px-6 py-2.5 rounded-xl border-2 border-sky-600 shadow-[0_4px_0_0_#0284c7]">
+                        💾 Guardar los 22 Alumnos
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT DEL JUEGO ================= -->
+    <script>
+        /**************************************************************
+         * 1. SISTEMA DE SONIDO SINTETIZADO (Web Audio API - Sin MP3 externos)
+         **************************************************************/
+        let soundEnabled = true;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('sound-btn');
+            btn.textContent = soundEnabled ? '🔊' : '🔇';
+            if (soundEnabled) playSound('pop');
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+
+                if (type === 'pop') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(420, now);
+                    osc.frequency.exponentialRampToValueAtTime(780, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } 
+                else if (type === 'grow') {
+                    // Sonido de rayo agrandador
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.exponentialRampToValueAtTime(660, now + 0.35);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.38);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.38);
+                }
+                else if (type === 'shrink') {
+                    // Sonido de rayo encogedor (agudo y simpático)
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(980, now + 0.3);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.32);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.32);
+                }
+                else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // Do-Mi-Sol-Do
+                    notes.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                        gain.gain.setValueAtTime(0.22, now + i * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.008, now + i * 0.08 + 0.22);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + i * 0.08);
+                        osc.stop(now + i * 0.08 + 0.23);
+                    });
+                }
+                else if (type === 'wrong') {
+                    const notes = [300, 240];
+                    notes.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.15);
+                        gain.gain.setValueAtTime(0.15, now + i * 0.15);
+                        gain.gain.exponentialRampToValueAtTime(0.008, now + i * 0.15 + 0.2);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + i * 0.15);
+                        osc.stop(now + i * 0.15 + 0.22);
+                    });
+                }
+                else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50];
+                    const times = [0, 0.12, 0.24, 0.36, 0.55, 0.72];
+                    notes.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[i]);
+                        gain.gain.setValueAtTime(0.25, now + times[i]);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + times[i] + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + times[i]);
+                        osc.stop(now + times[i] + 0.32);
+                    });
+                }
+            } catch (e) {
+                // Ignorar si el navegador bloquea el audio antes del primer click
+            }
+        }
+
+        /**************************************************************
+         * 2. GESTIÓN DE LOS 22 ALUMNOS DE LA CLASE
+         **************************************************************/
+        const TOTAL_STUDENTS = 22;
+        let studentsList = [];
+        let remainingStudentIndices = [];
+        let currentStudentOnBoard = "Alumno 1";
+
+        function initStudents() {
+            const saved = localStorage.getItem('primaria3_students_22');
+            if (saved) {
+                try {
+                    studentsList = JSON.parse(saved);
+                } catch (e) {
+                    studentsList = [];
+                }
+            }
+            if (!studentsList || studentsList.length !== TOTAL_STUDENTS) {
+                studentsList = Array.from({ length: TOTAL_STUDENTS }, (_, i) => `Nº ${i + 1} de lista`);
+            }
+            resetStudentBag(false);
+        }
+
+        function resetStudentBag(playSnd = true) {
+            remainingStudentIndices = Array.from({ length: TOTAL_STUDENTS }, (_, i) => i);
+            updateRemainingBadge();
+            if (playSnd) playSound('pop');
+            const display = document.getElementById('roulette-display-name');
+            if (display) display.textContent = "¡Bolsa de 22 lista!";
+        }
+
+        function updateRemainingBadge() {
+            const badge = document.getElementById('remaining-students-badge');
+            const modalCount = document.getElementById('roulette-remaining-count');
+            if (badge) badge.textContent = remainingStudentIndices.length;
+            if (modalCount) modalCount.textContent = remainingStudentIndices.length;
+        }
+
+        function drawNextStudentFromBag() {
+            if (remainingStudentIndices.length === 0) {
+                resetStudentBag(false);
+            }
+            const randPos = Math.floor(Math.random() * remainingStudentIndices.length);
+            const studentIndex = remainingStudentIndices.splice(randPos, 1)[0];
+            currentStudentOnBoard = studentsList[studentIndex];
+            updateRemainingBadge();
+            const boardLabel = document.getElementById('current-student-display');
+            if (boardLabel) boardLabel.textContent = currentStudentOnBoard;
+            return currentStudentOnBoard;
+        }
+
+        function pickRandomStudentForTurn() {
+            playSound('pop');
+            const chosen = drawNextStudentFromBag();
+            const boardLabel = document.getElementById('current-student-display');
+            boardLabel.classList.add('scale-110', 'text-indigo-600');
+            setTimeout(() => boardLabel.classList.remove('scale-110', 'text-indigo-600'), 300);
+        }
+
+        // Ruleta Modal
+        function openRouletteModal() {
+            playSound('pop');
+            updateRemainingBadge();
+            document.getElementById('modal-roulette').classList.remove('hidden');
+        }
+
+        function closeRouletteModal() {
+            playSound('pop');
+            document.getElementById('modal-roulette').classList.add('hidden');
+        }
+
+        function spinStudentRoulette() {
+            const btn = document.getElementById('btn-spin-roulette');
+            const display = document.getElementById('roulette-display-name');
+            btn.disabled = true;
+
+            let ticks = 0;
+            const totalTicks = 14;
+            const interval = setInterval(() => {
+                playSound('pop');
+                const previewName = studentsList[Math.floor(Math.random() * TOTAL_STUDENTS)];
+                display.textContent = previewName;
+                ticks++;
+                if (ticks >= totalTicks) {
+                    clearInterval(interval);
+                    const winner = drawNextStudentFromBag();
+                    display.textContent = `🌟 ${winner} 🌟`;
+                    playSound('correct');
+                    btn.disabled = false;
+                }
+            }, 65);
+        }
+
+        // Editar Nombres de los 22 Alumnos
+        function openStudentListModal() {
+            playSound('pop');
+            const container = document.getElementById('student-inputs-container');
+            container.innerHTML = '';
+            studentsList.forEach((name, idx) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200';
+                wrapper.innerHTML = `
+                    <span class="w-7 h-7 rounded-lg bg-sky-500 text-white font-bold text-xs flex items-center justify-center shrink-0">${idx + 1}</span>
+                    <input type="text" id="student-input-${idx}" value="${name}" 
+                        class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-sm font-semibold focus:outline-none focus:border-sky-500" />
+                `;
+                container.appendChild(wrapper);
+            });
+            document.getElementById('modal-students').classList.remove('hidden');
+        }
+
+        function closeStudentListModal() {
+            document.getElementById('modal-students').classList.add('hidden');
+        }
+
+        function saveStudentNames() {
+            const updated = [];
+            for (let i = 0; i < TOTAL_STUDENTS; i++) {
+                const input = document.getElementById(`student-input-${i}`);
+                const val = input && input.value.trim() ? input.value.trim() : `Nº ${i + 1} de lista`;
+                updated.push(val);
+            }
+            studentsList = updated;
+            localStorage.setItem('primaria3_students_22', JSON.stringify(studentsList));
+            playSound('correct');
+            closeStudentListModal();
+            const boardLabel = document.getElementById('current-student-display');
+            if (boardLabel) boardLabel.textContent = studentsList[0];
+        }
+
+        function resetDefaultStudentNames() {
+            studentsList = Array.from({ length: TOTAL_STUDENTS }, (_, i) => `Nº ${i + 1} de lista`);
+            localStorage.removeItem('primaria3_students_22');
+            openStudentListModal();
+        }
+
+        /**************************************************************
+         * 3. BANCO DE PREGUNTAS COMPLETO (TODOS LOS SUFIJOS PEDIDOS)
+         * Aumentativos: -ón, -ona, -azo, -aza, -ote, -ota
+         * Diminutivos: -ito, -ita, -illo, -illa
+         **************************************************************/
+        const LAB_QUESTIONS = [
+            // AUMENTATIVOS (-ón, -ona, -azo, -aza, -ote, -ota)
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🥄',
+                baseWord: 'CUCHARA',
+                suffixHint: '-ón',
+                correctAnswer: 'Cucharón',
+                options: ['Cucharón', 'Cucharita', 'Cucharilla', 'Cuchareta'],
+                explanation: '¡Exacto! Con el sufijo aumentativo "-ón", una cuchara se convierte en un CUCHARÓN gigante.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🏰',
+                baseWord: 'CASA',
+                suffixHint: '-ona',
+                correctAnswer: 'Casona',
+                options: ['Casona', 'Casita', 'Casilla', 'Caseta'],
+                explanation: '¡Muy bien! Con el sufijo aumentativo "-ona", una casa grande es una CASONA.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '⚽',
+                baseWord: 'GOL',
+                suffixHint: '-azo',
+                correctAnswer: 'Golazo',
+                options: ['Golazo', 'Golito', 'Golillo', 'Golete'],
+                explanation: '¡GOOOLAZO! El sufijo "-azo" es aumentativo e indica un gol espectacular.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🖐️',
+                baseWord: 'MANO',
+                suffixHint: '-aza',
+                correctAnswer: 'Manaza',
+                options: ['Manaza', 'Manita', 'Manilla', 'Manecilla'],
+                explanation: '¡Genial! Con el sufijo aumentativo "-aza", una mano muy grande es una MANAZA.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '📚',
+                baseWord: 'LIBRO',
+                suffixHint: '-ote',
+                correctAnswer: 'Librote',
+                options: ['Librote', 'Librito', 'Librillo', 'Librería'],
+                explanation: '¡Bravo! Con el sufijo aumentativo "-ote", un libro enorme es un LIBROTE.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🗿',
+                baseWord: 'CABEZA',
+                suffixHint: '-ota',
+                correctAnswer: 'Cabezota',
+                options: ['Cabezota', 'Cabecita', 'Cabecilla', 'Cabezal'],
+                explanation: '¡Correcto! Con el sufijo aumentativo "-ota", formamos CABEZOTA.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🚗',
+                baseWord: 'COCHE',
+                suffixHint: '-azo',
+                correctAnswer: 'Cochazo',
+                options: ['Cochazo', 'Cochecito', 'Cochillo', 'Cochera'],
+                explanation: '¡Súper! Con el sufijo aumentativo "-azo", un gran coche es un COCHAZO.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '📦',
+                baseWord: 'CAJA',
+                suffixHint: '-ón',
+                correctAnswer: 'Cajón',
+                options: ['Cajón', 'Cajita', 'Cajilla', 'Cajero'],
+                explanation: '¡Eso es! Añadiendo el sufijo "-ón" a caja formamos el aumentativo CAJÓN.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🚢',
+                baseWord: 'BARCO',
+                suffixHint: '-ote',
+                correctAnswer: 'Barcote',
+                options: ['Barcote', 'Barquito', 'Barquillo', 'Barquero'],
+                explanation: '¡Fantástico! Con el sufijo aumentativo "-ote", un barco gigante es un BARCOTE.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🍎',
+                baseWord: 'MANZANA',
+                suffixHint: '-ota',
+                correctAnswer: 'Manzanota',
+                options: ['Manzanota', 'Manzanita', 'Manzanilla', 'Manzano'],
+                explanation: '¡Bien hecho! Con el sufijo aumentativo "-ota" tenemos una MANZANOTA gigante.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🪑',
+                baseWord: 'SILLA',
+                suffixHint: '-ón',
+                correctAnswer: 'Sillón',
+                options: ['Sillón', 'Sillita', 'Sillilla', 'Sillero'],
+                explanation: '¡Correcto! Con el sufijo aumentativo "-ón", una silla grande se transforma en SILLÓN.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '🐕',
+                baseWord: 'PERRO',
+                suffixHint: '-azo',
+                correctAnswer: 'Perrazo',
+                options: ['Perrazo', 'Perrito', 'Perrillo', 'Perrera'],
+                explanation: '¡Guau! Con el sufijo aumentativo "-azo", un perro enorme es un PERRAZO.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '👄',
+                baseWord: 'BOCA',
+                suffixHint: '-aza',
+                correctAnswer: 'Bocaza',
+                options: ['Bocaza', 'Boquita', 'Boquilla', 'Bocado'],
+                explanation: '¡Exacto! Con el sufijo aumentativo "-aza", una boca muy grande es una BOCAZA.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'giant',
+                emoji: '👩',
+                baseWord: 'MUJER',
+                suffixHint: '-ona',
+                correctAnswer: 'Mujerona',
+                options: ['Mujerona', 'Mujercita', 'Mujerilla', 'Mujeres'],
+                explanation: '¡Genial! El sufijo "-ona" es un aumentativo femenino: MUJERONA.'
+            },
+
+            // DIMINUTIVOS (-ito, -ita, -illo, -illa)
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '🐶',
+                baseWord: 'PERRO',
+                suffixHint: '-ito',
+                correctAnswer: 'Perrito',
+                options: ['Perrito', 'Perrazo', 'Perrote', 'Perrón'],
+                explanation: '¡Qué mono! Con el sufijo diminutivo "-ito", perro se convierte en PERRITO.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '🏠',
+                baseWord: 'CASA',
+                suffixHint: '-ita',
+                correctAnswer: 'Casita',
+                options: ['Casita', 'Casona', 'Casota', 'Casazo'],
+                explanation: '¡Muy bien! Con el sufijo diminutivo "-ita", una casa pequeña es una CASITA.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '🐦',
+                baseWord: 'PÁJARO',
+                suffixHint: '-illo',
+                correctAnswer: 'Pajarillo',
+                options: ['Pajarillo', 'Pajarote', 'Pajarazo', 'Pajarón'],
+                explanation: '¡Pío, pío! Con el sufijo diminutivo "-illo", pájaro se convierte en PAJARILLO.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '🪑',
+                baseWord: 'MESA',
+                suffixHint: '-illa',
+                correctAnswer: 'Mesilla',
+                options: ['Mesilla', 'Mesota', 'Mesona', 'Mesaza'],
+                explanation: '¡Estupendo! Con el sufijo diminutivo "-illa", una mesa pequeña es una MESILLA.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '🐱',
+                baseWord: 'GATO',
+                suffixHint: '-ito',
+                correctAnswer: 'Gatito',
+                options: ['Gatito', 'Gatazo', 'Gatote', 'Gatón'],
+                explanation: '¡Miau! Con el sufijo diminutivo "-ito", un gato pequeñito es un GATITO.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '🌸',
+                baseWord: 'FLOR',
+                suffixHint: '-ecilla',
+                correctAnswer: 'Florecilla',
+                options: ['Florecilla', 'Florota', 'Floraza', 'Florona'],
+                explanation: '¡Precioso! Terminada en "-illa", una flor pequeñita es una FLORECILLA.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '🌳',
+                baseWord: 'ÁRBOL',
+                suffixHint: '-illo',
+                correctAnswer: 'Arbolillo',
+                options: ['Arbolillo', 'Arbolote', 'Arbolazo', 'Arboleda'],
+                explanation: '¡Correcto! Con el sufijo diminutivo "-illo", un árbol pequeño es un ARBOLILLO.'
+            },
+            {
+                type: 'lab',
+                targetSize: 'tiny',
+                emoji: '⭐',
+                baseWord: 'ESTRELLA',
+                suffixHint: '-ita',
+                correctAnswer: 'Estrellita',
+                options: ['Estrellita', 'Estrellona', 'Estrellaza', 'Estrellota'],
+                explanation: '¡Brillante! Con el sufijo diminutivo "-ita" formamos ESTRELLITA.'
+            }
+        ];
+
+        const CLASSIFIER_QUESTIONS = [
+            {
+                type: 'classifier',
+                emoji: '🦖',
+                word: 'GRANDOTE',
+                correctCategory: 'Aumentativo',
+                explanation: 'Termina en "-ote", así que GRANDOTE es un AUMENTATIVO.'
+            },
+            {
+                type: 'classifier',
+                emoji: '🕯️',
+                word: 'FAROLILLO',
+                correctCategory: 'Diminutivo',
+                explanation: 'Termina en "-illo" (un farol pequeño), así que FAROLILLO es un DIMINUTIVO.'
+            },
+            {
+                type: 'classifier',
+                emoji: '❤️',
+                word: 'CORAZÓN',
+                correctCategory: 'Palabra Trampa',
+                explanation: '¡Cuidado! Aunque termina en "-ón", un CORAZÓN no es un "corazo grande". ¡Es una palabra normal (trampa)!'
+            },
+            {
+                type: 'classifier',
+                emoji: '🏀',
+                word: 'CANASTAZA',
+                correctCategory: 'Aumentativo',
+                explanation: 'Termina en "-aza" (una gran canasta), así que CANASTAZA es un AUMENTATIVO.'
+            },
+            {
+                type: 'classifier',
+                emoji: '🐿️',
+                word: 'ARDILLA',
+                correctCategory: 'Palabra Trampa',
+                explanation: '¡No caigas en la trampa! ARDILLA termina en "-illa", pero es el nombre del animal, no un diminutivo.'
+            },
+            {
+                type: 'classifier',
+                emoji: '👟',
+                word: 'ZAPATÓN',
+                correctCategory: 'Aumentativo',
+                explanation: 'Viene de zapato + "-ón". ¡ZAPATÓN es un AUMENTATIVO!'
+            },
+            {
+                type: 'classifier',
+                emoji: '🍋',
+                word: 'LIMÓN',
+                correctCategory: 'Palabra Trampa',
+                explanation: '¡Bien visto! LIMÓN termina en "-ón", pero es una fruta normal, ¡no es aumentativo!'
+            },
+            {
+                type: 'classifier',
+                emoji: '🔔',
+                word: 'CAMPANILLA',
+                correctCategory: 'Diminutivo',
+                explanation: 'Viene de campana + "-illa" (una campana pequeña). ¡Es un DIMINUTIVO!'
+            },
+            {
+                type: 'classifier',
+                emoji: '🌞',
+                word: 'SOLAZO',
+                correctCategory: 'Aumentativo',
+                explanation: 'Viene de sol + "-azo". ¡SOLAZO es un AUMENTATIVO!'
+            },
+            {
+                type: 'classifier',
+                emoji: '🐣',
+                word: 'POLLITO',
+                correctCategory: 'Diminutivo',
+                explanation: 'Viene de pollo + "-ito". ¡POLLITO es un DIMINUTIVO!'
+            },
+            {
+                type: 'classifier',
+                emoji: '🍳',
+                word: 'TORTILLA',
+                correctCategory: 'Palabra Trampa',
+                explanation: '¡Buena vista! Aunque termina en "-illa", la TORTILLA de patatas es una palabra trampa en este juego.'
+            },
+            {
+                type: 'classifier',
+                emoji: '👒',
+                word: 'SOMBREROTE',
+                correctCategory: 'Aumentativo',
+                explanation: 'Viene de sombrero + "-ote". ¡SOMBREROTE es un AUMENTATIVO!'
+            }
+        ];
+
+        /**************************************************************
+         * 4. ESTADO DE LA PARTIDA Y EQUIPOS
+         **************************************************************/
+        const TEAM_PRESETS = [
+            { name: 'Equipo Rayo ⚡', color: 'from-amber-400 to-orange-500', border: 'border-amber-500', bgLight: 'bg-amber-50', text: 'text-amber-900', score: 0 },
+            { name: 'Equipo Cohete 🚀', color: 'from-sky-400 to-indigo-500', border: 'border-sky-500', bgLight: 'bg-sky-50', text: 'text-sky-900', score: 0 },
+            { name: 'Equipo Dino 🦖', color: 'from-emerald-400 to-teal-500', border: 'border-emerald-500', bgLight: 'bg-emerald-50', text: 'text-emerald-900', score: 0 },
+            { name: 'Equipo Unicornio 🦄', color: 'from-pink-400 to-purple-500', border: 'border-pink-500', bgLight: 'bg-pink-50', text: 'text-pink-900', score: 0 }
+        ];
+
+        let configTeamCount = 4;
+        let configGameMode = 'mixed';
+        let configTotalRounds = 22;
+
+        let activeTeams = [];
+        let currentTeamIndex = 0;
+        let questionPool = [];
+        let currentQuestionIndex = 0;
+        let isQuestionAnswered = false;
+
+        // Funciones de selección en pantalla de inicio
+        function selectTeamCount(count) {
+            playSound('pop');
+            configTeamCount = count;
+            document.querySelectorAll('.team-opt-btn').forEach(btn => {
+                const isSelected = parseInt(btn.dataset.teams) === count;
+                btn.className = isSelected
+                    ? 'team-opt-btn bg-indigo-600 text-white border-2 border-indigo-700 rounded-2xl p-3 font-bold text-center shadow-md transition'
+                    : 'team-opt-btn bg-white text-slate-800 border-2 border-indigo-300 rounded-2xl p-3 font-bold text-center hover:bg-indigo-100 transition';
+            });
+        }
+
+        function selectGameMode(mode) {
+            playSound('pop');
+            configGameMode = mode;
+            document.querySelectorAll('.mode-opt-btn').forEach(btn => {
+                const isSelected = btn.dataset.mode === mode;
+                btn.className = isSelected
+                    ? 'mode-opt-btn bg-purple-600 text-white border-2 border-purple-700 rounded-2xl p-3 font-bold text-left flex items-center gap-3 shadow-md transition'
+                    : 'mode-opt-btn bg-white text-slate-800 border-2 border-purple-300 rounded-2xl p-3 font-bold text-left flex items-center gap-3 hover:bg-purple-100 transition';
+            });
+        }
+
+        function selectRounds(rounds) {
+            playSound('pop');
+            configTotalRounds = rounds;
+            document.querySelectorAll('.round-opt-btn').forEach(btn => {
+                const isSelected = parseInt(btn.dataset.rounds) === rounds;
+                btn.className = isSelected
+                    ? 'round-opt-btn bg-amber-500 text-white border-2 border-amber-600 rounded-2xl p-3 font-bold text-left flex items-center justify-between shadow-md transition'
+                    : 'round-opt-btn bg-white text-slate-800 border-2 border-amber-300 rounded-2xl p-3 font-bold text-left flex items-center justify-between hover:bg-amber-100 transition';
+            });
+        }
+
+        // Utilidad para barajar arrays
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        /**************************************************************
+         * 5. FLUJO PRINCIPAL DEL JUEGO
+         **************************************************************/
+        function startGame() {
+            playSound('fanfare');
+
+            // Configurar equipos activos
+            if (configTeamCount === 1) {
+                activeTeams = [{
+                    name: '¡Toda la Clase de 3º! 🏫',
+                    color: 'from-indigo-500 to-purple-600',
+                    border: 'border-indigo-500',
+                    bgLight: 'bg-indigo-50',
+                    text: 'text-indigo-900',
+                    score: 0
+                }];
+            } else {
+                activeTeams = TEAM_PRESETS.slice(0, configTeamCount).map(t => ({ ...t, score: 0 }));
+            }
+            currentTeamIndex = 0;
+
+            // Construir lista de preguntas según el modo elegido
+            let baseList = [];
+            if (configGameMode === 'lab') {
+                baseList = shuffleArray(LAB_QUESTIONS);
+            } else if (configGameMode === 'classifier') {
+                baseList = shuffleArray(CLASSIFIER_QUESTIONS);
+            } else {
+                // Mixto equilibrado
+                baseList = shuffleArray([...LAB_QUESTIONS, ...CLASSIFIER_QUESTIONS]);
+            }
+
+            // Si piden más rondas que preguntas únicas, repetimos barajando
+            questionPool = [];
+            while (questionPool.length < configTotalRounds) {
+                questionPool.push(...shuffleArray(baseList));
+            }
+            questionPool = questionPool.slice(0, configTotalRounds);
+
+            currentQuestionIndex = 0;
+
+            // Cambiar de pantalla
+            document.getElementById('screen-home').classList.add('hidden');
+            document.getElementById('screen-podium').classList.add('hidden');
+            const gameScreen = document.getElementById('screen-game');
+            gameScreen.classList.remove('hidden');
+            gameScreen.classList.add('flex');
+
+            // Reiniciar bolsa de 22 alumnos para que salgan todos en orden aleatorio
+            resetStudentBag(false);
+            drawNextStudentFromBag();
+
+            renderScoreboard();
+            loadCurrentQuestion();
+        }
+
+        function renderScoreboard() {
+            const container = document.getElementById('scoreboard-container');
+            container.innerHTML = '';
+
+            activeTeams.forEach((team, idx) => {
+                const isTurn = idx === currentTeamIndex;
+                const card = document.createElement('div');
+                card.className = `rounded-3xl p-3 border-4 transition-all flex items-center justify-between ${
+                    isTurn
+                        ? `bg-gradient-to-r ${team.color} text-white ${team.border} shadow-lg scale-[1.03]`
+                        : `bg-white ${team.border} text-slate-700 opacity-85`
+                }`;
+
+                card.innerHTML = `
+                    <div class="truncate pr-2">
+                        <div class="text-xs font-bold uppercase ${isTurn ? 'text-white/90' : 'text-slate-400'}">
+                            ${isTurn ? '👉 Turno actual' : 'En espera'}
+                        </div>
+                        <div class="font-extrabold text-sm md:text-base truncate">${team.name}</div>
+                    </div>
+                    <div class="bg-white/95 text-slate-900 font-extrabold text-xl md:text-2xl px-3.5 py-1 rounded-2xl shadow-sm shrink-0">
+                        ${team.score} <span class="text-xs font-bold text-amber-500">pts</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            const turnBadge = document.getElementById('current-team-turn-badge');
+            if (turnBadge && activeTeams[currentTeamIndex]) {
+                turnBadge.textContent = `Turno: ${activeTeams[currentTeamIndex].name}`;
+            }
+        }
+
+        function loadCurrentQuestion() {
+            isQuestionAnswered = false;
+            const q = questionPool[currentQuestionIndex];
+
+            // Actualizar contadores y barra de progreso
+            document.getElementById('question-counter').textContent = `${currentQuestionIndex + 1} / ${questionPool.length}`;
+            const pct = Math.round(((currentQuestionIndex + 1) / questionPool.length) * 100);
+            document.getElementById('progress-bar').style.width = `${pct}%`;
+
+            // Resetear escenario visual
+            const emojiEl = document.getElementById('main-emoji');
+            emojiEl.className = 'emoji-stage text-7xl md:text-8xl select-none scale-normal';
+            emojiEl.textContent = q.emoji;
+
+            const feedbackBanner = document.getElementById('feedback-banner');
+            feedbackBanner.classList.add('hidden');
+            feedbackBanner.classList.remove('flex');
+
+            const roundBadge = document.getElementById('round-type-badge');
+            const promptEl = document.getElementById('question-prompt');
+            const subpromptEl = document.getElementById('question-subprompt');
+            const wordCard = document.getElementById('word-card');
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+
+            if (q.type === 'lab') {
+                roundBadge.textContent = '🔬 El Laboratorio Transformador';
+                roundBadge.className = 'bg-purple-600 text-white text-sm md:text-base font-bold px-4 py-1 rounded-full';
+                wordCard.textContent = q.baseWord;
+
+                if (q.targetSize === 'giant') {
+                    promptEl.innerHTML = `¡Haz que <span class="text-orange-600 underline">${q.baseWord}</span> sea GIGANTE (Aumentativo)!`;
+                    subpromptEl.textContent = `🔍 Pista del científico: Usa el sufijo aumentativo "${q.suffixHint}"`;
+                    subpromptEl.className = 'text-center text-base md:text-xl font-bold px-5 py-1.5 rounded-full mb-4 bg-orange-100 text-orange-800 border-2 border-orange-300';
+                } else {
+                    promptEl.innerHTML = `¡Haz que <span class="text-sky-600 underline">${q.baseWord}</span> sea PEQUEÑITO/A (Diminutivo)!`;
+                    subpromptEl.textContent = `🔍 Pista del científico: Usa el sufijo diminutivo "${q.suffixHint}"`;
+                    subpromptEl.className = 'text-center text-base md:text-xl font-bold px-5 py-1.5 rounded-full mb-4 bg-sky-100 text-sky-800 border-2 border-sky-300';
+                }
+
+                const shuffledOpts = shuffleArray(q.options);
+                optionsGrid.className = 'w-full max-w-4xl grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4';
+
+                shuffledOpts.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn-3d bg-indigo-50 hover:bg-indigo-100 text-slate-800 font-extrabold text-2xl md:text-3xl py-5 px-6 rounded-3xl border-4 border-indigo-300 shadow-[0_6px_0_0_#a5b4fc] transition flex items-center justify-center gap-3';
+                    btn.innerHTML = `<span>✨</span> <span>${opt}</span>`;
+                    btn.onclick = () => checkAnswer(opt, q.correctAnswer, btn, q);
+                    optionsGrid.appendChild(btn);
+                });
+
+            } else {
+                // Modo El Rayo Clasificador
+                roundBadge.textContent = '⚡ El Rayo Clasificador';
+                roundBadge.className = 'bg-amber-500 text-white text-sm md:text-base font-bold px-4 py-1 rounded-full';
+                wordCard.textContent = q.word;
+
+                promptEl.innerHTML = `¿Qué tipo de palabra es <span class="text-indigo-600 underline">${q.word}</span>?`;
+                subpromptEl.textContent = '¡Fíjate muy bien en su terminación y cuidado con las palabras trampa!';
+                subpromptEl.className = 'text-center text-base md:text-xl font-bold px-5 py-1.5 rounded-full mb-4 bg-amber-100 text-amber-900 border-2 border-amber-300';
+
+                optionsGrid.className = 'w-full max-w-4xl grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4';
+
+                const categories = [
+                    { label: 'Aumentativo', icon: '🐘', desc: 'Muy grande (-ón, -ona, -azo, -aza, -ote, -ota)', style: 'bg-orange-50 hover:bg-orange-100 border-orange-400 shadow-[0_6px_0_0_#fb923c] text-orange-950' },
+                    { label: 'Diminutivo', icon: '🐭', desc: 'Pequeñito (-ito, -ita, -illo, -illa)', style: 'bg-sky-50 hover:bg-sky-100 border-sky-400 shadow-[0_6px_0_0_#38bdf8] text-sky-950' },
+                    { label: 'Palabra Trampa', icon: '🕵️‍♂️', desc: 'No es ni aumentativo ni diminutivo', style: 'bg-purple-50 hover:bg-purple-100 border-purple-400 shadow-[0_6px_0_0_#c084fc] text-purple-950' }
+                ];
+
+                categories.forEach(cat => {
+                    const btn = document.createElement('button');
+                    btn.className = `btn-3d ${cat.style} font-extrabold p-5 rounded-3xl border-4 transition flex flex-col items-center justify-center gap-1`;
+                    btn.innerHTML = `
+                        <span class="text-4xl mb-1">${cat.icon}</span>
+                        <span class="text-2xl">${cat.label}</span>
+                        <span class="text-xs font-medium opacity-80">${cat.desc}</span>
+                    `;
+                    btn.onclick = () => checkAnswer(cat.label, q.correctCategory, btn, q);
+                    optionsGrid.appendChild(btn);
+                });
+            }
+        }
+
+        function checkAnswer(selected, correct, clickedBtn, questionObj) {
+            if (isQuestionAnswered) return;
+            isQuestionAnswered = true;
+
+            const isCorrect = selected === correct;
+            const allBtns = document.getElementById('options-grid').querySelectorAll('button');
+            allBtns.forEach(b => b.disabled = true);
+
+            const emojiEl = document.getElementById('main-emoji');
+            const wordCard = document.getElementById('word-card');
+            const feedbackBanner = document.getElementById('feedback-banner');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackExp = document.getElementById('feedback-explanation');
+
+            // Animación del dibujo en la pizarra
+            if (questionObj.type === 'lab') {
+                wordCard.textContent = questionObj.correctAnswer.toUpperCase();
+                if (questionObj.targetSize === 'giant') {
+                    emojiEl.classList.remove('scale-normal');
+                    emojiEl.classList.add('scale-giant');
+                    playSound('grow');
+                } else {
+                    emojiEl.classList.remove('scale-normal');
+                    emojiEl.classList.add('scale-tiny');
+                    playSound('shrink');
+                }
+            } else {
+                if (questionObj.correctCategory === 'Aumentativo') {
+                    emojiEl.classList.add('scale-giant');
+                } else if (questionObj.correctCategory === 'Diminutivo') {
+                    emojiEl.classList.add('scale-tiny');
+                }
+            }
+
+            if (isCorrect) {
+                setTimeout(() => playSound('correct'), 180);
+                clickedBtn.className = 'btn-3d bg-emerald-500 text-white font-extrabold text-2xl py-5 px-6 rounded-3xl border-4 border-emerald-700 shadow-lg flex items-center justify-center gap-2 scale-105';
+
+                // Sumar 10 puntos al equipo actual
+                activeTeams[currentTeamIndex].score += 10;
+                renderScoreboard();
+
+                // Confeti en la pizarra
+                if (typeof confetti === 'function') {
+                    confetti({
+                        particleCount: 55,
+                        spread: 65,
+                        origin: { y: 0.65 }
+                    });
+                }
+
+                feedbackBanner.className = 'w-full max-w-4xl mt-6 p-4 md:p-5 rounded-3xl border-4 bg-emerald-50 border-emerald-400 text-emerald-950 flex items-center justify-between gap-4 flex-col sm:flex-row shadow-lg';
+                feedbackIcon.textContent = '🎉';
+                feedbackTitle.textContent = `¡Correcto! +10 puntos para ${activeTeams[currentTeamIndex].name}`;
+                feedbackExp.textContent = questionObj.explanation;
+            } else {
+                playSound('wrong');
+                clickedBtn.className = 'btn-3d bg-rose-500 text-white font-extrabold text-2xl py-5 px-6 rounded-3xl border-4 border-rose-700 opacity-90 flex items-center justify-center gap-2';
+
+                // Resaltar cuál era la respuesta correcta
+                allBtns.forEach(b => {
+                    if (b.textContent.includes(correct)) {
+                        b.className = 'btn-3d bg-emerald-500 text-white font-extrabold text-2xl py-5 px-6 rounded-3xl border-4 border-emerald-700 shadow-lg flex flex-col items-center justify-center';
+                    }
+                });
+
+                feedbackBanner.className = 'w-full max-w-4xl mt-6 p-4 md:p-5 rounded-3xl border-4 bg-amber-50 border-amber-400 text-amber-950 flex items-center justify-between gap-4 flex-col sm:flex-row shadow-lg';
+                feedbackIcon.textContent = '💡';
+                feedbackTitle.textContent = `¡Casi! La respuesta correcta era "${correct}"`;
+                feedbackExp.textContent = questionObj.explanation;
+            }
+        }
+
+        function nextQuestion() {
+            playSound('pop');
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex >= questionPool.length) {
+                showFinalPodium();
+                return;
+            }
+
+            // Siguiente equipo y siguiente alumno de los 22
+            currentTeamIndex = (currentTeamIndex + 1) % activeTeams.length;
+            drawNextStudentFromBag();
+            renderScoreboard();
+            loadCurrentQuestion();
+        }
+
+        function showFinalPodium() {
+            playSound('fanfare');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('flex');
+            document.getElementById('screen-podium').classList.remove('hidden');
+
+            const sortedTeams = [...activeTeams].sort((a, b) => b.score - a.score);
+            const podiumContainer = document.getElementById('podium-cards');
+            podiumContainer.innerHTML = '';
+
+            const medals = ['🥇 1º Puesto', '🥈 2º Puesto', '🥉 3º Puesto', '🏅 4º Puesto'];
+
+            sortedTeams.forEach((team, idx) => {
+                const card = document.createElement('div');
+                card.className = `rounded-3xl p-6 border-4 ${team.border} bg-gradient-to-b ${team.color} text-white shadow-xl flex flex-col items-center justify-between ${
+                    idx === 0 ? 'scale-105 ring-4 ring-amber-300' : ''
+                }`;
+                card.innerHTML = `
+                    <div class="bg-white/25 px-4 py-1 rounded-full font-extrabold text-sm mb-3">
+                        ${medals[idx] || '🏅 Equipo'}
+                    </div>
+                    <div class="text-2xl font-extrabold mb-3">${team.name}</div>
+                    <div class="bg-white text-slate-900 font-extrabold text-3xl px-6 py-3 rounded-2xl shadow-md">
+                        ${team.score} pts
+                    </div>
+                `;
+                podiumContainer.appendChild(card);
+            });
+
+            celebrateAgain();
+        }
+
+        function celebrateAgain() {
+            playSound('fanfare');
+            if (typeof confetti === 'function') {
+                confetti({ particleCount: 100, spread: 90, origin: { y: 0.6 } });
+                setTimeout(() => {
+                    confetti({ particleCount: 80, spread: 110, origin: { y: 0.5 } });
+                }, 400);
+            }
+        }
+
+        function resetToHome() {
+            playSound('pop');
+            document.getElementById('screen-game').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('flex');
+            document.getElementById('screen-podium').classList.add('hidden');
+            document.getElementById('screen-home').classList.remove('hidden');
+        }
+
+        function confirmGoHome() {
+            resetToHome();
+        }
+
+        // Modal de Chuleta / Repaso
+        function openCheatSheetModal() {
+            playSound('pop');
+            document.getElementById('modal-cheatsheet').classList.remove('hidden');
+        }
+
+        function closeCheatSheetModal() {
+            playSound('pop');
+            document.getElementById('modal-cheatsheet').classList.add('hidden');
+        }
+
+        // Inicialización al cargar la ventana
+        window.onload = function () {
+            initStudents();
+        };
+    </script>
+</body>
+</html>
