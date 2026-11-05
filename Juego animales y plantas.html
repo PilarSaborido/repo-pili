@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego: ¿A qué grupo pertenece? (Fotos Reales)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(#cbd5e1 2px, transparent 2px);
+            background-size: 30px 30px;
+        }
+        
+        .game-btn {
+            transition: all 0.1s;
+        }
+        
+        .game-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 0 transparent !important;
+        }
+        
+        .game-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #image-container {
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #94a3b8;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col items-center p-4 sm:p-6">
+
+    <!-- Cabecera -->
+    <header class="w-full max-w-6xl flex justify-between items-center mb-2">
+        <h1 class="text-3xl sm:text-5xl font-black text-slate-700 drop-shadow-sm text-center flex-1">
+            🌿 El Juego de las Tarjetas 🐾
+        </h1>
+        <button onclick="toggleFullScreen()" class="game-btn bg-slate-700 text-white font-bold p-3 rounded-xl shadow-[0_4px_0_rgb(51,65,85)] hover:bg-slate-600 flex items-center justify-center text-xl ml-4" title="Pantalla Completa">
+            🔲
+        </button>
+    </header>
+
+    <!-- Progreso -->
+    <div class="w-full max-w-4xl text-center mb-2 font-bold text-slate-500 text-lg">
+        Ser vivo <span id="counter-current">0</span> de <span id="counter-total">32</span>
+    </div>
+
+    <!-- Tarjeta Principal -->
+    <main class="flex-1 flex flex-col items-center justify-center w-full max-w-4xl w-full">
+        
+        <!-- Pantalla de Juego Finalizado (Oculta al inicio) -->
+        <div id="end-screen" class="hidden flex-col items-center justify-center text-center bg-white rounded-3xl p-12 shadow-2xl border-4 border-slate-200 w-full h-[60vh]">
+            <h2 class="text-6xl font-black text-slate-800 mb-6">🎉 ¡Juego Terminado! 🎉</h2>
+            <p class="text-2xl text-slate-600 mb-8">¡Habéis clasificado todos los seres vivos!</p>
+            <button onclick="initGame()" class="game-btn bg-indigo-500 text-white text-3xl font-black py-4 px-10 rounded-full shadow-[0_8px_0_rgb(67,56,202)] hover:bg-indigo-400">
+                🔄 Jugar Otra Vez
+            </button>
+        </div>
+
+        <!-- Pantalla de Juego -->
+        <div id="game-screen" class="w-full h-full flex flex-col items-center justify-between">
+            
+            <!-- Contenedor de la Imagen -->
+            <div id="image-container" class="relative w-full max-h-[50vh] flex-1 bg-white rounded-3xl shadow-xl border-[12px] border-transparent flex items-center justify-center overflow-hidden mb-4 p-2">
+                
+                <!-- Loader -->
+                <div id="loading-state" class="absolute flex flex-col items-center justify-center text-slate-500 font-bold text-2xl">
+                    <div class="loader"></div>
+                    Buscando foto en Wikipedia...
+                </div>
+
+                <!-- Imagen Real -->
+                <img id="main-image" src="" alt="Ser vivo" class="w-full h-full object-contain hidden opacity-0 transition-opacity duration-500 rounded-xl">
+            </div>
+            
+            <!-- Nombre Común -->
+            <h2 id="name-display" class="text-4xl sm:text-6xl font-black text-slate-800 text-center mb-2 min-h-[4rem]">
+                <!-- Nombre -->
+            </h2>
+            
+            <!-- Respuesta -->
+            <div id="answer-display" class="text-3xl sm:text-5xl font-bold px-8 py-3 rounded-full transition-all duration-300 opacity-0 scale-90 mb-4 min-h-[4rem] text-white">
+                <!-- Grupo -->
+            </div>
+
+            <!-- Controles -->
+            <footer class="w-full flex flex-col sm:flex-row gap-4 justify-center items-center pb-2">
+                <button id="btn-answer" onclick="showAnswer()" class="game-btn w-full sm:w-auto bg-amber-400 text-amber-900 text-2xl sm:text-3xl font-black py-3 px-8 rounded-full shadow-[0_6px_0_rgb(217,119,6)] hover:bg-amber-300">
+                    👀 Mostrar Respuesta
+                </button>
+                
+                <button id="btn-next" onclick="nextCard()" class="game-btn w-full sm:w-auto bg-slate-300 text-slate-600 text-2xl sm:text-3xl font-black py-3 px-8 rounded-full shadow-[0_6px_0_rgb(148,163,184)] hover:bg-slate-200" disabled>
+                    Siguiente ➔
+                </button>
+            </footer>
+        </div>
+    </main>
+
+    <script>
+        // Base de datos (Nombres científicos para Wiki API + Nombres comunes + Grupo + Color)
+        const database = [
+            // Vertebrados (Azul #2196F3)
+            { title: "Panthera_leo", name: "León", group: "Vertebrados", color: "#2196F3" },
+            { title: "Aquila_chrysaetos", name: "Águila real", group: "Vertebrados", color: "#2196F3" },
+            { title: "Agalychnis_callidryas", name: "Rana de ojos rojos", group: "Vertebrados", color: "#2196F3" },
+            { title: "Carcharodon_carcharias", name: "Tiburón blanco", group: "Vertebrados", color: "#2196F3" },
+            { title: "Crotalus", name: "Serpiente de cascabel", group: "Vertebrados", color: "#2196F3" },
+            { title: "Loxodonta_africana", name: "Elefante africano", group: "Vertebrados", color: "#2196F3" },
+            { title: "Delphinidae", name: "Delfín", group: "Vertebrados", color: "#2196F3" },
+            { title: "Chamaeleonidae", name: "Camaleón", group: "Vertebrados", color: "#2196F3" },
+
+            // Invertebrados (Rojo #F44336)
+            { title: "Danaus_plexippus", name: "Mariposa monarca", group: "Invertebrados", color: "#F44336" },
+            { title: "Cornu_aspersum", name: "Caracol común", group: "Invertebrados", color: "#F44336" },
+            { title: "Asteroidea", name: "Estrella de mar", group: "Invertebrados", color: "#F44336" },
+            { title: "Salticidae", name: "Araña saltarina", group: "Invertebrados", color: "#F44336" },
+            { title: "Scyphozoa", name: "Medusa", group: "Invertebrados", color: "#F44336" },
+            { title: "Brachyura", name: "Cangrejo", group: "Invertebrados", color: "#F44336" },
+            { title: "Lumbricidae", name: "Lombriz de tierra", group: "Invertebrados", color: "#F44336" },
+            { title: "Anthophila", name: "Abeja", group: "Invertebrados", color: "#F44336" },
+
+            // Plantas con flor (Verde #4CAF50)
+            { title: "Helianthus_annuus", name: "Girasol", group: "Plantas con flor", color: "#4CAF50" },
+            { title: "Rosa", name: "Rosa", group: "Plantas con flor", color: "#4CAF50" },
+            { title: "Bellis_perennis", name: "Margarita", group: "Plantas con flor", color: "#4CAF50" },
+            { title: "Papaver_rhoeas", name: "Amapola", group: "Plantas con flor", color: "#4CAF50" },
+            { title: "Orchidaceae", name: "Orquídea", group: "Plantas con flor", color: "#4CAF50" },
+            { title: "Malus_domestica", name: "Manzano", group: "Plantas con flor", color: "#4CAF50" },
+            { title: "Tulipa", name: "Tulipán", group: "Plantas con flor", color: "#4CAF50" },
+            { title: "Nymphaeaceae", name: "Nenúfar", group: "Plantas con flor", color: "#4CAF50" },
+
+            // Plantas sin flor (Amarillo #FFC107)
+            { title: "Pteridium_aquilinum", name: "Helecho común", group: "Plantas sin flor", color: "#FFC107" },
+            { title: "Bryophyta", name: "Musgo", group: "Plantas sin flor", color: "#FFC107" },
+            { title: "Equisetum_arvense", name: "Cola de caballo", group: "Plantas sin flor", color: "#FFC107" },
+            { title: "Marchantiophyta", name: "Hepática", group: "Plantas sin flor", color: "#FFC107" },
+            { title: "Lycopodium_clavatum", name: "Licopodio", group: "Plantas sin flor", color: "#FFC107" },
+            { title: "Anthocerotophyta", name: "Antocerote", group: "Plantas sin flor", color: "#FFC107" },
+            { title: "Cyatheales", name: "Helecho arborescente", group: "Plantas sin flor", color: "#FFC107" },
+            { title: "Sphagnum", name: "Musgo esfagno", group: "Plantas sin flor", color: "#FFC107" }
+        ];
+
+        let playList = [];
+        let currentIndex = 0;
+        let currentItem = null;
+
+        // Elementos DOM
+        const uiEndScreen = document.getElementById('end-screen');
+        const uiGameScreen = document.getElementById('game-screen');
+        const uiImageContainer = document.getElementById('image-container');
+        const uiLoadingState = document.getElementById('loading-state');
+        const uiMainImage = document.getElementById('main-image');
+        const uiNameDisplay = document.getElementById('name-display');
+        const uiAnswerDisplay = document.getElementById('answer-display');
+        const btnAnswer = document.getElementById('btn-answer');
+        const btnNext = document.getElementById('btn-next');
+        const counterCurrent = document.getElementById('counter-current');
+        const counterTotal = document.getElementById('counter-total');
+
+        // Algoritmo para mezclar el array aleatoriamente (Fisher-Yates)
+        function shuffleArray(array) {
+            let newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // Obtener imagen de Wikipedia API
+        async function fetchWikipediaImage(title) {
+            const url = `https://es.wikipedia.org/w/api.php?action=query&titles=${title}&prop=pageimages&format=json&pithumbsize=800&origin=*`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const pages = data.query.pages;
+                const pageId = Object.keys(pages)[0];
+                
+                if (pages[pageId] && pages[pageId].thumbnail) {
+                    return pages[pageId].thumbnail.source;
+                }
+            } catch (error) {
+                console.error("Error cargando imagen de Wikipedia:", error);
+            }
+            // Imagen de respaldo (placeholder) si falla o no tiene foto
+            return `https://placehold.co/800x600/e2e8f0/64748b?text=Imagen+No+Encontrada\\n(${title.replace('_', ' ')})`;
+        }
+
+        // Inicializar el juego
+        function initGame() {
+            playList = shuffleArray(database);
+            currentIndex = 0;
+            counterTotal.textContent = playList.length;
+            
+            uiEndScreen.classList.add('hidden');
+            uiEndScreen.classList.remove('flex');
+            
+            uiGameScreen.classList.remove('hidden');
+            uiGameScreen.classList.add('flex');
+            
+            loadItem();
+        }
+
+        // Cargar el ser vivo actual
+        async function loadItem() {
+            if (currentIndex >= playList.length) {
+                // Juego terminado
+                uiGameScreen.classList.add('hidden');
+                uiGameScreen.classList.remove('flex');
+                uiEndScreen.classList.remove('hidden');
+                uiEndScreen.classList.add('flex');
+                return;
+            }
+
+            currentItem = playList[currentIndex];
+            counterCurrent.textContent = currentIndex + 1;
+
+            // Resetear la UI para la nueva pregunta
+            uiImageContainer.style.borderColor = 'transparent';
+            uiImageContainer.style.boxShadow = 'none';
+            
+            uiAnswerDisplay.style.opacity = '0';
+            uiAnswerDisplay.style.transform = 'scale(0.9)';
+            uiAnswerDisplay.style.backgroundColor = 'transparent';
+            
+            uiNameDisplay.textContent = currentItem.name;
+            
+            // Ocultar imagen vieja, mostrar loader
+            uiMainImage.classList.add('hidden');
+            uiMainImage.style.opacity = '0';
+            uiLoadingState.classList.remove('hidden');
+            uiLoadingState.classList.add('flex');
+
+            // Estado de Botones
+            btnAnswer.disabled = true;
+            btnAnswer.classList.add('opacity-50', 'cursor-not-allowed');
+            
+            btnNext.disabled = true;
+            btnNext.classList.remove('bg-indigo-500', 'text-white', 'shadow-[0_6px_0_rgb(67,56,202)]');
+            btnNext.classList.add('bg-slate-300', 'text-slate-600', 'shadow-[0_6px_0_rgb(148,163,184)]');
+
+            // Cargar nueva imagen
+            const imageUrl = await fetchWikipediaImage(currentItem.title);
+            
+            // Si el usuario no ha pulsado siguiente rápido mientras cargaba...
+            if (playList[currentIndex].title === currentItem.title) {
+                uiMainImage.src = imageUrl;
+                uiMainImage.onload = () => {
+                    uiLoadingState.classList.add('hidden');
+                    uiLoadingState.classList.remove('flex');
+                    uiMainImage.classList.remove('hidden');
+                    // Pequeño timeout para que se aplique la transición de opacidad
+                    setTimeout(() => uiMainImage.style.opacity = '1', 50);
+                    
+                    // Activar botón de respuesta
+                    btnAnswer.disabled = false;
+                    btnAnswer.classList.remove('opacity-50', 'cursor-not-allowed');
+                };
+            }
+        }
+
+        // Mostrar la respuesta (iluminar el cuadro)
+        function showAnswer() {
+            if (!currentItem) return;
+
+            // Cambiar marco de la imagen
+            uiImageContainer.style.borderColor = currentItem.color;
+            uiImageContainer.style.boxShadow = `0 0 40px ${currentItem.color}80`; // 80 es opacidad hexadecimal
+
+            // Mostrar el grupo con su color
+            uiAnswerDisplay.textContent = currentItem.group.toUpperCase();
+            uiAnswerDisplay.style.backgroundColor = currentItem.color;
+            // Para el amarillo, usar texto negro para que contraste mejor
+            uiAnswerDisplay.style.color = currentItem.color === '#FFC107' ? '#451a03' : 'white';
+            uiAnswerDisplay.style.opacity = '1';
+            uiAnswerDisplay.style.transform = 'scale(1)';
+
+            // Desactivar botón de respuesta
+            btnAnswer.disabled = true;
+            btnAnswer.classList.add('opacity-50', 'cursor-not-allowed');
+
+            // Activar botón siguiente, dándole un color llamativo
+            btnNext.disabled = false;
+            btnNext.classList.remove('bg-slate-300', 'text-slate-600', 'shadow-[0_6px_0_rgb(148,163,184)]');
+            btnNext.classList.add('bg-indigo-500', 'text-white', 'shadow-[0_6px_0_rgb(67,56,202)]');
+        }
+
+        // Pasar al siguiente
+        function nextCard() {
+            currentIndex++;
+            loadItem();
+        }
+
+        // Utilidad Pantalla Completa
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error iniciando pantalla completa: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Iniciar en la primera carga
+        window.onload = initGame;
+
+    </script>
+</body>
+</html>
