@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Batalla de Adjetivos - Pizarra Digital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            overflow: hidden;
+            touch-action: none; /* Evita zooms raros en la pizarra */
+            user-select: none;
+            background-color: #1a1a1a;
+        }
+
+        .fredoka { font-family: 'Fredoka One', cursive; }
+
+        /* Pantalla dividida */
+        .team-side {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding-top: 2rem;
+            cursor: pointer;
+            transition: filter 0.1s;
+        }
+        .team-side:active { filter: brightness(0.8); }
+
+        #team-red {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            box-shadow: inset -10px 0 30px rgba(0,0,0,0.2);
+        }
+
+        #team-blue {
+            background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+            box-shadow: inset 10px 0 30px rgba(0,0,0,0.2);
+        }
+
+        /* Centro de mando */
+        #center-console {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none; /* Para que el clic pase a los lados */
+        }
+
+        #word-display {
+            background: white;
+            border: 8px solid #ffde59;
+            border-radius: 3rem;
+            padding: 2rem 4rem;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+            text-align: center;
+            min-width: 400px;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .pop-anim {
+            animation: popWord 0.4s ease-out;
+        }
+
+        @keyframes popWord {
+            0% { transform: scale(0.5); opacity: 0; }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Barra de tiempo */
+        #timer-container {
+            width: 80%;
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 10px;
+            margin-top: -15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 21;
+        }
+
+        #timer-bar {
+            height: 100%;
+            background-color: #ffde59;
+            width: 100%;
+            transform-origin: left;
+        }
+
+        /* Confeti */
+        .particle {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 50;
+            animation: shoot 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes shoot {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+        }
+
+        /* Textos flotantes (+10, -5) */
+        .score-float {
+            position: absolute;
+            font-size: 5rem;
+            font-weight: 900;
+            color: white;
+            text-shadow: 0 5px 10px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 30;
+            animation: floatUpScore 1s ease-out forwards;
+        }
+
+        @keyframes floatUpScore {
+            0% { transform: translateY(0) scale(0.5); opacity: 0; }
+            20% { transform: translateY(-50px) scale(1.2); opacity: 1; }
+            100% { transform: translateY(-150px) scale(1); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de Inicio -->
+    <div id="start-screen" class="absolute inset-0 bg-black/80 backdrop-blur-md flex flex-col items-center justify-center z-50 p-4">
+        <h1 class="text-6xl md:text-8xl text-center text-white mb-6 drop-shadow-2xl fredoka">
+            <span class="text-red-500">FUEGO</span> vs <span class="text-blue-400">AGUA</span>
+        </h1>
+        <div class="bg-white rounded-3xl p-8 max-w-2xl w-full text-center shadow-2xl mb-8 border-8 border-yellow-400">
+            <h2 class="text-4xl text-purple-600 fredoka mb-4">Batalla de Adjetivos</h2>
+            <ul class="text-2xl text-left text-gray-700 space-y-4 font-bold">
+                <li>👉 La pantalla está dividida en dos.</li>
+                <li>👉 En el centro saldrá una palabra gigante.</li>
+                <li>✅ Si <strong>ES UN ADJETIVO</strong> (bonito, alto...), ¡golpea tu lado rápido para ganar 10 puntos!</li>
+                <li>❌ Si <strong>NO ES UN ADJETIVO</strong> (perro, saltar...) ¡NO toques nada! Si te equivocas pierdes 5 puntos.</li>
+            </ul>
+        </div>
+        <button id="btn-start" class="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 border-b-8 border-yellow-600 rounded-full px-12 py-6 text-4xl fredoka transition transform hover:scale-105 active:translate-y-2 active:border-b-0">
+            ¡EMPEZAR BATALLA! ⚔️
+        </button>
+    </div>
+
+    <!-- Área de Juego -->
+    <div class="flex w-full h-full relative">
+        
+        <!-- Lado Rojo (Fuego) -->
+        <div id="team-red" class="team-side w-1/2">
+            <h2 class="text-white text-5xl fredoka drop-shadow-lg mb-2">FUEGO 🔥</h2>
+            <div class="bg-white/20 px-8 py-4 rounded-3xl backdrop-blur-sm">
+                <span class="text-3xl text-white font-bold mr-2">PUNTOS:</span>
+                <span id="score-red" class="text-7xl text-white fredoka drop-shadow-md">0</span>
+            </div>
+        </div>
+
+        <!-- Lado Azul (Agua) -->
+        <div id="team-blue" class="team-side w-1/2">
+            <h2 class="text-white text-5xl fredoka drop-shadow-lg mb-2">AGUA 💧</h2>
+            <div class="bg-white/20 px-8 py-4 rounded-3xl backdrop-blur-sm">
+                <span class="text-3xl text-white font-bold mr-2">PUNTOS:</span>
+                <span id="score-blue" class="text-7xl text-white fredoka drop-shadow-md">0</span>
+            </div>
+        </div>
+
+        <!-- Centro de Consola -->
+        <div id="center-console">
+            <div id="word-display" class="mb-4">
+                <span id="word-text" class="text-7xl md:text-9xl text-gray-800 fredoka uppercase tracking-wide">LISTO</span>
+            </div>
+            <div id="timer-container">
+                <div id="timer-bar"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // === LISTA DE PALABRAS ===
+        const wordList = [
+            // Adjetivos (25) - CORRECTAS
+            { text: "bonito", isAdj: true }, { text: "feo", isAdj: true }, { text: "alto", isAdj: true },
+            { text: "bajo", isAdj: true }, { text: "rápido", isAdj: true }, { text: "lento", isAdj: true },
+            { text: "brillante", isAdj: true }, { text: "oscuro", isAdj: true }, { text: "grande", isAdj: true },
+            { text: "pequeño", isAdj: true }, { text: "feliz", isAdj: true }, { text: "triste", isAdj: true },
+            { text: "fuerte", isAdj: true }, { text: "débil", isAdj: true }, { text: "suave", isAdj: true },
+            { text: "áspero", isAdj: true }, { text: "caliente", isAdj: true }, { text: "frío", isAdj: true },
+            { text: "dulce", isAdj: true }, { text: "salado", isAdj: true }, { text: "nuevo", isAdj: true },
+            { text: "viejo", isAdj: true }, { text: "gordo", isAdj: true }, { text: "flaco", isAdj: true },
+            { text: "listo", isAdj: true },
+            // Sustantivos (15) - INCORRECTAS
+            { text: "perro", isAdj: false }, { text: "gato", isAdj: false }, { text: "casa", isAdj: false },
+            { text: "árbol", isAdj: false }, { text: "coche", isAdj: false }, { text: "mesa", isAdj: false },
+            { text: "silla", isAdj: false }, { text: "sol", isAdj: false }, { text: "luna", isAdj: false },
+            { text: "libro", isAdj: false }, { text: "escuela", isAdj: false }, { text: "agua", isAdj: false },
+            { text: "nube", isAdj: false }, { text: "flor", isAdj: false }, { text: "zapato", isAdj: false },
+            // Verbos (15) - INCORRECTAS
+            { text: "correr", isAdj: false }, { text: "saltar", isAdj: false }, { text: "jugar", isAdj: false },
+            { text: "comer", isAdj: false }, { text: "dormir", isAdj: false }, { text: "cantar", isAdj: false },
+            { text: "leer", isAdj: false }, { text: "escribir", isAdj: false }, { text: "bailar", isAdj: false },
+            { text: "nadar", isAdj: false }, { text: "hablar", isAdj: false }, { text: "pensar", isAdj: false },
+            { text: "mirar", isAdj: false }, { text: "escuchar", isAdj: false }, { text: "reír", isAdj: false }
+        ];
+
+        // === ESTADO DEL JUEGO ===
+        let scoreRed = 0;
+        let scoreBlue = 0;
+        let currentWord = null;
+        let isProcessing = false;
+        let wordTimeout = null;
+        let animFrame = null;
+        let startTime = 0;
+        const TIME_LIMIT = 4000; // 4 segundos por palabra
+
+        // === ELEMENTOS DEL DOM ===
+        const redSide = document.getElementById('team-red');
+        const blueSide = document.getElementById('team-blue');
+        const wordText = document.getElementById('word-text');
+        const wordDisplay = document.getElementById('word-display');
+        const timerBar = document.getElementById('timer-bar');
+        
+        // === MOTOR DE AUDIO (Web Audio API) ===
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Sintetizador de sonidos
+        function playTone(freq, type, duration, vol=0.5, slideFreq=null) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            if (slideFreq) {
+                osc.frequency.exponentialRampToValueAtTime(slideFreq, audioCtx.currentTime + duration);
+            }
+            
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playSuccessSound() {
+            // Arpegio feliz
+            playTone(440, 'sine', 0.1, 0.3); // A4
+            setTimeout(() => playTone(554.37, 'sine', 0.1, 0.3), 100); // C#5
+            setTimeout(() => playTone(659.25, 'sine', 0.3, 0.3), 200); // E5
+        }
+
+        function playErrorSound() {
+            // Zumbido grave
+            playTone(150, 'sawtooth', 0.4, 0.5, 100);
+        }
+
+        function playTimeOutSound() {
+            // Sonido de paso (whoosh)
+            playTone(300, 'sine', 0.2, 0.2, 50);
+        }
+
+        // === LÓGICA DEL JUEGO ===
+
+        document.getElementById('btn-start').addEventListener('click', () => {
+            initAudio();
+            document.getElementById('start-screen').classList.add('hidden');
+            nextWord();
+        });
+
+        function getRandomWord() {
+            // 50% de probabilidad de que sea adjetivo para mantenerlo dinámico
+            const wantAdj = Math.random() < 0.5;
+            const filtered = wordList.filter(w => w.isAdj === wantAdj);
+            return filtered[Math.floor(Math.random() * filtered.length)];
+        }
+
+        function nextWord() {
+            isProcessing = false;
+            currentWord = getRandomWord();
+            
+            wordText.innerText = currentWord.text;
+            
+            // Animación de aparición
+            wordDisplay.classList.remove('pop-anim');
+            void wordDisplay.offsetWidth; // Trigger reflow
+            wordDisplay.classList.add('pop-anim');
+
+            // Reiniciar Temporizador
+            startTime = performance.now();
+            if (animFrame) cancelAnimationFrame(animFrame);
+            if (wordTimeout) clearTimeout(wordTimeout);
+            
+            updateTimer();
+            
+            // Si nadie toca en 4 segundos
+            wordTimeout = setTimeout(() => {
+                if(!isProcessing) {
+                    playTimeOutSound();
+                    nextWord();
+                }
+            }, TIME_LIMIT);
+        }
+
+        function updateTimer() {
+            if (isProcessing) return;
+            const elapsed = performance.now() - startTime;
+            const remaining = Math.max(0, 1 - (elapsed / TIME_LIMIT));
+            
+            timerBar.style.transform = `scaleX(${remaining})`;
+            
+            // Cambiar color a rojo si queda poco tiempo
+            if (remaining < 0.3) {
+                timerBar.style.backgroundColor = '#ff4b2b';
+            } else {
+                timerBar.style.backgroundColor = '#ffde59';
+            }
+
+            if (remaining > 0) {
+                animFrame = requestAnimationFrame(updateTimer);
+            }
+        }
+
+        // === MANEJO DE INTERACCIONES ===
+        
+        function handleTap(team) {
+            if (isProcessing || !currentWord) return;
+            isProcessing = true; // Bloquear otros toques
+
+            if (animFrame) cancelAnimationFrame(animFrame);
+            if (wordTimeout) clearTimeout(wordTimeout);
+
+            const isRed = team === 'red';
+            const rect = (isRed ? redSide : blueSide).getBoundingClientRect();
+            // Centro del lado tocado para animaciones
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+
+            if (currentWord.isAdj) {
+                // ¡ACIERTO!
+                playSuccessSound();
+                createConfetti(centerX, centerY, isRed ? ['#ff416c', '#ffde59', '#fff'] : ['#6dd5ed', '#fff', '#ffde59']);
+                showFloatingScore(centerX, centerY, "+10", "#4ade80");
+                
+                if (isRed) scoreRed += 10;
+                else scoreBlue += 10;
+            } else {
+                // ¡ERROR!
+                playErrorSound();
+                showFloatingScore(centerX, centerY, "-5", "#f87171");
+                
+                // Efecto de temblor rápido en la pantalla
+                document.body.style.transform = "translateX(10px)";
+                setTimeout(() => document.body.style.transform = "translateX(-10px)", 50);
+                setTimeout(() => document.body.style.transform = "translateX(0)", 100);
+
+                if (isRed) scoreRed -= 5;
+                else scoreBlue -= 5;
+            }
+
+            // Actualizar Marcadores
+            document.getElementById('score-red').innerText = scoreRed;
+            document.getElementById('score-blue').innerText = scoreBlue;
+
+            // Esperar un momento antes de la siguiente palabra
+            setTimeout(nextWord, 1000);
+        }
+
+        // Eventos táctiles y de clic (Pizarra digital admite ambos)
+        redSide.addEventListener('mousedown', (e) => { e.preventDefault(); handleTap('red'); });
+        redSide.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap('red'); }, {passive: false});
+        
+        blueSide.addEventListener('mousedown', (e) => { e.preventDefault(); handleTap('blue'); });
+        blueSide.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap('blue'); }, {passive: false});
+
+        // === EFECTOS VISUALES ===
+
+        function createConfetti(x, y, colors) {
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                // Vectores de explosión aleatorios
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 200 + 50;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance + 100; // Caída por gravedad simulada
+                
+                particle.style.setProperty('--tx', `${tx}px`);
+                particle.style.setProperty('--ty', `${ty}px`);
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => {
+                    if (particle.parentNode) particle.parentNode.removeChild(particle);
+                }, 1000);
+            }
+        }
+
+        function showFloatingScore(x, y, text, color) {
+            const floatText = document.createElement('div');
+            floatText.className = 'score-float fredoka';
+            floatText.innerText = text;
+            floatText.style.color = color;
+            floatText.style.left = `${x - 40}px`; // Centrar un poco
+            floatText.style.top = `${y - 40}px`;
+            
+            document.body.appendChild(floatText);
+            
+            setTimeout(() => {
+                if (floatText.parentNode) floatText.parentNode.removeChild(floatText);
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
