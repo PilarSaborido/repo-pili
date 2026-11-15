@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>¡Duelo Matemático en el Cuaderno! - 1º a 6º de Primaria</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka para títulos infantiles y Patrick Hand / Nunito para números de cuaderno -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        :root {
+            --grid-size: 46px;
+            --carry-size: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            :root {
+                --grid-size: 38px;
+                --carry-size: 26px;
+            }
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .font-numbers {
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* Estilo de Hoja de Cuaderno Escolar Español */
+        .notebook-paper {
+            background-color: #ffffff;
+            background-image: 
+                linear-gradient(to right, #e0f2fe 1px, transparent 1px),
+                linear-gradient(to bottom, #e0f2fe 1px, transparent 1px);
+            background-size: 24px 24px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.04), 0 8px 20px rgba(0,0,0,0.08);
+            position: relative;
+        }
+
+        /* Margen rojo izquierdo típico de libreta */
+        .notebook-paper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 28px;
+            width: 2px;
+            background-color: rgba(248, 113, 113, 0.55);
+            pointer-events: none;
+        }
+
+        /* Espiral superior del cuaderno */
+        .notebook-spiral {
+            background-image: radial-gradient(circle, #475569 35%, transparent 38%);
+            background-size: 28px 18px;
+            height: 18px;
+            width: 100%;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        /* Cuadraditos de la cuadrícula de operaciones */
+        .grid-cell {
+            width: var(--grid-size);
+            height: var(--grid-size);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: calc(var(--grid-size) * 0.58);
+            border: 1.5px solid #bae6fd;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        /* Casilla fija con número del enunciado */
+        .cell-static {
+            color: #1e293b;
+            background-color: rgba(240, 249, 255, 0.6);
+        }
+
+        /* Casilla editable para el resultado */
+        .cell-input {
+            background-color: #ffffff;
+            border: 2.5px solid #38bdf8;
+            color: #0284c7;
+            cursor: pointer;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .cell-input:hover {
+            transform: scale(1.04);
+        }
+
+        /* Casilla activa seleccionada por el jugador */
+        .cell-active-p1 {
+            border-color: #2563eb !important;
+            background-color: #dbeafe !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.35), inset 0 2px 4px rgba(0,0,0,0.05) !important;
+            transform: scale(1.08);
+            z-index: 10;
+            animation: pulseCell 1.2s infinite;
+        }
+
+        .cell-active-p2 {
+            border-color: #e11d48 !important;
+            background-color: #ffe4e6 !important;
+            box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.35), inset 0 2px 4px rgba(0,0,0,0.05) !important;
+            transform: scale(1.08);
+            z-index: 10;
+            animation: pulseCell 1.2s infinite;
+        }
+
+        /* Cuadraditos pequeños redondos para las LLEVADAS */
+        .cell-carry {
+            width: var(--carry-size);
+            height: var(--carry-size);
+            border-radius: 50%;
+            border: 2px dashed #f59e0b;
+            background-color: #fffbeb;
+            color: #d97706;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 900;
+            font-size: calc(var(--carry-size) * 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            margin: 0 auto;
+        }
+
+        .cell-carry-filled {
+            border-style: solid;
+            background-color: #fef3c7;
+            transform: scale(1.05);
+        }
+
+        /* Estados de corrección */
+        .cell-correct {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+            color: #15803d !important;
+            animation: popSuccess 0.4s ease;
+        }
+
+        .cell-wrong {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #b91c1c !important;
+            animation: shakeError 0.4s ease;
+        }
+
+        /* Caja española de división |___ */
+        .spanish-division-box {
+            border-left: 3.5px solid #1e293b !important;
+            border-bottom: 3.5px solid #1e293b !important;
+            border-bottom-left-radius: 4px;
+        }
+
+        .spanish-division-bottom {
+            border-bottom: 3.5px solid #1e293b !important;
+        }
+
+        /* Línea horizontal de suma/resta/multiplicación */
+        .operation-line {
+            height: 4px;
+            background-color: #1e293b;
+            border-radius: 999px;
+            margin: 4px 0;
+            width: 100%;
+        }
+
+        /* Botones estilo arcade infantil 3D */
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+            position: relative;
+            top: 0;
+        }
+        .btn-3d:active {
+            top: 4px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+        }
+
+        .numpad-btn {
+            transition: all 0.08s ease;
+            box-shadow: 0 4px 0 #cbd5e1;
+        }
+        .numpad-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #cbd5e1;
+        }
+
+        @keyframes pulseCell {
+            0%, 100% { transform: scale(1.06); }
+            50% { transform: scale(1.12); }
+        }
+
+        @keyframes popSuccess {
+            0% { transform: scale(0.8); }
+            50% { transform: scale(1.18); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+
+        /* Scrollbars ocultos pero funcionales por si una operación 6º es alta */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-900 via-blue-800 to-purple-900 h-screen w-screen flex flex-col select-none">
+
+    <!-- ==================== CABECERA SUPERIOR COMPARTIDA ==================== -->
+    <header class="bg-white/95 backdrop-blur border-b-4 border-amber-400 px-3 py-1.5 flex items-center justify-between shadow-md z-20 shrink-0">
+        <!-- Info Izquierda + Controles -->
+        <div class="flex items-center gap-2">
+            <button onclick="openSetupModal()" class="btn-3d bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-sm flex items-center gap-1.5">
+                <i class="fa-solid fa-sliders"></i>
+                <span class="hidden sm:inline">Curso / Menú</span>
+            </button>
+            <div id="badge-grade" class="bg-indigo-100 text-indigo-800 font-bold px-3 py-1 rounded-xl text-xs sm:text-sm border border-indigo-200">
+                1º Primaria • Sumas
+            </div>
+        </div>
+
+        <!-- Pista Central de Carrera 1 vs 1 -->
+        <div class="flex-1 max-w-xl mx-4 hidden md:flex flex-col">
+            <div class="flex justify-between text-xs font-bold text-slate-600 mb-0.5 px-1">
+                <span id="race-label-p1" class="text-blue-600">🚀 Equipo Azul</span>
+                <span id="game-mode-status" class="text-amber-600 font-extrabold">META: 5 ACIERTOS</span>
+                <span id="race-label-p2" class="text-rose-600">🦖 Equipo Rojo</span>
+            </div>
+            <div class="relative h-6 bg-slate-200 rounded-full border-2 border-slate-300 overflow-hidden flex items-center px-2">
+                <!-- Línea de meta central o derecha -->
+                <div class="absolute right-2 top-0 bottom-0 flex items-center text-base z-0">🏁</div>
+                <!-- Barra Progreso P1 -->
+                <div id="race-bar-p1" class="h-2.5 bg-blue-500 rounded-full transition-all duration-500 absolute left-0 top-1" style="width: 6%;"></div>
+                <div id="race-avatar-p1" class="absolute transition-all duration-500 text-sm z-10 -top-0.5" style="left: 2%;">🚀</div>
+                <!-- Barra Progreso P2 -->
+                <div id="race-bar-p2" class="h-2.5 bg-rose-500 rounded-full transition-all duration-500 absolute left-0 bottom-1" style="width: 6%;"></div>
+                <div id="race-avatar-p2" class="absolute transition-all duration-500 text-sm z-10 top-2" style="left: 2%;">🦖</div>
+            </div>
+        </div>
+
+        <!-- Reloj y Sonido -->
+        <div class="flex items-center gap-2">
+            <div id="timer-box" class="bg-slate-800 text-amber-300 font-numbers font-black px-3 py-1 rounded-xl text-base flex items-center gap-1.5 border-2 border-slate-600">
+                <i class="fa-regular fa-clock text-xs"></i>
+                <span id="timer-display">00:00</span>
+            </div>
+            <button id="btn-sound" onclick="toggleSound()" class="btn-3d bg-sky-100 hover:bg-sky-200 text-sky-700 w-9 h-9 rounded-xl flex items-center justify-center text-base border border-sky-300" title="Activar/Silenciar sonidos">
+                <i id="icon-sound" class="fa-solid fa-volume-high"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- ==================== ZONA PRINCIPAL: PANTALLA DIVIDIDA 1 VS 1 ==================== -->
+    <main class="flex-1 grid grid-cols-2 gap-1.5 sm:gap-3 p-1.5 sm:p-2.5 overflow-hidden bg-slate-900/40">
+
+        <!-- ==================== MITAD JUGADOR 1 (IZQUIERDA - AZUL) ==================== -->
+        <section class="bg-gradient-to-b from-blue-50 to-sky-100 rounded-2xl border-4 border-blue-500 flex flex-col overflow-hidden shadow-2xl relative">
+            
+            <!-- Cabecera Jugador 1 -->
+            <div class="bg-blue-600 text-white px-3 py-1.5 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2">
+                    <span id="p1-avatar-header" class="text-xl sm:text-2xl bg-white/20 p-1 rounded-lg">🚀</span>
+                    <div>
+                        <h2 id="p1-name-header" class="font-bold text-sm sm:text-base leading-tight">Jugador 1</h2>
+                        <span id="p1-streak" class="text-[11px] text-blue-200 block">¡Listo para calcular!</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="giveHint(1)" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 shadow" title="Dar una pista en una casilla">
+                        <i class="fa-solid fa-lightbulb"></i> <span class="hidden lg:inline">Pista</span>
+                    </button>
+                    <button onclick="skipProblem(1)" class="bg-blue-700 hover:bg-blue-800 text-blue-100 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 border border-blue-400" title="Cambiar por otra cuenta">
+                        <i class="fa-solid fa-rotate"></i> <span class="hidden lg:inline">Otra</span>
+                    </button>
+                    <div class="bg-white text-blue-700 font-numbers font-black px-3 py-0.5 rounded-xl text-lg sm:text-xl shadow-inner flex items-center gap-1">
+                        <i class="fa-solid fa-star text-amber-400 text-sm"></i>
+                        <span id="p1-score">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hoja de Cuaderno Jugador 1 -->
+            <div class="flex-1 p-2 sm:p-3 flex flex-col overflow-hidden">
+                <div class="notebook-paper rounded-xl border-2 border-slate-300 flex-1 flex flex-col overflow-hidden">
+                    <div class="notebook-spiral shrink-0"></div>
+                    
+                    <!-- Barra informativa de la cuenta y botón rápido de llevada -->
+                    <div class="flex items-center justify-between px-3 pt-1.5 pb-1 border-b border-sky-100 text-xs shrink-0">
+                        <span id="p1-op-title" class="font-bold text-slate-500 pl-5">Resuelve de derecha a izquierda:</span>
+                        <button id="p1-carry-btn" onclick="focusNextCarry(1)" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-arrow-turn-up"></i> Apuntar Llevada
+                        </button>
+                    </div>
+
+                    <!-- Contenedor de la Cuadrícula Vertical -->
+                    <div id="p1-board-container" class="flex-1 flex items-center justify-center overflow-auto no-scrollbar p-2">
+                        <!-- Se genera dinámicamente la operación en cuadrícula -->
+                    </div>
+
+                    <!-- Mensaje de feedback instantáneo P1 -->
+                    <div id="p1-feedback" class="h-7 flex items-center justify-center text-xs sm:text-sm font-bold px-2 shrink-0 transition-all"></div>
+                </div>
+            </div>
+
+            <!-- Teclado Numérico Independiente Jugador 1 -->
+            <div class="bg-blue-100/90 border-t-2 border-blue-300 p-2 shrink-0">
+                <!-- Fila 1: Números 1 al 5 + Flecha Izquierda + Borrar -->
+                <div class="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1.5">
+                    <button onclick="pressNumber(1, 1)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">1</button>
+                    <button onclick="pressNumber(1, 2)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">2</button>
+                    <button onclick="pressNumber(1, 3)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">3</button>
+                    <button onclick="pressNumber(1, 4)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">4</button>
+                    <button onclick="pressNumber(1, 5)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">5</button>
+                    <button onclick="moveCursor(1, -1)" class="numpad-btn bg-sky-200 hover:bg-sky-300 text-sky-900 font-bold text-base py-1.5 sm:py-2 rounded-xl border border-sky-400" title="Casilla anterior">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button onclick="clearCell(1)" class="numpad-btn bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-base py-1.5 sm:py-2 rounded-xl border border-rose-300" title="Borrar casilla">
+                        <i class="fa-solid fa-delete-left"></i>
+                    </button>
+                </div>
+                <!-- Fila 2: Números 6 al 0 + Flecha Derecha + Botón Comprobar -->
+                <div class="grid grid-cols-7 gap-1 sm:gap-1.5">
+                    <button onclick="pressNumber(1, 6)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">6</button>
+                    <button onclick="pressNumber(1, 7)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">7</button>
+                    <button onclick="pressNumber(1, 8)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">8</button>
+                    <button onclick="pressNumber(1, 9)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">9</button>
+                    <button onclick="pressNumber(1, 0)" class="numpad-btn bg-white hover:bg-blue-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">0</button>
+                    <button onclick="moveCursor(1, 1)" class="numpad-btn bg-sky-200 hover:bg-sky-300 text-sky-900 font-bold text-base py-1.5 sm:py-2 rounded-xl border border-sky-400" title="Siguiente casilla">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button onclick="checkOperation(1)" class="btn-3d bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm py-1.5 sm:py-2 rounded-xl flex items-center justify-center gap-1 shadow-md">
+                        <i class="fa-solid fa-check text-base"></i>
+                        <span class="hidden xl:inline">¡Listo!</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== MITAD JUGADOR 2 (DERECHA - ROJO) ==================== -->
+        <section class="bg-gradient-to-b from-rose-50 to-orange-100 rounded-2xl border-4 border-rose-500 flex flex-col overflow-hidden shadow-2xl relative">
+            
+            <!-- Cabecera Jugador 2 -->
+            <div class="bg-rose-600 text-white px-3 py-1.5 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2">
+                    <span id="p2-avatar-header" class="text-xl sm:text-2xl bg-white/20 p-1 rounded-lg">🦖</span>
+                    <div>
+                        <h2 id="p2-name-header" class="font-bold text-sm sm:text-base leading-tight">Jugador 2</h2>
+                        <span id="p2-streak" class="text-[11px] text-rose-200 block">¡Listo para calcular!</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="giveHint(2)" class="bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 shadow" title="Dar una pista en una casilla">
+                        <i class="fa-solid fa-lightbulb"></i> <span class="hidden lg:inline">Pista</span>
+                    </button>
+                    <button onclick="skipProblem(2)" class="bg-rose-700 hover:bg-rose-800 text-rose-100 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 border border-rose-400" title="Cambiar por otra cuenta">
+                        <i class="fa-solid fa-rotate"></i> <span class="hidden lg:inline">Otra</span>
+                    </button>
+                    <div class="bg-white text-rose-700 font-numbers font-black px-3 py-0.5 rounded-xl text-lg sm:text-xl shadow-inner flex items-center gap-1">
+                        <i class="fa-solid fa-star text-amber-400 text-sm"></i>
+                        <span id="p2-score">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hoja de Cuaderno Jugador 2 -->
+            <div class="flex-1 p-2 sm:p-3 flex flex-col overflow-hidden">
+                <div class="notebook-paper rounded-xl border-2 border-slate-300 flex-1 flex flex-col overflow-hidden">
+                    <div class="notebook-spiral shrink-0"></div>
+                    
+                    <!-- Barra informativa de la cuenta y botón rápido de llevada -->
+                    <div class="flex items-center justify-between px-3 pt-1.5 pb-1 border-b border-sky-100 text-xs shrink-0">
+                        <span id="p2-op-title" class="font-bold text-slate-500 pl-5">Resuelve de derecha a izquierda:</span>
+                        <button id="p2-carry-btn" onclick="focusNextCarry(2)" class="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-arrow-turn-up"></i> Apuntar Llevada
+                        </button>
+                    </div>
+
+                    <!-- Contenedor de la Cuadrícula Vertical -->
+                    <div id="p2-board-container" class="flex-1 flex items-center justify-center overflow-auto no-scrollbar p-2">
+                        <!-- Se genera dinámicamente la operación en cuadrícula -->
+                    </div>
+
+                    <!-- Mensaje de feedback instantáneo P2 -->
+                    <div id="p2-feedback" class="h-7 flex items-center justify-center text-xs sm:text-sm font-bold px-2 shrink-0 transition-all"></div>
+                </div>
+            </div>
+
+            <!-- Teclado Numérico Independiente Jugador 2 -->
+            <div class="bg-rose-100/90 border-t-2 border-rose-300 p-2 shrink-0">
+                <!-- Fila 1: Números 1 al 5 + Flecha Izquierda + Borrar -->
+                <div class="grid grid-cols-7 gap-1 sm:gap-1.5 mb-1.5">
+                    <button onclick="pressNumber(2, 1)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">1</button>
+                    <button onclick="pressNumber(2, 2)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">2</button>
+                    <button onclick="pressNumber(2, 3)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">3</button>
+                    <button onclick="pressNumber(2, 4)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">4</button>
+                    <button onclick="pressNumber(2, 5)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">5</button>
+                    <button onclick="moveCursor(2, -1)" class="numpad-btn bg-orange-200 hover:bg-orange-300 text-orange-900 font-bold text-base py-1.5 sm:py-2 rounded-xl border border-orange-400" title="Casilla anterior">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button onclick="clearCell(2)" class="numpad-btn bg-rose-200 hover:bg-rose-300 text-rose-800 font-bold text-base py-1.5 sm:py-2 rounded-xl border border-rose-400" title="Borrar casilla">
+                        <i class="fa-solid fa-delete-left"></i>
+                    </button>
+                </div>
+                <!-- Fila 2: Números 6 al 0 + Flecha Derecha + Botón Comprobar -->
+                <div class="grid grid-cols-7 gap-1 sm:gap-1.5">
+                    <button onclick="pressNumber(2, 6)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">6</button>
+                    <button onclick="pressNumber(2, 7)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">7</button>
+                    <button onclick="pressNumber(2, 8)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">8</button>
+                    <button onclick="pressNumber(2, 9)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">9</button>
+                    <button onclick="pressNumber(2, 0)" class="numpad-btn bg-white hover:bg-rose-50 text-slate-800 font-numbers font-black text-lg sm:text-xl py-1.5 sm:py-2 rounded-xl border border-slate-300">0</button>
+                    <button onclick="moveCursor(2, 1)" class="numpad-btn bg-orange-200 hover:bg-orange-300 text-orange-900 font-bold text-base py-1.5 sm:py-2 rounded-xl border border-orange-400" title="Siguiente casilla">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button onclick="checkOperation(2)" class="btn-3d bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm py-1.5 sm:py-2 rounded-xl flex items-center justify-center gap-1 shadow-md">
+                        <i class="fa-solid fa-check text-base"></i>
+                        <span class="hidden xl:inline">¡Listo!</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ==================== MODAL DE CONFIGURACIÓN INICIAL (MENÚ DEL PROFESOR/ALUMNOS) ==================== -->
+    <div id="setup-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-3 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-4xl w-full border-4 border-amber-400 shadow-2xl overflow-hidden my-auto">
+            <!-- Cabecera del Modal -->
+            <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600 text-white p-4 sm:p-5 text-center relative">
+                <div class="inline-flex items-center gap-2 bg-amber-400 text-slate-900 font-extrabold px-3 py-0.5 rounded-full text-xs mb-1 shadow">
+                    <i class="fa-solid fa-graduation-cap"></i> EDUCACIÓN PRIMARIA (1º A 6º)
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">📓 ¡Duelo Matemático en el Cuaderno!</h1>
+                <p class="text-blue-100 text-xs sm:text-sm mt-0.5">Competición 1 contra 1 en pantalla dividida con cuentas verticales y llevadas</p>
+            </div>
+
+            <div class="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+                
+                <!-- 1. Selección de Curso de Primaria -->
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                        <span class="bg-indigo-600 text-white w-5 h-5 rounded-full inline-flex items-center justify-center text-xs">1</span>
+                        Selecciona el Curso de Primaria:
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2" id="grade-buttons">
+                        <button onclick="selectGrade(1)" data-grade="1" class="grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-indigo-50 border-indigo-500 ring-2 ring-indigo-300">
+                            <div class="font-extrabold text-indigo-900 text-base">1º Primaria</div>
+                            <div class="text-[11px] text-slate-600 leading-tight mt-0.5">Sumas y restas (1-2 cifras) sencillas</div>
+                        </button>
+                        <button onclick="selectGrade(2)" data-grade="2" class="grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-white border-slate-200 hover:border-indigo-300">
+                            <div class="font-extrabold text-slate-800 text-base">2º Primaria</div>
+                            <div class="text-[11px] text-slate-600 leading-tight mt-0.5">2-3 cifras con llevadas y tablas 2, 5, 10</div>
+                        </button>
+                        <button onclick="selectGrade(3)" data-grade="3" class="grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-white border-slate-200 hover:border-indigo-300">
+                            <div class="font-extrabold text-slate-800 text-base">3º Primaria</div>
+                            <div class="text-[11px] text-slate-600 leading-tight mt-0.5">3-4 cifras, multi 1 cifra y división sencilla</div>
+                        </button>
+                        <button onclick="selectGrade(4)" data-grade="4" class="grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-white border-slate-200 hover:border-indigo-300">
+                            <div class="font-extrabold text-slate-800 text-base">4º Primaria</div>
+                            <div class="text-[11px] text-slate-600 leading-tight mt-0.5">Multi de 2 cifras y división vertical</div>
+                        </button>
+                        <button onclick="selectGrade(5)" data-grade="5" class="grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-white border-slate-200 hover:border-indigo-300">
+                            <div class="font-extrabold text-slate-800 text-base">5º Primaria</div>
+                            <div class="text-[11px] text-slate-600 leading-tight mt-0.5">Multi avanzadas y divisiones completas</div>
+                        </button>
+                        <button onclick="selectGrade(6)" data-grade="6" class="grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-white border-slate-200 hover:border-indigo-300">
+                            <div class="font-extrabold text-slate-800 text-base">6º Primaria</div>
+                            <div class="text-[11px] text-slate-600 leading-tight mt-0.5">Reto experto en todas las operaciones</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Selección del Tipo de Operación -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                            <span class="bg-indigo-600 text-white w-5 h-5 rounded-full inline-flex items-center justify-center text-xs">2</span>
+                            Tipo de Operación:
+                        </label>
+                        <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5" id="op-buttons">
+                            <button onclick="selectOp('add')" data-op="add" class="op-btn py-2 px-2 rounded-xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center gap-1 bg-emerald-50 border-emerald-500 text-emerald-900">
+                                <span class="text-xl font-black text-emerald-600">+</span> Sumas
+                            </button>
+                            <button onclick="selectOp('sub')" data-op="sub" class="op-btn py-2 px-2 rounded-xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center gap-1 bg-white border-slate-200 text-slate-700">
+                                <span class="text-xl font-black text-rose-500">−</span> Restas
+                            </button>
+                            <button onclick="selectOp('mul')" data-op="mul" class="op-btn py-2 px-2 rounded-xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center gap-1 bg-white border-slate-200 text-slate-700">
+                                <span class="text-xl font-black text-amber-500">×</span> Multi
+                            </button>
+                            <button onclick="selectOp('div')" data-op="div" class="op-btn py-2 px-2 rounded-xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center gap-1 bg-white border-slate-200 text-slate-700">
+                                <span class="text-xl font-black text-purple-600">÷</span> División
+                            </button>
+                            <button onclick="selectOp('mixed')" data-op="mixed" class="op-btn py-2 px-2 rounded-xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center gap-1 bg-white border-slate-200 text-slate-700 col-span-3 sm:col-span-1">
+                                <span class="text-xl">🎲</span> Variado
+                            </button>
+                        </div>
+                        <p id="op-grade-note" class="text-[11px] text-indigo-600 font-semibold mt-1.5">
+                            * En 1º de Primaria las operaciones se adaptan automáticamente al nivel inicial.
+                        </p>
+                    </div>
+
+                    <!-- 3. Modo de Victoria -->
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                            <span class="bg-indigo-600 text-white w-5 h-5 rounded-full inline-flex items-center justify-center text-xs">3</span>
+                            Meta del Duelo:
+                        </label>
+                        <div class="grid grid-cols-3 gap-2" id="goal-buttons">
+                            <button onclick="selectGoal('race5')" data-goal="race5" class="goal-btn p-2.5 rounded-xl border-2 font-bold text-xs text-center bg-amber-50 border-amber-500 text-amber-900">
+                                <div class="text-lg">🏁</div>
+                                Primero a 5
+                            </button>
+                            <button onclick="selectGoal('race10')" data-goal="race10" class="goal-btn p-2.5 rounded-xl border-2 font-bold text-xs text-center bg-white border-slate-200 text-slate-700">
+                                <div class="text-lg">🏆</div>
+                                Primero a 10
+                            </button>
+                            <button onclick="selectGoal('time120')" data-goal="time120" class="goal-btn p-2.5 rounded-xl border-2 font-bold text-xs text-center bg-white border-slate-200 text-slate-700">
+                                <div class="text-lg">⏱️</div>
+                                Reloj 2 min
+                            </button>
+                        </div>
+                        <div class="mt-2.5 flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                            <input type="checkbox" id="same-op-check" checked class="w-4 h-4 accent-indigo-600 rounded cursor-pointer">
+                            <label for="same-op-check" class="text-xs font-semibold text-slate-700 cursor-pointer">
+                                Misma operación al empezar para ambos jugadores (duelo justo)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Personalización de Jugadores -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <!-- Equipo Azul -->
+                    <div class="bg-blue-50 p-3 rounded-2xl border-2 border-blue-200 flex items-center gap-3">
+                        <button onclick="cycleAvatar(1)" id="setup-avatar-p1" class="text-3xl bg-white w-12 h-12 rounded-xl border-2 border-blue-400 flex items-center justify-center shadow-sm hover:scale-105 transition">🚀</button>
+                        <div class="flex-1">
+                            <label class="text-xs font-bold text-blue-700 block">JUGADOR 1 (Izquierda)</label>
+                            <input id="setup-name-p1" type="text" value="Equipo Azul" maxlength="15" class="w-full bg-white border border-blue-300 rounded-lg px-2.5 py-1 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <!-- Equipo Rojo -->
+                    <div class="bg-rose-50 p-3 rounded-2xl border-2 border-rose-200 flex items-center gap-3">
+                        <button onclick="cycleAvatar(2)" id="setup-avatar-p2" class="text-3xl bg-white w-12 h-12 rounded-xl border-2 border-rose-400 flex items-center justify-center shadow-sm hover:scale-105 transition">🦖</button>
+                        <div class="flex-1">
+                            <label class="text-xs font-bold text-rose-700 block">JUGADOR 2 (Derecha)</label>
+                            <input id="setup-name-p2" type="text" value="Equipo Rojo" maxlength="15" class="w-full bg-white border border-rose-300 rounded-lg px-2.5 py-1 text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botón Empezar Partida -->
+                <div class="pt-2 flex justify-center">
+                    <button onclick="startGame()" class="btn-3d bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white font-extrabold text-lg sm:text-xl px-10 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+                        <i class="fa-solid fa-play"></i>
+                        ¡EMPEZAR EL DUELO!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL DE VICTORIA FINAL ==================== -->
+    <div id="victory-modal" class="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-lg w-full border-4 border-amber-400 shadow-2xl p-6 text-center relative overflow-hidden">
+            <div class="text-5xl mb-2 animate-bounce" id="victory-trophy">🏆</div>
+            <h2 id="victory-title" class="text-2xl sm:text-3xl font-extrabold text-slate-800">¡Fin de la Partida!</h2>
+            <p id="victory-subtitle" class="text-slate-500 font-semibold text-sm mt-1">¡Gran trabajo matemático en el cuaderno!</p>
+
+            <!-- Marcador comparativo -->
+            <div class="grid grid-cols-2 gap-4 my-6">
+                <div class="bg-blue-50 border-2 border-blue-300 rounded-2xl p-3">
+                    <div id="victory-avatar-p1" class="text-3xl mb-1">🚀</div>
+                    <div id="victory-name-p1" class="font-bold text-blue-900 text-sm">Equipo Azul</div>
+                    <div id="victory-score-p1" class="font-numbers font-black text-3xl text-blue-600 my-1">0</div>
+                    <div class="text-xs text-slate-500">operaciones resueltas</div>
+                </div>
+                <div class="bg-rose-50 border-2 border-rose-300 rounded-2xl p-3">
+                    <div id="victory-avatar-p2" class="text-3xl mb-1">🦖</div>
+                    <div id="victory-name-p2" class="font-bold text-rose-900 text-sm">Equipo Rojo</div>
+                    <div id="victory-score-p2" class="font-numbers font-black text-3xl text-rose-600 my-1">0</div>
+                    <div class="text-xs text-slate-500">operaciones resueltas</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="startGame()" class="btn-3d bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> ¡Revancha!
+                </button>
+                <button onclick="openSetupModal()" class="btn-3d bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold px-6 py-3 rounded-xl flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> Cambiar Curso / Operación
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           ESTADO GLOBAL DEL JUEGO Y CONFIGURACIÓN
+           ========================================================================== */
+        const AVATARS = ['🚀', '🦖', '🦄', '🤖', '🦊', '🐼', '⚡', '🦁', '🐸', '🌟'];
+
+        const config = {
+            grade: 1,          // 1 a 6 de Primaria
+            opType: 'add',     // 'add', 'sub', 'mul', 'div', 'mixed'
+            goalMode: 'race5', // 'race5', 'race10', 'time120'
+            sameStartOp: true,
+            soundEnabled: true
+        };
+
+        const players = {
+            1: {
+                name: 'Equipo Azul',
+                avatar: '🚀',
+                score: 0,
+                streak: 0,
+                currentProblem: null,
+                inputOrder: [],     // Lista ordenada de IDs de casillas de resultado (en el orden natural de resolución)
+                carryOrder: [],     // Lista de IDs de casillas de llevadas
+                activeCellId: null, // Casilla actualmente seleccionada
+                userValues: {}      // Valores introducidos por el alumno { cellId: '5' }
+            },
+            2: {
+                name: 'Equipo Rojo',
+                avatar: '🦖',
+                score: 0,
+                streak: 0,
+                currentProblem: null,
+                inputOrder: [],
+                carryOrder: [],
+                activeCellId: null,
+                userValues: {}
+            }
+        };
+
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let isGameActive = false;
+
+        /* ==========================================================================
+           SINTETIZADOR DE SONIDOS (WEB AUDIO API SIN ARCHIVOS EXTERNOS)
+           ========================================================================== */
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!config.soundEnabled) return;
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const now = audioCtx.currentTime;
+                if (type === 'tap') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(680, now + 0.05);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        gain.gain.setValueAtTime(0.15, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.08 + 0.22);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.22);
+                    });
+                } else if (type === 'wrong') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(150, now + 0.25);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'win') {
+                    const notes = [523.25, 659.25, 783.99, 659.25, 1046.50];
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+                        gain.gain.setValueAtTime(0.12, now + idx * 0.12);
+                        gain.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.12 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.12);
+                        osc.stop(now + idx * 0.12 + 0.3);
+                    });
+                }
+            } catch (e) {
+                // Silencioso si el navegador bloquea el audio
+            }
+        }
+
+        function toggleSound() {
+            config.soundEnabled = !config.soundEnabled;
+            const icon = document.getElementById('icon-sound');
+            icon.className = config.soundEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-rose-500';
+        }
+
+        /* ==========================================================================
+           CONTROL DEL MENÚ DE CONFIGURACIÓN
+           ========================================================================== */
+        function selectGrade(grade) {
+            config.grade = grade;
+            document.querySelectorAll('.grade-btn').forEach(btn => {
+                const g = parseInt(btn.getAttribute('data-grade'));
+                if (g === grade) {
+                    btn.className = 'grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-indigo-50 border-indigo-600 ring-2 ring-indigo-300';
+                } else {
+                    btn.className = 'grade-btn p-2.5 rounded-2xl border-2 text-left transition-all bg-white border-slate-200 hover:border-indigo-300';
+                }
+            });
+
+            const note = document.getElementById('op-grade-note');
+            const notesByGrade = {
+                1: '* 1º Primaria: Sumas y restas de 1 y 2 cifras adaptadas para iniciación.',
+                2: '* 2º Primaria: Sumas y restas de 2-3 cifras con llevadas y tablas del 2, 5 y 10.',
+                3: '* 3º Primaria: Operaciones de 3-4 cifras, multiplicar por 1 cifra y divisiones exactas.',
+                4: '* 4º Primaria: Incluye multiplicaciones por 2 cifras (con escalón) y divisiones con caja.',
+                5: '* 5º Primaria: Multiplicaciones completas de 2 cifras y divisiones de 3 cifras paso a paso.',
+                6: '* 6º Primaria: Nivel experto en sumas, restas, multiplicación de 2 cifras y división vertical.'
+            };
+            note.textContent = notesByGrade[grade];
+            playSound('tap');
+        }
+
+        function selectOp(op) {
+            config.opType = op;
+            document.querySelectorAll('.op-btn').forEach(btn => {
+                const bOp = btn.getAttribute('data-op');
+                if (bOp === op) {
+                    btn.className = 'op-btn py-2 px-2 rounded-xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center gap-1 bg-indigo-50 border-indigo-600 text-indigo-900 ring-2 ring-indigo-200 ' + (bOp === 'mixed' ? 'col-span-3 sm:col-span-1' : '');
+                } else {
+                    btn.className = 'op-btn py-2 px-2 rounded-xl border-2 font-bold text-xs sm:text-sm flex flex-col items-center gap-1 bg-white border-slate-200 text-slate-700 ' + (bOp === 'mixed' ? 'col-span-3 sm:col-span-1' : '');
+                }
+            });
+            playSound('tap');
+        }
+
+        function selectGoal(goal) {
+            config.goalMode = goal;
+            document.querySelectorAll('.goal-btn').forEach(btn => {
+                const g = btn.getAttribute('data-goal');
+                if (g === goal) {
+                    btn.className = 'goal-btn p-2.5 rounded-xl border-2 font-bold text-xs text-center bg-amber-50 border-amber-500 text-amber-900 ring-2 ring-amber-200';
+                } else {
+                    btn.className = 'goal-btn p-2.5 rounded-xl border-2 font-bold text-xs text-center bg-white border-slate-200 text-slate-700';
+                }
+            });
+            playSound('tap');
+        }
+
+        function cycleAvatar(playerNum) {
+            const current = players[playerNum].avatar;
+            const nextIdx = (AVATARS.indexOf(current) + 1) % AVATARS.length;
+            players[playerNum].avatar = AVATARS[nextIdx];
+            document.getElementById(`setup-avatar-p${playerNum}`).textContent = players[playerNum].avatar;
+            playSound('tap');
+        }
+
+        function openSetupModal() {
+            isGameActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+            document.getElementById('victory-modal').classList.add('hidden');
+            document.getElementById('victory-modal').classList.remove('flex');
+            document.getElementById('setup-modal').classList.remove('hidden');
+            document.getElementById('setup-modal').classList.add('flex');
+        }
+
+        /* ==========================================================================
+           GENERADOR DE OPERACIONES VERTICALES POR CURSO (1º A 6º PRIMARIA)
+           ========================================================================== */
+        function randInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateProblemForGrade(grade, requestedOp) {
+            let op = requestedOp;
+            if (op === 'mixed') {
+                if (grade === 1) {
+                    op = Math.random() < 0.6 ? 'add' : 'sub';
+                } else if (grade === 2) {
+                    const pool = ['add', 'sub', 'mul'];
+                    op = pool[randInt(0, pool.length - 1)];
+                } else {
+                    const pool = ['add', 'sub', 'mul', 'div'];
+                    op = pool[randInt(0, pool.length - 1)];
+                }
+            }
+
+            // Si en 1º o 2º eligen división, adaptamos a reparto exacto muy sencillo de 1 cifra
+            if (op === 'add') return generateAddition(grade);
+            if (op === 'sub') return generateSubtraction(grade);
+            if (op === 'mul') return generateMultiplication(grade);
+            if (op === 'div') return generateDivision(grade);
+            return generateAddition(grade);
+        }
+
+        // --- 1. GENERADOR DE SUMAS VERTICALES ---
+        function generateAddition(grade) {
+            let a, b;
+            if (grade === 1) {
+                // 1º Primaria: 2 cifras sencillas, a veces sin llevada
+                a = randInt(11, 54);
+                b = randInt(11, 44);
+            } else if (grade === 2) {
+                // 2º Primaria: 2 y 3 cifras con llevadas
+                a = randInt(45, 489);
+                b = randInt(28, 379);
+            } else if (grade === 3) {
+                // 3º Primaria: 3 y 4 cifras
+                a = randInt(245, 4580);
+                b = randInt(189, 3690);
+            } else if (grade === 4) {
+                a = randInt(1250, 7890);
+                b = randInt(950, 6450);
+            } else {
+                // 5º y 6º Primaria: 4 y 5 cifras
+                a = randInt(4580, 48950);
+                b = randInt(2890, 37890);
+            }
+
+            const ans = a + b;
+            return buildStandardVerticalModel('+', [a, b], ans, 'Suma en vertical (de derecha a izquierda)');
+        }
+
+        // --- 2. GENERADOR DE RESTAS VERTICALES ---
+        function generateSubtraction(grade) {
+            let a, b;
+            if (grade === 1) {
+                // 1º Primaria: Restas sin llevadas para afianzar mecánica vertical
+                const d1 = randInt(3, 9), u1 = randInt(4, 9);
+                const d2 = randInt(1, d1 - 1), u2 = randInt(1, u1);
+                a = d1 * 10 + u1;
+                b = d2 * 10 + u2;
+            } else if (grade === 2) {
+                // 2º Primaria: 2-3 cifras con llevadas
+                a = randInt(62, 540);
+                b = randInt(18, a - 12);
+            } else if (grade === 3) {
+                a = randInt(350, 5400);
+                b = randInt(165, a - 80);
+            } else if (grade === 4) {
+                a = randInt(1500, 8900);
+                b = randInt(650, a - 250);
+            } else {
+                a = randInt(6500, 65000);
+                b = randInt(1890, a - 950);
+            }
+
+            const ans = a - b;
+            return buildStandardVerticalModel('−', [a, b], ans, 'Resta en vertical (de derecha a izquierda)');
+        }
+
+        // --- 3. GENERADOR DE MULTIPLICACIONES (1 Y 2 CIFRAS) ---
+        function generateMultiplication(grade) {
+            if (grade <= 3) {
+                // Multiplicación por 1 cifra
+                let a, b;
+                if (grade === 1) {
+                    a = randInt(11, 32);
+                    b = randInt(2, 3);
+                } else if (grade === 2) {
+                    // Tablas 2, 5, 10 o 3
+                    const tables = [2, 3, 5];
+                    a = randInt(12, 84);
+                    b = tables[randInt(0, tables.length - 1)];
+                } else {
+                    // 3º Primaria: 2 o 3 cifras por 1 cifra
+                    a = randInt(34, 468);
+                    b = randInt(2, 8);
+                }
+                const ans = a * b;
+                return buildStandardVerticalModel('×', [a, b], ans, 'Multiplicación por 1 cifra');
+            } else {
+                // 4º, 5º y 6º de Primaria: Multiplicación por 2 cifras con productos parciales
+                let a, b;
+                if (grade === 4) {
+                    a = randInt(24, 165);
+                    b = randInt(12, 35);
+                } else if (grade === 5) {
+                    a = randInt(124, 485);
+                    b = randInt(14, 64);
+                } else {
+                    a = randInt(235, 864);
+                    b = randInt(23, 86);
+                }
+                return buildTwoDigitMultiplicationModel(a, b);
+            }
+        }
+
+        // --- 4. GENERADOR DE DIVISIONES CON CAJA ESPAÑOLA |___ ---
+        function generateDivision(grade) {
+            if (grade <= 2) {
+                // División exacta directa de iniciación
+                const divisor = randInt(2, 5);
+                const quotient = randInt(2, 9);
+                const dividend = divisor * quotient;
+                return buildSimpleDivisionModel(dividend, divisor, quotient, 0);
+            } else if (grade === 3) {
+                // 3º Primaria: 2 cifras entre 1 cifra (paso a paso en caja española)
+                const divisor = randInt(2, 6);
+                const d1 = randInt(divisor, 9); // Primera cifra >= divisor para que sea 2 pasos limpios
+                const d2 = randInt(0, 9);
+                const dividend = d1 * 10 + d2;
+                return buildStepDivision2Digits(dividend, divisor);
+            } else {
+                // 4º, 5º y 6º Primaria: División en escalera con caja española
+                const divisor = grade === 4 ? randInt(2, 7) : randInt(3, 9);
+                const d1 = randInt(divisor, 9);
+                const d2 = randInt(0, 9);
+                const dividend = d1 * 10 + d2;
+                return buildStepDivision2Digits(dividend, divisor);
+            }
+        }
+
+        /* ==========================================================================
+           CONSTRUCTORES DE MODELOS DE CUADRÍCULA ("COMO EN EL CUADERNO")
+           ========================================================================== */
+
+        // Etiquetas de valor posicional españolas (U, D, C, UM, DM, CM)
+        function getPlaceLabels(numCols) {
+            const labels = ['U', 'D', 'C', 'UM', 'DM', 'CM'];
+            const colors = [
+                'text-blue-600 bg-blue-50 border-blue-200',
+                'text-rose-600 bg-rose-50 border-rose-200',
+                'text-emerald-600 bg-emerald-50 border-emerald-200',
+                'text-amber-600 bg-amber-50 border-amber-200',
+                'text-purple-600 bg-purple-50 border-purple-200',
+                'text-indigo-600 bg-indigo-50 border-indigo-200'
+            ];
+            const res = [];
+            for (let i = numCols - 1; i >= 0; i--) {
+                res.push({
+                    text: labels[i] || '',
+                    cls: colors[i] || colors[0]
+                });
+            }
+            return res;
+        }
+
+        // Constructor para Suma, Resta y Multiplicación de 1 cifra
+        function buildStandardVerticalModel(sign, operands, answer, titleText) {
+            const ansStr = String(answer);
+            const maxLen = Math.max(ansStr.length, String(operands[0]).length, String(operands[1]).length);
+            const totalCols = maxLen + 1; // Columna 0 para el signo (+, -, ×)
+
+            const rows = [];
+            const inputOrder = [];
+            const carryOrder = [];
+            const solutionMap = {};
+
+            // Fila 0: Etiquetas U, D, C, UM...
+            const placeLabels = getPlaceLabels(maxLen);
+            const headerCells = [{ type: 'empty' }];
+            placeLabels.forEach(lbl => {
+                headerCells.push({ type: 'header', text: lbl.text, cls: lbl.cls });
+            });
+            rows.push({ kind: 'cells', cells: headerCells });
+
+            // Fila 1: Cuadraditos redondos de LLEVADAS (encima de todas las columnas excepto Unidades)
+            const carryCells = [{ type: 'empty' }];
+            for (let c = 1; c <= maxLen; c++) {
+                // La última columna es Unidades (no recibe llevada)
+                if (c < maxLen) {
+                    const carryId = `carry_c${c}`;
+                    carryCells.push({ type: 'carry', id: carryId });
+                    carryOrder.unshift(carryId); // De derecha a izquierda
+                } else {
+                    carryCells.push({ type: 'empty' });
+                }
+            }
+            rows.push({ kind: 'cells', cells: carryCells });
+
+            // Filas de Operandos
+            operands.forEach((num, idx) => {
+                const s = String(num).padStart(maxLen, ' ');
+                const rowCells = [];
+                // Signo en el último operando
+                rowCells.push({
+                    type: idx === operands.length - 1 ? 'sign' : 'empty',
+                    text: idx === operands.length - 1 ? sign : ''
+                });
+                for (let i = 0; i < maxLen; i++) {
+                    const ch = s[i];
+                    rowCells.push({
+                        type: ch === ' ' ? 'empty' : 'static',
+                        text: ch === ' ' ? '' : ch
+                    });
+                }
+                rows.push({ kind: 'cells', cells: rowCells });
+            });
+
+            // Línea divisoria horizontal
+            rows.push({ kind: 'line', cols: totalCols });
+
+            // Fila de Resultado (Editable cifra a cifra)
+            const ansPadded = ansStr.padStart(maxLen, ' ');
+            const resCells = [{ type: 'empty' }];
+            const rowInputIds = [];
+
+            for (let i = 0; i < maxLen; i++) {
+                const expectedChar = ansPadded[i];
+                if (expectedChar !== ' ') {
+                    const cellId = `res_${i}`;
+                    resCells.push({ type: 'input', id: cellId });
+                    solutionMap[cellId] = expectedChar;
+                    rowInputIds.push(cellId);
+                } else {
+                    resCells.push({ type: 'empty' });
+                }
+            }
+            rows.push({ kind: 'cells', cells: resCells });
+
+            // Orden de escritura: de derecha a izquierda (Unidades -> Decenas -> Centenas...)
+            for (let i = rowInputIds.length - 1; i >= 0; i--) {
+                inputOrder.push(rowInputIds[i]);
+            }
+
+            return {
+                layout: 'vertical',
+                title: titleText,
+                totalCols,
+                rows,
+                inputOrder,
+                carryOrder,
+                solutionMap
+            };
+        }
+
+        // Constructor para Multiplicación por 2 cifras (4º a 6º de Primaria)
+        function buildTwoDigitMultiplicationModel(a, b) {
+            const bUnits = b % 10;
+            const bTens = Math.floor(b / 10);
+            const partial1 = a * bUnits;
+            const partial2 = a * bTens; // Se coloca desplazado 1 columna a la izquierda
+            const totalAns = a * b;
+
+            const maxLen = Math.max(
+                String(totalAns).length,
+                String(partial2).length + 1,
+                String(a).length
+            );
+            const totalCols = maxLen + 1;
+
+            const rows = [];
+            const inputOrder = [];
+            const carryOrder = [];
+            const solutionMap = {};
+
+            // Etiquetas posicionales
+            const placeLabels = getPlaceLabels(maxLen);
+            const headerCells = [{ type: 'empty' }];
+            placeLabels.forEach(lbl => headerCells.push({ type: 'header', text: lbl.text, cls: lbl.cls }));
+            rows.push({ kind: 'cells', cells: headerCells });
+
+            // Fila de Llevadas
+            const carryCells = [{ type: 'empty' }];
+            for (let c = 1; c <= maxLen; c++) {
+                if (c < maxLen) {
+                    const cid = `carry_c${c}`;
+                    carryCells.push({ type: 'carry', id: cid });
+                    carryOrder.unshift(cid);
+                } else {
+                    carryCells.push({ type: 'empty' });
+                }
+            }
+            rows.push({ kind: 'cells', cells: carryCells });
+
+            // Multiplicando (a)
+            const sA = String(a).padStart(maxLen, ' ');
+            const rowA = [{ type: 'empty' }];
+            for (let i = 0; i < maxLen; i++) {
+                rowA.push({ type: sA[i] === ' ' ? 'empty' : 'static', text: sA[i] === ' ' ? '' : sA[i] });
+            }
+            rows.push({ kind: 'cells', cells: rowA });
+
+            // Multiplicador (b) con signo ×
+            const sB = String(b).padStart(maxLen, ' ');
+            const rowB = [{ type: 'sign', text: '×' }];
+            for (let i = 0; i < maxLen; i++) {
+                rowB.push({ type: sB[i] === ' ' ? 'empty' : 'static', text: sB[i] === ' ' ? '' : sB[i] });
+            }
+            rows.push({ kind: 'cells', cells: rowB });
+
+            // Primera línea
+            rows.push({ kind: 'line', cols: totalCols });
+
+            // 1º Producto Parcial (a × unidades)
+            const sP1 = String(partial1).padStart(maxLen, ' ');
+            const rowP1 = [{ type: 'empty' }];
+            const p1Ids = [];
+            for (let i = 0; i < maxLen; i++) {
+                if (sP1[i] !== ' ') {
+                    const cid = `p1_${i}`;
+                    rowP1.push({ type: 'input', id: cid });
+                    solutionMap[cid] = sP1[i];
+                    p1Ids.push(cid);
+                } else {
+                    rowP1.push({ type: 'empty' });
+                }
+            }
+            rows.push({ kind: 'cells', cells: rowP1 });
+            for (let i = p1Ids.length - 1; i >= 0; i--) inputOrder.push(p1Ids[i]);
+
+            // 2º Producto Parcial (a × decenas, desplazado 1 hueco a la izquierda)
+            const sP2 = (String(partial2) + ' ').padStart(maxLen, ' ');
+            const rowP2 = [{ type: 'sign', text: '+' }];
+            const p2Ids = [];
+            for (let i = 0; i < maxLen; i++) {
+                if (i === maxLen - 1) {
+                    // Hueco o raya del escalón de las unidades en el cuaderno
+                    rowP2.push({ type: 'step_dash', text: '—' });
+                } else if (sP2[i] !== ' ') {
+                    const cid = `p2_${i}`;
+                    rowP2.push({ type: 'input', id: cid });
+                    solutionMap[cid] = sP2[i];
+                    p2Ids.push(cid);
+                } else {
+                    rowP2.push({ type: 'empty' });
+                }
+            }
+            rows.push({ kind: 'cells', cells: rowP2 });
+            for (let i = p2Ids.length - 1; i >= 0; i--) inputOrder.push(p2Ids[i]);
+
+            // Segunda línea (suma de productos parciales)
+            rows.push({ kind: 'line', cols: totalCols });
+
+            // Resultado Final
+            const sTot = String(totalAns).padStart(maxLen, ' ');
+            const rowTot = [{ type: 'empty' }];
+            const totIds = [];
+            for (let i = 0; i < maxLen; i++) {
+                if (sTot[i] !== ' ') {
+                    const cid = `tot_${i}`;
+                    rowTot.push({ type: 'input', id: cid });
+                    solutionMap[cid] = sTot[i];
+                    totIds.push(cid);
+                } else {
+                    rowTot.push({ type: 'empty' });
+                }
+            }
+            rows.push({ kind: 'cells', cells: rowTot });
+            for (let i = totIds.length - 1; i >= 0; i--) inputOrder.push(totIds[i]);
+
+            return {
+                layout: 'vertical',
+                title: 'Multiplicación por 2 cifras (productos parciales y suma)',
+                totalCols,
+                rows,
+                inputOrder,
+                carryOrder,
+                solutionMap
+            };
+        }
+
+        // Constructor División Sencilla con Caja Española (Iniciación)
+        function buildSimpleDivisionModel(dividend, divisor, quotient, remainder) {
+            const divStr = String(dividend);
+            const rows = [];
+            const inputOrder = [];
+            const solutionMap = {};
+
+            // Fila 1: Dividendo a la izquierda | Divisor dentro de la caja española a la derecha
+            const row1 = [];
+            for (let i = 0; i < divStr.length; i++) {
+                row1.push({ type: 'static', text: divStr[i] });
+            }
+            row1.push({ type: 'div_box', text: String(divisor) });
+            rows.push({ kind: 'cells', cells: row1 });
+
+            // Fila 2: Resto debajo de las unidades del dividendo | Cociente debajo del divisor
+            const row2 = [];
+            for (let i = 0; i < divStr.length - 1; i++) {
+                row2.push({ type: 'empty' });
+            }
+            const remId = 'div_rem';
+            const quoId = 'div_quo';
+            row2.push({ type: 'input', id: remId, label: 'R' });
+            row2.push({ type: 'input', id: quoId, label: 'C' });
+
+            solutionMap[quoId] = String(quotient);
+            solutionMap[remId] = String(remainder);
+
+            // Primero se escribe el cociente y luego el resto
+            inputOrder.push(quoId, remId);
+            rows.push({ kind: 'cells', cells: row2 });
+
+            return {
+                layout: 'division',
+                title: 'División en caja española: escribe Cociente y Resto',
+                totalCols: divStr.length + 1,
+                rows,
+                inputOrder,
+                carryOrder: [],
+                solutionMap
+            };
+        }
+
+        // Constructor División de 2 cifras paso a paso en escalera (Caja Española tradicional)
+        function buildStepDivision2Digits(dividend, divisor) {
+            const d1 = Math.floor(dividend / 10);
+            const d2 = dividend % 10;
+
+            const q1 = Math.floor(d1 / divisor);
+            const rem1 = d1 - q1 * divisor;
+
+            const partialDiv = rem1 * 10 + d2;
+            const q2 = Math.floor(partialDiv / divisor);
+            const remFinal = partialDiv - q2 * divisor;
+
+            const rows = [];
+            const inputOrder = [];
+            const solutionMap = {};
+
+            // Fila 1: [d1] [d2] | [divisor] [hueco]
+            rows.push({
+                kind: 'cells',
+                cells: [
+                    { type: 'static', text: String(d1) },
+                    { type: 'static', text: String(d2) },
+                    { type: 'div_box', text: String(divisor) },
+                    { type: 'div_bottom', text: '' }
+                ]
+            });
+
+            // Fila 2: [rem1] [bajar d2]   [q1] [q2]
+            const idRem1 = 'div_rem1';
+            const idDrop2 = 'div_drop2';
+            const idQ1 = 'div_q1';
+            const idQ2 = 'div_q2';
+
+            rows.push({
+                kind: 'cells',
+                cells: [
+                    { type: 'input', id: idRem1 },
+                    { type: 'input', id: idDrop2 },
+                    { type: 'input', id: idQ1 },
+                    { type: 'input', id: idQ2 }
+                ]
+            });
+
+            // Fila 3: [vacío] [remFinal] [vacío] [vacío]
+            const idRemFinal = 'div_rem_final';
+            rows.push({
+                kind: 'cells',
+                cells: [
+                    { type: 'empty' },
+                    { type: 'input', id: idRemFinal },
+                    { type: 'empty' },
+                    { type: 'empty' }
+                ]
+            });
+
+            solutionMap[idQ1] = String(q1);
+            solutionMap[idRem1] = String(rem1);
+            solutionMap[idDrop2] = String(d2);
+            solutionMap[idQ2] = String(q2);
+            solutionMap[idRemFinal] = String(remFinal);
+
+            // Orden natural en escuela española:
+            // 1º Primera cifra del cociente -> 2º Primer resto -> 3º Bajar cifra siguiente -> 4º Segunda cifra del cociente -> 5º Resto final
+            inputOrder.push(idQ1, idRem1, idDrop2, idQ2, idRemFinal);
+
+            return {
+                layout: 'division',
+                title: 'División paso a paso: 1º Cociente → Resto → Baja cifra → 2º Cociente → Resto final',
+                totalCols: 4,
+                rows,
+                inputOrder,
+                carryOrder: [],
+                solutionMap
+            };
+        }
+
+        /* ==========================================================================
+           RENDERIZADO VISUAL DE LA CUADRÍCULA EN EL CUADERNO DE CADA JUGADOR
+           ========================================================================== */
+        function renderPlayerBoard(playerNum) {
+            const p = players[playerNum];
+            const prob = p.currentProblem;
+            const container = document.getElementById(`p${playerNum}-board-container`);
+            const titleEl = document.getElementById(`p${playerNum}-op-title`);
+            const carryBtn = document.getElementById(`p${playerNum}-carry-btn`);
+
+            titleEl.textContent = prob.title;
+            carryBtn.style.display = prob.carryOrder.length > 0 ? 'flex' : 'none';
+
+            let html = `<div class="inline-flex flex-col items-center my-auto">`;
+
+            prob.rows.forEach(row => {
+                if (row.kind === 'line') {
+                    html += `<div class="operation-line"></div>`;
+                } else if (row.kind === 'cells') {
+                    html += `<div class="flex items-center gap-1 my-0.5">`;
+                    row.cells.forEach(cell => {
+                        if (cell.type === 'empty') {
+                            html += `<div class="grid-cell border-transparent bg-transparent"></div>`;
+                        } else if (cell.type === 'header') {
+                            html += `<div class="w-[var(--grid-size)] h-6 flex items-center justify-center text-xs font-extrabold rounded-md border ${cell.cls}">${cell.text}</div>`;
+                        } else if (cell.type === 'carry') {
+                            const val = p.userValues[cell.id] || '';
+                            const isActive = p.activeCellId === cell.id;
+                            const activeCls = isActive ? (playerNum === 1 ? 'cell-active-p1' : 'cell-active-p2') : '';
+                            const filledCls = val ? 'cell-carry-filled' : '';
+                            html += `
+                                <div class="w-[var(--grid-size)] h-[calc(var(--carry-size)+4px)] flex items-center justify-center">
+                                    <div id="p${playerNum}_${cell.id}" onclick="selectCell(${playerNum}, '${cell.id}')" 
+                                         class="cell-carry ${filledCls} ${activeCls}" title="Cuadradito para apuntar la llevada">
+                                        ${val}
+                                    </div>
+                                </div>`;
+                        } else if (cell.type === 'static') {
+                            html += `<div class="grid-cell cell-static">${cell.text}</div>`;
+                        } else if (cell.type === 'sign') {
+                            html += `<div class="grid-cell border-transparent bg-transparent text-rose-600 font-black text-2xl">${cell.text}</div>`;
+                        } else if (cell.type === 'step_dash') {
+                            html += `<div class="grid-cell border-dashed border-slate-300 bg-slate-50 text-slate-400 text-lg">${cell.text}</div>`;
+                        } else if (cell.type === 'div_box') {
+                            html += `<div class="grid-cell cell-static spanish-division-box">${cell.text}</div>`;
+                        } else if (cell.type === 'div_bottom') {
+                            html += `<div class="grid-cell border-transparent bg-transparent spanish-division-bottom"></div>`;
+                        } else if (cell.type === 'input') {
+                            const val = p.userValues[cell.id] || '';
+                            const isActive = p.activeCellId === cell.id;
+                            const activeCls = isActive ? (playerNum === 1 ? 'cell-active-p1' : 'cell-active-p2') : '';
+                            html += `
+                                <div id="p${playerNum}_${cell.id}" onclick="selectCell(${playerNum}, '${cell.id}')" 
+                                     class="grid-cell cell-input ${activeCls}">
+                                    ${val}
+                                </div>`;
+                        }
+                    });
+                    html += `</div>`;
+                }
+            });
+
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        /* ==========================================================================
+           INTERACCIÓN CON EL TECLADO Y LAS CASILLAS DEL CUADERNO
+           ========================================================================== */
+        function selectCell(playerNum, cellId) {
+            if (!isGameActive) return;
+            players[playerNum].activeCellId = cellId;
+            playSound('tap');
+            renderPlayerBoard(playerNum);
+        }
+
+        function focusNextCarry(playerNum) {
+            if (!isGameActive) return;
+            const p = players[playerNum];
+            const carries = p.currentProblem.carryOrder;
+            if (!carries || carries.length === 0) return;
+
+            // Si ya está en una llevada, pasa a la siguiente llevada a la izquierda
+            const currentIdx = carries.indexOf(p.activeCellId);
+            const nextIdx = (currentIdx + 1) % carries.length;
+            p.activeCellId = carries[nextIdx];
+            playSound('tap');
+            renderPlayerBoard(playerNum);
+            showFeedback(playerNum, '✏️ Escribe el número que te llevas', 'text-amber-600');
+        }
+
+        function pressNumber(playerNum, digit) {
+            if (!isGameActive) return;
+            const p = players[playerNum];
+            if (!p.activeCellId) {
+                p.activeCellId = p.inputOrder[0];
+            }
+
+            p.userValues[p.activeCellId] = String(digit);
+            playSound('tap');
+
+            // Si acaba de escribir en un cuadradito de llevada, regresa automáticamente a la casilla de resultado pendiente
+            if (p.activeCellId.startsWith('carry_')) {
+                const nextEmptyInput = p.inputOrder.find(id => !p.userValues[id]) || p.inputOrder[0];
+                p.activeCellId = nextEmptyInput;
+            } else {
+                // Avanza automáticamente a la siguiente casilla en el orden natural de resolución (derecha a izquierda)
+                const idx = p.inputOrder.indexOf(p.activeCellId);
+                if (idx !== -1 && idx < p.inputOrder.length - 1) {
+                    p.activeCellId = p.inputOrder[idx + 1];
+                }
+            }
+
+            renderPlayerBoard(playerNum);
+        }
+
+        function clearCell(playerNum) {
+            if (!isGameActive) return;
+            const p = players[playerNum];
+            if (!p.activeCellId) return;
+
+            if (p.userValues[p.activeCellId]) {
+                delete p.userValues[p.activeCellId];
+            } else {
+                // Si ya estaba vacía, retrocede una casilla y la borra
+                const idx = p.inputOrder.indexOf(p.activeCellId);
+                if (idx > 0) {
+                    p.activeCellId = p.inputOrder[idx - 1];
+                    delete p.userValues[p.activeCellId];
+                }
+            }
+            playSound('tap');
+            renderPlayerBoard(playerNum);
+        }
+
+        function moveCursor(playerNum, dir) {
+            if (!isGameActive) return;
+            const p = players[playerNum];
+            const list = p.inputOrder;
+            if (!list.length) return;
+
+            let idx = list.indexOf(p.activeCellId);
+            if (idx === -1) idx = 0;
+            else idx = (idx + dir + list.length) % list.length;
+
+            p.activeCellId = list[idx];
+            playSound('tap');
+            renderPlayerBoard(playerNum);
+        }
+
+        /* ==========================================================================
+           COMPROBACIÓN PEDAGÓGICA Y PISTAS
+           ========================================================================== */
+        function checkOperation(playerNum) {
+            if (!isGameActive) return;
+            const p = players[playerNum];
+            const prob = p.currentProblem;
+            const sol = prob.solutionMap;
+
+            let allFilled = true;
+            let allCorrect = true;
+            let firstWrongCell = null;
+
+            prob.inputOrder.forEach(cellId => {
+                const userVal = p.userValues[cellId];
+                if (userVal === undefined || userVal === '') {
+                    allFilled = false;
+                    allCorrect = false;
+                    if (!firstWrongCell) firstWrongCell = cellId;
+                } else if (userVal !== sol[cellId]) {
+                    allCorrect = false;
+                    if (!firstWrongCell) firstWrongCell = cellId;
+                }
+            });
+
+            if (!allFilled) {
+                playSound('wrong');
+                p.activeCellId = firstWrongCell;
+                renderPlayerBoard(playerNum);
+                showFeedback(playerNum, '⚠️ ¡Completa todos los cuadraditos azules antes de comprobar!', 'text-amber-600');
+                return;
+            }
+
+            if (allCorrect) {
+                // ¡ACIERTO!
+                playSound('correct');
+                p.score += 1;
+                p.streak += 1;
+
+                // Iluminar todas las casillas en verde
+                prob.inputOrder.forEach(cellId => {
+                    const domEl = document.getElementById(`p${playerNum}_${cellId}`);
+                    if (domEl) domEl.classList.add('cell-correct');
+                });
+
+                const praises = ['¡Excelente cálculo!', '¡Increíble!', '¡Como un genio!', '¡Operación perfecta!', '¡Muy bien hecho!'];
+                const msg = praises[randInt(0, praises.length - 1)];
+                showFeedback(playerNum, `✅ ${msg} (+1 punto)`, 'text-emerald-600');
+                updateScoreUI();
+
+                // Verificar si el jugador ha ganado la partida
+                if (checkVictoryCondition()) return;
+
+                // Cargar nueva operación tras una breve pausa para celebrar
+                setTimeout(() => {
+                    if (isGameActive) assignNewProblem(playerNum);
+                }, 750);
+
+            } else {
+                // HAY ALGÚN FALLO: iluminar solo las casillas erróneas en rojo para que el alumno aprenda y corrija
+                playSound('wrong');
+                p.streak = 0;
+                p.activeCellId = firstWrongCell;
+                renderPlayerBoard(playerNum);
+
+                prob.inputOrder.forEach(cellId => {
+                    const domEl = document.getElementById(`p${playerNum}_${cellId}`);
+                    if (!domEl) return;
+                    if (p.userValues[cellId] === sol[cellId]) {
+                        domEl.classList.add('cell-correct');
+                    } else {
+                        domEl.classList.add('cell-wrong');
+                    }
+                });
+
+                showFeedback(playerNum, '❌ Revisa los cuadraditos en rojo (¡cuidado con las llevadas!)', 'text-rose-600');
+                updateScoreUI();
+            }
+        }
+
+        function giveHint(playerNum) {
+            if (!isGameActive) return;
+            const p = players[playerNum];
+            const prob = p.currentProblem;
+
+            // Busca la primera casilla vacía o incorrecta en el orden de resolución
+            const targetId = prob.inputOrder.find(id => p.userValues[id] !== prob.solutionMap[id]) || p.activeCellId;
+            if (!targetId || !prob.solutionMap[targetId]) return;
+
+            p.userValues[targetId] = prob.solutionMap[targetId];
+            const nextEmpty = prob.inputOrder.find(id => !p.userValues[id]) || targetId;
+            p.activeCellId = nextEmpty;
+
+            playSound('tap');
+            renderPlayerBoard(playerNum);
+            showFeedback(playerNum, '💡 ¡Pista colocada en el cuaderno!', 'text-indigo-600');
+        }
+
+        function skipProblem(playerNum) {
+            if (!isGameActive) return;
+            playSound('tap');
+            assignNewProblem(playerNum);
+            showFeedback(playerNum, '🔄 ¡Nueva operación en tu cuaderno!', 'text-slate-600');
+        }
+
+        function showFeedback(playerNum, text, colorClass) {
+            const el = document.getElementById(`p${playerNum}-feedback`);
+            el.className = `h-7 flex items-center justify-center text-xs sm:text-sm font-bold px-2 shrink-0 transition-all ${colorClass}`;
+            el.textContent = text;
+        }
+
+        /* ==========================================================================
+           FLUJO DE PARTIDA, MARCADORES Y CONDICIÓN DE VICTORIA
+           ========================================================================== */
+        function assignNewProblem(playerNum, forcedProblem = null) {
+            const p = players[playerNum];
+            const prob = forcedProblem
+                ? JSON.parse(JSON.stringify(forcedProblem))
+                : generateProblemForGrade(config.grade, config.opType);
+
+            p.currentProblem = prob;
+            p.inputOrder = prob.inputOrder;
+            p.carryOrder = prob.carryOrder;
+            p.userValues = {};
+            p.activeCellId = prob.inputOrder[0] || null;
+
+            renderPlayerBoard(playerNum);
+            showFeedback(playerNum, '', '');
+        }
+
+        function startGame() {
+            // Leer nombres personalizados
+            const name1 = document.getElementById('setup-name-p1').value.trim() || 'Equipo Azul';
+            const name2 = document.getElementById('setup-name-p2').value.trim() || 'Equipo Rojo';
+            config.sameStartOp = document.getElementById('same-op-check').checked;
+
+            players[1].name = name1;
+            players[2].name = name2;
+            players[1].score = 0;
+            players[2].score = 0;
+            players[1].streak = 0;
+            players[2].streak = 0;
+
+            // Actualizar cabeceras
+            document.getElementById('p1-name-header').textContent = players[1].name;
+            document.getElementById('p2-name-header').textContent = players[2].name;
+            document.getElementById('p1-avatar-header').textContent = players[1].avatar;
+            document.getElementById('p2-avatar-header').textContent = players[2].avatar;
+
+            document.getElementById('race-label-p1').textContent = `${players[1].avatar} ${players[1].name}`;
+            document.getElementById('race-label-p2').textContent = `${players[2].avatar} ${players[2].name}`;
+            document.getElementById('race-avatar-p1').textContent = players[1].avatar;
+            document.getElementById('race-avatar-p2').textContent = players[2].avatar;
+
+            const opNames = { add: 'Sumas', sub: 'Restas', mul: 'Multiplicaciones', div: 'Divisiones', mixed: 'Variado' };
+            document.getElementById('badge-grade').textContent = `${config.grade}º Primaria • ${opNames[config.opType]}`;
+
+            const goalLabels = {
+                race5: 'META: 5 ACIERTOS',
+                race10: 'META: 10 ACIERTOS',
+                time120: 'CONTRARRELOJ: 2 MIN'
+            };
+            document.getElementById('game-mode-status').textContent = goalLabels[config.goalMode];
+
+            // Cerrar modales
+            document.getElementById('setup-modal').classList.add('hidden');
+            document.getElementById('setup-modal').classList.remove('flex');
+            document.getElementById('victory-modal').classList.add('hidden');
+            document.getElementById('victory-modal').classList.remove('flex');
+
+            isGameActive = true;
+            updateScoreUI();
+
+            // Generar primera cuenta (idéntica si está activado "duelo justo")
+            const firstProblem = generateProblemForGrade(config.grade, config.opType);
+            assignNewProblem(1, firstProblem);
+            if (config.sameStartOp) {
+                assignNewProblem(2, firstProblem);
+            } else {
+                assignNewProblem(2);
+            }
+
+            // Iniciar reloj
+            if (timerInterval) clearInterval(timerInterval);
+            secondsElapsed = config.goalMode === 'time120' ? 120 : 0;
+            updateTimerDisplay();
+
+            timerInterval = setInterval(() => {
+                if (!isGameActive) return;
+                if (config.goalMode === 'time120') {
+                    secondsElapsed--;
+                    updateTimerDisplay();
+                    if (secondsElapsed <= 0) {
+                        endGame();
+                    }
+                } else {
+                    secondsElapsed++;
+                    updateTimerDisplay();
+                }
+            }, 1000);
+
+            playSound('tap');
+        }
+
+        function updateTimerDisplay() {
+            const mins = String(Math.floor(Math.abs(secondsElapsed) / 60)).padStart(2, '0');
+            const secs = String(Math.abs(secondsElapsed) % 60).padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${mins}:${secs}`;
+        }
+
+        function updateScoreUI() {
+            document.getElementById('p1-score').textContent = players[1].score;
+            document.getElementById('p2-score').textContent = players[2].score;
+
+            document.getElementById('p1-streak').textContent = players[1].streak >= 2 ? `🔥 ¡Racha de ${players[1].streak} seguidas!` : '¡Calculando en el cuaderno!';
+            document.getElementById('p2-streak').textContent = players[2].streak >= 2 ? `🔥 ¡Racha de ${players[2].streak} seguidas!` : '¡Calculando en el cuaderno!';
+
+            // Actualizar barra de carrera superior
+            const target = config.goalMode === 'race10' ? 10 : (config.goalMode === 'race5' ? 5 : Math.max(10, players[1].score + 2, players[2].score + 2));
+            const pct1 = Math.min(92, Math.max(5, (players[1].score / target) * 92));
+            const pct2 = Math.min(92, Math.max(5, (players[2].score / target) * 92));
+
+            document.getElementById('race-bar-p1').style.width = `${pct1}%`;
+            document.getElementById('race-avatar-p1').style.left = `calc(${pct1}% - 10px)`;
+
+            document.getElementById('race-bar-p2').style.width = `${pct2}%`;
+            document.getElementById('race-avatar-p2').style.left = `calc(${pct2}% - 10px)`;
+        }
+
+        function checkVictoryCondition() {
+            if (config.goalMode === 'race5' && (players[1].score >= 5 || players[2].score >= 5)) {
+                endGame();
+                return true;
+            }
+            if (config.goalMode === 'race10' && (players[1].score >= 10 || players[2].score >= 10)) {
+                endGame();
+                return true;
+            }
+            return false;
+        }
+
+        function endGame() {
+            isGameActive = false;
+            if (timerInterval) clearInterval(timerInterval);
+            playSound('win');
+
+            const s1 = players[1].score;
+            const s2 = players[2].score;
+
+            const titleEl = document.getElementById('victory-title');
+            const subEl = document.getElementById('victory-subtitle');
+            const trophyEl = document.getElementById('victory-trophy');
+
+            if (s1 > s2) {
+                trophyEl.textContent = players[1].avatar;
+                titleEl.textContent = `¡Gana ${players[1].name}!`;
+                subEl.textContent = `¡Ha dominado el cuaderno de ${config.grade}º de Primaria!`;
+            } else if (s2 > s1) {
+                trophyEl.textContent = players[2].avatar;
+                titleEl.textContent = `¡Gana ${players[2].name}!`;
+                subEl.textContent = `¡Ha dominado el cuaderno de ${config.grade}º de Primaria!`;
+            } else {
+                trophyEl.textContent = '🤝';
+                titleEl.textContent = '¡Empate Matemático!';
+                subEl.textContent = '¡Ambos habéis calculado a la misma velocidad!';
+            }
+
+            document.getElementById('victory-avatar-p1').textContent = players[1].avatar;
+            document.getElementById('victory-name-p1').textContent = players[1].name;
+            document.getElementById('victory-score-p1').textContent = s1;
+
+            document.getElementById('victory-avatar-p2').textContent = players[2].avatar;
+            document.getElementById('victory-name-p2').textContent = players[2].name;
+            document.getElementById('victory-score-p2').textContent = s2;
+
+            document.getElementById('victory-modal').classList.remove('hidden');
+            document.getElementById('victory-modal').classList.add('flex');
+        }
+
+        // Inicialización al cargar la ventana
+        window.onload = function () {
+            selectGrade(1);
+            selectOp('add');
+            selectGoal('race5');
+        };
+    </script>
+</body>
+</html>
