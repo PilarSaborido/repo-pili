@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>¡Muévete y Multiplica! - Juego Corporal de Tablas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-display: 'Fredoka', sans-serif;
+            --font-numbers: 'Nunito', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-display);
+            user-select: none;
+            overflow-x: hidden;
+        }
+
+        /* Fondo de cuadrícula escolar inspirado en la imagen de referencia */
+        .notebook-grid {
+            background-color: #eceff1;
+            background-image: 
+                linear-gradient(to right, rgba(160, 174, 192, 0.28) 3px, transparent 3px),
+                linear-gradient(to bottom, rgba(160, 174, 192, 0.28) 3px, transparent 3px),
+                radial-gradient(circle at 50% 45%, rgba(255,255,255,0.85) 0%, rgba(203, 213, 225, 0.45) 100%);
+            background-size: 72px 72px, 72px 72px, 100% 100%;
+        }
+
+        /* Cartel amarillo superior (estilo fiel a la imagen) */
+        .question-banner {
+            background: linear-gradient(180deg, #d8ca47 0%, #cfc038 100%);
+            box-shadow: 
+                0 12px 25px -5px rgba(0, 0, 0, 0.18),
+                inset 0 3px 6px rgba(255, 255, 255, 0.45),
+                0 6px 0 #b2a324;
+            transform: rotate(-1.3deg);
+            font-family: var(--font-numbers);
+        }
+
+        /* Tarjetas blancas inclinadas de respuesta */
+        .answer-card-left {
+            transform: rotate(-3.2deg);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0,0,0,0.06);
+        }
+        .answer-card-left:hover:not(.disabled-card) {
+            transform: rotate(-1.5deg) scale(1.03) translateY(-4px);
+            box-shadow: 0 24px 45px rgba(0, 0, 0, 0.18);
+        }
+
+        .answer-card-right {
+            transform: rotate(2.8deg);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0,0,0,0.06);
+        }
+        .answer-card-right:hover:not(.disabled-card) {
+            transform: rotate(1.2deg) scale(1.03) translateY(-4px);
+            box-shadow: 0 24px 45px rgba(0, 0, 0, 0.18);
+        }
+
+        /* Estados de revelación */
+        .card-correct {
+            ring: 8px solid #22c55e !important;
+            border-color: #22c55e !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%) !important;
+            transform: rotate(0deg) scale(1.06) !important;
+            box-shadow: 0 0 0 8px #22c55e, 0 25px 50px rgba(34, 197, 94, 0.35) !important;
+            z-index: 30;
+        }
+
+        .card-wrong-Picked {
+            box-shadow: 0 0 0 8px #ef4444, 0 20px 40px rgba(239, 68, 68, 0.25) !important;
+            animation: shakeError 0.5s ease-in-out;
+        }
+
+        .card-dimmed {
+            opacity: 0.42;
+            filter: grayscale(45%);
+            transform: scale(0.94) !important;
+        }
+
+        @keyframes shakeError {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-12px) rotate(-4deg); }
+            40% { transform: translateX(12px) rotate(4deg); }
+            60% { transform: translateX(-8px) rotate(-2deg); }
+            80% { transform: translateX(8px) rotate(2deg); }
+        }
+
+        /* Animación suave para los muñecos */
+        @keyframes charFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-7px) rotate(1.2deg); }
+        }
+        .character-idle {
+            animation: charFloat 2.8s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
+
+        @keyframes charCelebrate {
+            0%, 100% { transform: translateY(0) scale(1); }
+            30% { transform: translateY(-22px) scale(1.08) rotate(-4deg); }
+            60% { transform: translateY(-14px) scale(1.06) rotate(4deg); }
+        }
+        .character-winner {
+            animation: charCelebrate 0.65s ease-in-out infinite !important;
+        }
+
+        /* Botones con relieve tipo arcade escolar */
+        .btn-3d-amber {
+            box-shadow: 0 6px 0 #b45309;
+            transition: all 0.12s ease;
+        }
+        .btn-3d-amber:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #b45309;
+        }
+
+        .btn-3d-emerald {
+            box-shadow: 0 6px 0 #047857;
+            transition: all 0.12s ease;
+        }
+        .btn-3d-emerald:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #047857;
+        }
+
+        .btn-3d-indigo {
+            box-shadow: 0 6px 0 #3730a3;
+            transition: all 0.12s ease;
+        }
+        .btn-3d-indigo:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #3730a3;
+        }
+
+        .number-font {
+            font-family: var(--font-numbers);
+        }
+
+        /* Barra de progreso circular del temporizador */
+        .timer-ring {
+            transition: stroke-dashoffset 0.25s linear;
+        }
+    </style>
+</head>
+<body class="notebook-grid min-h-screen flex flex-col justify-between text-slate-800 relative overflow-x-hidden">
+
+    <!-- Canvas para Confeti -->
+    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50"></canvas>
+
+    <!-- ================= PANTALLA DE CONFIGURACIÓN ================= -->
+    <main id="setup-screen" class="flex-1 flex items-center justify-center p-3 sm:p-6 z-10">
+        <div class="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border-4 border-amber-400 max-w-4xl w-full p-5 sm:p-8 relative overflow-hidden">
+            
+            <!-- Decoración superior -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 border-b-2 border-slate-100 pb-5 mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-2xl bg-amber-400 flex items-center justify-center shadow-md transform -rotate-6 flex-shrink-0">
+                        <span class="text-4xl">🤸🏽‍♂️</span>
+                    </div>
+                    <div>
+                        <span class="inline-block bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-1">Matemáticas en Movimiento</span>
+                        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-800 tracking-tight">¡Muévete y Multiplica!</h1>
+                        <p class="text-slate-500 text-sm sm:text-base">Elige el resultado correcto imitando la postura del muñeco con tu cuerpo</p>
+                    </div>
+                </div>
+
+                <!-- Botón Sonido en Configuración -->
+                <button id="setup-sound-btn" onclick="toggleSound()" class="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm transition">
+                    <span id="setup-sound-icon" class="text-xl">🔊</span>
+                    <span id="setup-sound-text">Sonido: Sí</span>
+                </button>
+            </div>
+
+            <!-- 1. Selección de Tablas -->
+            <div class="mb-6">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <label class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <span class="bg-amber-400 text-slate-900 w-7 h-7 rounded-full inline-flex items-center justify-center text-sm font-black">1</span>
+                        ¿Qué tablas queremos practicar hoy?
+                    </label>
+                    <!-- Atajos rápidos -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <button onclick="selectPreset([2])" class="px-3 py-1 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs sm:text-sm font-bold transition">Solo la del 2</button>
+                        <button onclick="selectPreset([1,2,3,4])" class="px-3 py-1 rounded-xl bg-indigo-100 hover:bg-indigo-200 text-indigo-800 text-xs sm:text-sm font-bold transition">Del 1 al 4</button>
+                        <button onclick="selectPreset([1,2,3,4,5])" class="px-3 py-1 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold transition">Del 1 al 5</button>
+                        <button onclick="selectPreset([6,7,8,9,10])" class="px-3 py-1 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 text-xs sm:text-sm font-bold transition">Del 6 al 10</button>
+                        <button onclick="selectPreset([1,2,3,4,5,6,7,8,9,10])" class="px-3 py-1 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs sm:text-sm font-bold transition">Todas (1-10)</button>
+                        <button onclick="selectPreset([])" class="px-3 py-1 rounded-xl bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs sm:text-sm font-bold transition">Limpiar</button>
+                    </div>
+                </div>
+
+                <!-- Botones del 1 al 10 -->
+                <div id="tables-grid" class="grid grid-cols-5 sm:grid-cols-10 gap-2.5 sm:gap-3">
+                    <!-- Generado dinámicamente -->
+                </div>
+                <p id="table-error-msg" class="text-rose-600 text-sm font-bold mt-2 hidden">⚠️ ¡Selecciona al menos una tabla para empezar a jugar!</p>
+            </div>
+
+            <!-- 2. Opciones de Orden y Dinámica de Clase -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                
+                <!-- Orden de las preguntas -->
+                <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
+                    <label class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2 mb-3">
+                        <span class="bg-indigo-600 text-white w-7 h-7 rounded-full inline-flex items-center justify-center text-sm font-black">2</span>
+                        Orden de las multiplicaciones
+                    </label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button id="order-random-btn" onclick="setOrderMode('random')" class="p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-indigo-600 bg-indigo-50 text-indigo-900">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl">🎲</span>
+                                <span class="text-xs bg-indigo-600 text-white px-2 py-0.5 rounded-full">Activo</span>
+                            </div>
+                            <div class="text-base">Aleatorio</div>
+                            <div class="text-xs text-slate-500 font-normal">Mezcla las preguntas al azar</div>
+                        </button>
+
+                        <button id="order-sequential-btn" onclick="setOrderMode('ordered')" class="p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl">🔢</span>
+                                <span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full hidden">Activo</span>
+                            </div>
+                            <div class="text-base">Ordenado</div>
+                            <div class="text-xs text-slate-500 font-normal">En orden: x1, x2, x3... hasta x10</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ritmo de avance (Manual vs Automático tipo vídeo) -->
+                <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200">
+                    <label class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2 mb-3">
+                        <span class="bg-emerald-600 text-white w-7 h-7 rounded-full inline-flex items-center justify-center text-sm font-black">3</span>
+                        Ritmo del juego en el aula
+                    </label>
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button id="pace-manual-btn" onclick="setPaceMode('manual')" class="p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-emerald-600 bg-emerald-50 text-emerald-900">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl">👩‍🏫</span>
+                                <span class="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full">Manual</span>
+                            </div>
+                            <div class="text-base">A tu ritmo</div>
+                            <div class="text-xs text-slate-500 font-normal">Pulsa cuando la clase haga la pose</div>
+                        </button>
+
+                        <button id="pace-auto-btn" onclick="setPaceMode('auto')" class="p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xl">⏱️</span>
+                                <span id="auto-time-badge" class="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full">7 seg</span>
+                            </div>
+                            <div class="text-base">Automático</div>
+                            <div class="text-xs text-slate-500 font-normal">Estilo vídeo con cuenta atrás</div>
+                        </button>
+                    </div>
+
+                    <!-- Selector de segundos para modo automático -->
+                    <div id="auto-seconds-selector" class="mt-3 pt-2.5 border-t border-slate-200 hidden flex items-center justify-between text-xs sm:text-sm">
+                        <span class="font-bold text-slate-600">Tiempo para hacer la postura:</span>
+                        <div class="flex gap-1.5">
+                            <button onclick="setAutoSeconds(5)" data-sec="5" class="sec-btn px-2.5 py-1 rounded-lg font-bold bg-slate-200 text-slate-700">5s</button>
+                            <button onclick="setAutoSeconds(7)" data-sec="7" class="sec-btn px-2.5 py-1 rounded-lg font-bold bg-emerald-600 text-white">7s</button>
+                            <button onclick="setAutoSeconds(10)" data-sec="10" class="sec-btn px-2.5 py-1 rounded-lg font-bold bg-slate-200 text-slate-700">10s</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pie de configuración y botón de jugar -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+                <div class="text-sm text-slate-600 flex items-center gap-2 bg-amber-50 border border-amber-200 px-3.5 py-2 rounded-xl">
+                    <span class="text-lg">💡</span>
+                    <span><strong id="summary-text">Tabla del 2 seleccionada (10 preguntas)</strong></span>
+                </div>
+
+                <button onclick="startGame()" class="w-full sm:w-auto px-10 py-4 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-xl sm:text-2xl tracking-wide btn-3d-emerald flex items-center justify-center gap-3">
+                    <span>¡EMPEZAR A JUGAR!</span>
+                    <span class="text-2xl">▶️</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ================= PANTALLA DE JUEGO (INSPIRADA EN LA IMAGEN) ================= -->
+    <div id="game-screen" class="hidden flex-1 flex flex-col justify-between min-h-screen relative z-10">
+        
+        <!-- Barra Superior de Aula -->
+        <header class="w-full px-3 sm:px-8 pt-3 pb-1 flex flex-wrap items-center justify-between gap-2 z-30">
+            <!-- Logo estilo Svitlana / Muévete y botón volver -->
+            <div class="flex items-center gap-3">
+                <button onclick="returnToSetup()" class="bg-white/90 hover:bg-white text-slate-700 font-bold px-3.5 py-2 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-2 text-sm sm:text-base transition hover:scale-105" title="Cambiar tablas">
+                    <span>⚙️</span>
+                    <span class="hidden sm:inline">Tablas</span>
+                </button>
+                <div class="hidden md:flex flex-col leading-none select-none pl-1">
+                    <span class="text-2xl font-black tracking-tight text-slate-800 border-b-2 border-slate-700 pb-0.5">Muévete</span>
+                    <span class="text-xs font-extrabold text-sky-700 tracking-wider uppercase pt-0.5">y multiplica</span>
+                </div>
+            </div>
+
+            <!-- Indicador de progreso y tablas activas -->
+            <div class="flex items-center gap-2 sm:gap-4 bg-white/90 backdrop-blur px-4 py-1.5 rounded-full shadow-sm border border-slate-200">
+                <span id="active-tables-pill" class="text-xs sm:text-sm font-bold text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-full">Tabla: 2</span>
+                <div class="h-4 w-0.5 bg-slate-200"></div>
+                <span class="text-sm sm:text-base font-extrabold text-slate-700">
+                    Pregunta <span id="current-q-num" class="text-indigo-600">1</span> de <span id="total-q-num">10</span>
+                </span>
+                <div class="h-4 w-0.5 bg-slate-200"></div>
+                <span class="text-sm sm:text-base font-extrabold text-amber-600 flex items-center gap-1">
+                    ⭐ <span id="score-counter">0</span>
+                </span>
+            </div>
+
+            <!-- Controles de sonido y pantalla completa -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleSound()" id="game-sound-btn" class="w-10 h-10 rounded-2xl bg-white/90 hover:bg-white shadow-sm border border-slate-200 flex items-center justify-center text-lg transition hover:scale-105" title="Sonido Sí/No">
+                    🔊
+                </button>
+                <button onclick="toggleFullScreen()" class="w-10 h-10 rounded-2xl bg-white/90 hover:bg-white shadow-sm border border-slate-200 flex items-center justify-center text-lg transition hover:scale-105" title="Pantalla Completa">
+                    ⛶
+                </button>
+            </div>
+        </header>
+
+        <!-- Área Principal del Ejercicio -->
+        <div class="flex-1 flex flex-col items-center justify-around px-2 sm:px-6 py-2 max-w-7xl mx-auto w-full">
+            
+            <!-- CARTEL AMARILLO SUPERIOR CON LA MULTIPLICACIÓN (Igual a la referencia) -->
+            <div class="w-full flex flex-col items-center justify-center my-1 sm:my-2 relative">
+                <div id="question-box" class="question-banner rounded-[2.2rem] px-10 sm:px-20 py-4 sm:py-7 min-w-[290px] sm:min-w-[490px] flex items-center justify-center gap-6 sm:gap-12 border-2 border-yellow-300/60">
+                    <span id="factor-a" class="text-6xl sm:text-8xl md:text-9xl font-black text-slate-950 leading-none tracking-tight">5</span>
+                    <span class="text-5xl sm:text-7xl md:text-8xl font-bold text-slate-950 leading-none">X</span>
+                    <span id="factor-b" class="text-6xl sm:text-8xl md:text-9xl font-black text-slate-950 leading-none tracking-tight">8</span>
+                </div>
+
+                <!-- Mensaje guía dinámico -->
+                <div id="instruction-banner" class="mt-3 bg-white/90 backdrop-blur px-4 py-1 rounded-full shadow-sm border border-slate-200 text-xs sm:text-sm font-bold text-slate-600 flex items-center gap-2">
+                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span id="instruction-text">¡Haced la postura del resultado correcto con vuestro cuerpo!</span>
+                </div>
+            </div>
+
+            <!-- ZONA INFERIOR: DOS TARJETAS BLANCAS CON MUÑECOS Y CONTROLES CENTRALES -->
+            <div class="w-full grid grid-cols-1 lg:grid-cols-12 items-center justify-items-center gap-6 lg:gap-2 my-auto py-2 relative">
+                
+                <!-- OPCIÓN IZQUIERDA (Muñeco a la izquierda + Tarjeta blanca inclinada) -->
+                <div class="lg:col-span-5 w-full flex items-center justify-center relative">
+                    <div id="card-left" onclick="handleCardClick('left')" class="answer-card-left cursor-pointer bg-white rounded-[2.5rem] w-[260px] sm:w-[330px] h-[220px] sm:h-[290px] flex flex-col items-center justify-center relative border-4 border-white select-none ml-14 sm:ml-20">
+                        
+                        <!-- Muñeco Izquierdo asomando por el borde exterior izquierdo (como en la foto) -->
+                        <div id="char-container-left" class="character-idle absolute -left-20 sm:-left-28 -bottom-3 sm:-bottom-4 w-36 sm:w-48 h-48 sm:h-64 pointer-events-none z-20 flex items-end justify-center drop-shadow-md">
+                            <!-- SVG insertado por JS -->
+                        </div>
+
+                        <!-- Etiqueta de postura para imitar -->
+                        <span id="pose-label-left" class="absolute top-3.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-xs sm:text-sm tracking-tight text-center max-w-[85%] truncate">
+                            Tocar el suelo a un lado
+                        </span>
+
+                        <!-- Número Grande -->
+                        <span id="number-left" class="number-font text-7xl sm:text-8xl md:text-9xl font-black text-slate-950 tracking-tight mt-4">
+                            48
+                        </span>
+
+                        <!-- Indicador de acierto/error oculto hasta revelar -->
+                        <div id="badge-left" class="hidden absolute -top-4 -right-4 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg font-black"></div>
+                    </div>
+                </div>
+
+                <!-- CONTROLES CENTRALES (Inspirados en los botones centrales del vídeo + Botón Revelar) -->
+                <div class="lg:col-span-2 flex flex-col items-center justify-center gap-3 z-30 my-1">
+                    
+                    <!-- Trio de botones circulares estilo reproductor de la imagen de referencia -->
+                    <div class="flex items-center gap-3">
+                        <button onclick="prevQuestion()" class="w-11 h-11 rounded-full bg-slate-500/70 hover:bg-slate-700 text-white flex items-center justify-center shadow-md backdrop-blur transition hover:scale-110" title="Pregunta anterior (Flecha Arriba)">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                        </button>
+
+                        <!-- Botón central con anillo de cuenta atrás si está en modo automático -->
+                        <div class="relative flex items-center justify-center">
+                            <svg id="timer-svg" class="w-20 h-20 -rotate-90 hidden absolute pointer-events-none" viewBox="0 0 80 80">
+                                <circle cx="40" cy="40" r="35" stroke="#e2e8f0" stroke-width="6" fill="none"></circle>
+                                <circle id="timer-circle" class="timer-ring" cx="40" cy="40" r="35" stroke="#10b981" stroke-width="6" stroke-linecap="round" fill="none" stroke-dasharray="220" stroke-dashoffset="0"></circle>
+                            </svg>
+
+                            <button id="center-action-btn" onclick="handleCenterAction()" class="w-16 h-16 rounded-full bg-slate-600/80 hover:bg-indigo-600 text-white flex items-center justify-center shadow-xl backdrop-blur border-2 border-white transition transform hover:scale-110" title="Comprobar o Siguiente (Espacio)">
+                                <span id="center-btn-icon" class="text-2xl">👁️</span>
+                            </button>
+                        </div>
+
+                        <button onclick="skipOrNextQuestion()" class="w-11 h-11 rounded-full bg-slate-500/70 hover:bg-slate-700 text-white flex items-center justify-center shadow-md backdrop-blur transition hover:scale-110" title="Siguiente pregunta">
+                            <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                        </button>
+                    </div>
+
+                    <!-- Botón descriptivo claro para Pizarra Digital -->
+                    <button id="main-teacher-btn" onclick="handleCenterAction()" class="px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm sm:text-base shadow-lg btn-3d-indigo whitespace-nowrap flex items-center gap-2">
+                        <span id="teacher-btn-text">¡Ver Respuesta!</span>
+                    </button>
+
+                    <!-- Botón Pausa solo visible en modo automático -->
+                    <button id="auto-pause-btn" onclick="toggleAutoPause()" class="hidden text-xs font-bold text-slate-600 bg-white/80 hover:bg-white px-3 py-1 rounded-full border border-slate-300 shadow-sm">
+                        ⏸️ Pausar tiempo
+                    </button>
+                </div>
+
+                <!-- OPCIÓN DERECHA (Tarjeta blanca inclinada + Muñeco a la derecha) -->
+                <div class="lg:col-span-5 w-full flex items-center justify-center relative">
+                    <div id="card-right" onclick="handleCardClick('right')" class="answer-card-right cursor-pointer bg-white rounded-[2.5rem] w-[260px] sm:w-[330px] h-[220px] sm:h-[290px] flex flex-col items-center justify-center relative border-4 border-white select-none mr-14 sm:mr-20">
+                        
+                        <!-- Etiqueta de postura para imitar -->
+                        <span id="pose-label-right" class="absolute top-3.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-bold text-xs sm:text-sm tracking-tight text-center max-w-[85%] truncate">
+                            Mano arriba saludando
+                        </span>
+
+                        <!-- Número Grande -->
+                        <span id="number-right" class="number-font text-7xl sm:text-8xl md:text-9xl font-black text-slate-950 tracking-tight mt-4">
+                            40
+                        </span>
+
+                        <!-- Muñeco Derecho asomando por el borde exterior derecho (como en la foto) -->
+                        <div id="char-container-right" class="character-idle absolute -right-20 sm:-right-28 -bottom-3 sm:-bottom-4 w-36 sm:w-48 h-48 sm:h-64 pointer-events-none z-20 flex items-end justify-center drop-shadow-md">
+                            <!-- SVG insertado por JS -->
+                        </div>
+
+                        <!-- Indicador de acierto/error oculto hasta revelar -->
+                        <div id="badge-right" class="hidden absolute -top-4 -left-4 w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg font-black"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Barra inferior estilo vídeo / atajos de teclado -->
+        <footer class="w-full px-4 sm:px-8 pb-3 pt-1 flex flex-col gap-1.5 z-20">
+            <!-- Barra de progreso roja inspirada en el reproductor -->
+            <div class="w-full bg-slate-300/80 h-2.5 rounded-full overflow-hidden shadow-inner">
+                <div id="progress-bar-fill" class="bg-rose-600 h-full rounded-full transition-all duration-300" style="width: 10%"></div>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500 font-bold">
+                <span>💡 Haz clic en una tarjeta o pulsa <kbd class="bg-white px-1.5 py-0.5 rounded border border-slate-300">Espacio</kbd> para revelar la respuesta</span>
+                <span id="pose-name-footer" class="hidden sm:inline text-slate-600">¡Imita al personaje correcto!</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ================= MODAL DE FINAL DE PARTIDA ================= -->
+    <div id="finish-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 text-center border-4 border-amber-400 shadow-2xl transform animate-bounce-once">
+            <div class="w-24 h-24 mx-auto bg-amber-100 rounded-full flex items-center justify-center text-6xl mb-4 shadow-inner">
+                🏆
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-black text-slate-800 mb-2">¡Buen trabajo, equipo!</h2>
+            <p id="finish-subtitle" class="text-slate-600 text-base sm:text-lg mb-6">
+                Habéis completado todas las multiplicaciones moviendo el cuerpo.
+            </p>
+
+            <div class="bg-slate-50 rounded-2xl p-4 border-2 border-slate-100 mb-6 flex justify-around">
+                <div>
+                    <div class="text-xs font-bold text-slate-400 uppercase">Preguntas</div>
+                    <div id="final-total-q" class="text-3xl font-black text-indigo-600">10</div>
+                </div>
+                <div class="border-r border-slate-200"></div>
+                <div>
+                    <div class="text-xs font-bold text-slate-400 uppercase">Tablas practicadas</div>
+                    <div id="final-tables-practiced" class="text-xl font-black text-emerald-600 mt-1">Tabla del 2</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <button onclick="replaySameTables()" class="flex-1 py-3.5 px-6 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-black text-lg btn-3d-emerald flex items-center justify-center gap-2">
+                    <span>🔄 Repetir estas tablas</span>
+                </button>
+                <button onclick="returnToSetup()" class="flex-1 py-3.5 px-6 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-black text-lg btn-3d-amber flex items-center justify-center gap-2">
+                    <span>⚙️ Elegir otras tablas</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================================================
+           1. CATÁLOGO DE 14 POSTURAS CORPORALES EN SVG (COLORIDOS Y EXPRESIVOS)
+           Incluye las 2 posturas exactas de la imagen de referencia + 12 nuevas
+           ========================================================================= */
+        const POSES_CATALOG = [
+            {
+                id: 'side_stretch',
+                name: 'Inclinarse tocando el suelo',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="105" cy="246" rx="58" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas abiertas (pantalón coral como la imagen) -->
+                    <path d="M95 145 L68 232 M95 145 L146 232" stroke="#f26d5b" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M60 226 L77 232 M138 232 L155 225" stroke="#d9534f" stroke-width="8" stroke-linecap="round"/>
+                    <!-- Pies descalzos -->
+                    <ellipse cx="62" cy="238" rx="11" ry="6" fill="#a96e5b" transform="rotate(-10 62 238)"/>
+                    <ellipse cx="152" cy="238" rx="11" ry="6" fill="#a96e5b" transform="rotate(15 152 238)"/>
+                    <!-- Torso inclinado con camiseta de rayas marrones/amarillas -->
+                    <g transform="rotate(-48 95 145)">
+                        <rect x="75" y="75" width="42" height="72" rx="18" fill="#7c5826"/>
+                        <line x1="77" y1="90" x2="115" y2="90" stroke="#eab308" stroke-width="4"/>
+                        <line x1="77" y1="105" x2="115" y2="105" stroke="#eab308" stroke-width="4"/>
+                        <line x1="77" y1="120" x2="115" y2="120" stroke="#eab308" stroke-width="4"/>
+                        <line x1="77" y1="135" x2="115" y2="135" stroke="#eab308" stroke-width="4"/>
+                        <!-- Brazo arriba y brazo abajo -->
+                        <path d="M96 84 L138 22" stroke="#a96e5b" stroke-width="13" stroke-linecap="round"/>
+                        <circle cx="141" cy="18" r="8" fill="#a96e5b"/>
+                        <path d="M88 88 L42 145" stroke="#a96e5b" stroke-width="13" stroke-linecap="round"/>
+                        <circle cx="39" cy="149" r="8" fill="#a96e5b"/>
+                        <!-- Cabeza con gafas amarillas y pelo rizado -->
+                        <circle cx="96" cy="44" r="28" fill="#a96e5b"/>
+                        <path d="M68 45 C60 22, 85 8, 98 15 C115 8, 132 25, 122 45 C122 28, 72 28, 68 45 Z" fill="#1e1b18"/>
+                        <circle cx="75" cy="24" r="10" fill="#1e1b18"/>
+                        <circle cx="95" cy="18" r="11" fill="#1e1b18"/>
+                        <circle cx="114" cy="24" r="10" fill="#1e1b18"/>
+                        <!-- Gafas -->
+                        <circle cx="85" cy="44" r="9" fill="none" stroke="#facc15" stroke-width="3.5"/>
+                        <circle cx="107" cy="44" r="9" fill="none" stroke="#facc15" stroke-width="3.5"/>
+                        <line x1="94" y1="44" x2="98" y2="44" stroke="#facc15" stroke-width="3.5"/>
+                        <circle cx="85" cy="44" r="3.5" fill="#1e1b18"/>
+                        <circle cx="107" cy="44" r="3.5" fill="#1e1b18"/>
+                        <!-- Sonrisa -->
+                        <path d="M87 56 Q96 65 105 56" fill="#7f1d1d" stroke="#1e1b18" stroke-width="2" stroke-linecap="round"/>
+                    </g>
+                </svg>`
+            },
+            {
+                id: 'one_arm_high',
+                name: 'Un brazo arriba y mano en cintura',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="46" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas pantalón verde menta (como el niño de la derecha en la referencia) -->
+                    <path d="M84 150 L80 232 M116 150 L120 232" stroke="#52b788" stroke-width="22" stroke-linecap="round"/>
+                    <rect x="70" y="140" width="60" height="25" rx="10" fill="#52b788"/>
+                    <!-- Zapatillas moradas -->
+                    <path d="M62 238 Q78 225 92 238 Z" fill="#7c3aed"/>
+                    <path d="M108 238 Q122 225 138 238 Z" fill="#7c3aed"/>
+                    <!-- Brazo izquierdo bien arriba saludando -->
+                    <path d="M75 95 L68 25" stroke="#fcd5ce" stroke-width="15" stroke-linecap="round"/>
+                    <circle cx="67" cy="20" r="9" fill="#fcd5ce"/>
+                    <!-- Brazo derecho en la cintura -->
+                    <path d="M124 98 L145 122 L122 142" stroke="#fcd5ce" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <!-- Torso camisa beige abierta y camiseta blanca -->
+                    <rect x="72" y="84" width="56" height="66" rx="16" fill="#ffffff"/>
+                    <path d="M72 86 L90 86 L86 150 L70 150 Z" fill="#b08968"/>
+                    <path d="M110 86 L128 86 L130 150 L114 150 Z" fill="#b08968"/>
+                    <!-- Cabeza simpática inclinada -->
+                    <g transform="rotate(8 100 55)">
+                        <circle cx="100" cy="54" r="32" fill="#fcd5ce"/>
+                        <!-- Pelo castaño -->
+                        <path d="M66 50 C65 20, 105 12, 134 32 C138 42, 134 52, 132 54 C126 36, 85 32, 66 50 Z" fill="#8d4925"/>
+                        <path d="M95 20 L108 10 L112 24 L128 16 L124 30" fill="#8d4925"/>
+                        <!-- Ojos grandes expresivos -->
+                        <circle cx="88" cy="53" r="6.5" fill="#1e1b18"/>
+                        <circle cx="86" cy="51" r="2.2" fill="#ffffff"/>
+                        <circle cx="112" cy="53" r="6.5" fill="#1e1b18"/>
+                        <circle cx="110" cy="51" r="2.2" fill="#ffffff"/>
+                        <!-- Coloretes rosados -->
+                        <circle cx="76" cy="62" r="6" fill="#f43f5e" opacity="0.45"/>
+                        <circle cx="123" cy="62" r="6" fill="#f43f5e" opacity="0.45"/>
+                        <!-- Sonrisa abierta -->
+                        <path d="M90 65 Q100 76 110 65 Z" fill="#ef4444"/>
+                        <path d="M92 66 L108 66" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                </svg>`
+            },
+            {
+                id: 'superhero_hips',
+                name: 'Manos en la cintura (Superhéroe)',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="52" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Capa roja ondeando -->
+                    <path d="M72 88 L45 195 L155 195 L128 88 Z" fill="#ef4444"/>
+                    <!-- Piernas firmes abiertas -->
+                    <path d="M84 150 L68 232 M116 150 L132 232" stroke="#1d4ed8" stroke-width="22" stroke-linecap="round"/>
+                    <!-- Botas amarillas -->
+                    <ellipse cx="65" cy="238" rx="14" ry="7" fill="#eab308"/>
+                    <ellipse cx="135" cy="238" rx="14" ry="7" fill="#eab308"/>
+                    <!-- Brazos en jarra (manos en la cintura) -->
+                    <path d="M72 95 L42 122 L74 142" stroke="#f1c27d" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M128 95 L158 122 L126 142" stroke="#f1c27d" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <!-- Torso azul con estrella -->
+                    <rect x="70" y="84" width="60" height="68" rx="18" fill="#3b82f6"/>
+                    <polygon points="100,98 104,108 115,108 106,114 109,124 100,118 91,124 94,114 85,108 96,108" fill="#facc15"/>
+                    <rect x="70" y="142" width="60" height="10" rx="4" fill="#eab308"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="52" r="30" fill="#f1c27d"/>
+                    <path d="M68 48 C70 15, 130 15, 132 48 C120 32, 80 32, 68 48 Z" fill="#111827"/>
+                    <circle cx="62" cy="36" r="11" fill="#111827"/>
+                    <circle cx="138" cy="36" r="11" fill="#111827"/>
+                    <circle cx="88" cy="52" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="52" r="5.5" fill="#1e1b18"/>
+                    <path d="M88 65 Q100 74 112 65" fill="none" stroke="#1e1b18" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'airplane_arms',
+                name: 'Brazos abiertos en cruz (Avión)',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="48" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas -->
+                    <path d="M88 150 L82 232 M112 150 L118 232" stroke="#334155" stroke-width="20" stroke-linecap="round"/>
+                    <ellipse cx="78" cy="238" rx="13" ry="7" fill="#ec4899"/>
+                    <ellipse cx="122" cy="238" rx="13" ry="7" fill="#ec4899"/>
+                    <!-- Brazos completamente abiertos en horizontal -->
+                    <path d="M20 104 L180 104" stroke="#ffedd5" stroke-width="16" stroke-linecap="round"/>
+                    <circle cx="16" cy="104" r="9" fill="#ffedd5"/>
+                    <circle cx="184" cy="104" r="9" fill="#ffedd5"/>
+                    <!-- Torso camiseta rosa -->
+                    <rect x="72" y="84" width="56" height="68" rx="18" fill="#ec4899"/>
+                    <path d="M82 110 Q100 95 118 110" fill="none" stroke="#fbcfe8" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="50" r="30" fill="#ffedd5"/>
+                    <!-- Pelo rubio con dos coletas -->
+                    <circle cx="62" cy="48" r="12" fill="#f59e0b"/>
+                    <circle cx="138" cy="48" r="12" fill="#f59e0b"/>
+                    <path d="M70 46 C72 16, 128 16, 130 46 C115 32, 85 32, 70 46 Z" fill="#f59e0b"/>
+                    <circle cx="88" cy="50" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="50" r="5.5" fill="#1e1b18"/>
+                    <circle cx="78" cy="58" r="5" fill="#fb7185" opacity="0.5"/>
+                    <circle cx="122" cy="58" r="5" fill="#fb7185" opacity="0.5"/>
+                    <path d="M90 62 Q100 72 110 62" fill="none" stroke="#be123c" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'hands_on_head',
+                name: 'Manos sobre la cabeza',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="45" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas -->
+                    <path d="M86 150 L82 232 M114 150 L118 232" stroke="#0284c7" stroke-width="21" stroke-linecap="round"/>
+                    <ellipse cx="78" cy="238" rx="13" ry="7" fill="#f97316"/>
+                    <ellipse cx="122" cy="238" rx="13" ry="7" fill="#f97316"/>
+                    <!-- Brazos subiendo en arco hacia la cabeza -->
+                    <path d="M72 98 L40 60 L78 24" stroke="#d69e72" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M128 98 L160 60 L122 24" stroke="#d69e72" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <!-- Torso naranja -->
+                    <rect x="72" y="86" width="56" height="66" rx="18" fill="#f97316"/>
+                    <circle cx="100" cy="118" r="14" fill="#ffedd5"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="54" r="30" fill="#d69e72"/>
+                    <path d="M70 46 C75 18, 125 18, 130 46 C115 35, 85 35, 70 46 Z" fill="#27272a"/>
+                    <circle cx="88" cy="54" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="54" r="5.5" fill="#1e1b18"/>
+                    <path d="M89 67 Q100 76 111 67" fill="none" stroke="#1e1b18" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'victory_v',
+                name: 'Dos brazos arriba en V (¡Victoria!)',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="48" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas -->
+                    <path d="M85 150 L72 232 M115 150 L128 232" stroke="#4f46e5" stroke-width="21" stroke-linecap="round"/>
+                    <ellipse cx="68" cy="238" rx="13" ry="7" fill="#10b981"/>
+                    <ellipse cx="132" cy="238" rx="13" ry="7" fill="#10b981"/>
+                    <!-- Dos brazos en V bien altos -->
+                    <path d="M74 94 L42 22" stroke="#fde68a" stroke-width="15" stroke-linecap="round"/>
+                    <circle cx="40" cy="18" r="9" fill="#fde68a"/>
+                    <path d="M126 94 L158 22" stroke="#fde68a" stroke-width="15" stroke-linecap="round"/>
+                    <circle cx="160" cy="18" r="9" fill="#fde68a"/>
+                    <!-- Torso verde esmeralda -->
+                    <rect x="72" y="84" width="56" height="68" rx="18" fill="#10b981"/>
+                    <path d="M85 108 L100 126 L115 108" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="52" r="30" fill="#fde68a"/>
+                    <path d="M68 48 C68 18, 132 18, 132 48 C118 32, 82 32, 68 48 Z" fill="#b45309"/>
+                    <circle cx="88" cy="52" r="6" fill="#1e1b18"/>
+                    <circle cx="112" cy="52" r="6" fill="#1e1b18"/>
+                    <path d="M88 64 Q100 76 112 64 Z" fill="#ef4444"/>
+                </svg>`
+            },
+            {
+                id: 'flamingo_leg',
+                name: 'A la pata coja (Equilibrio)',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="95" cy="246" rx="40" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Pierna izquierda recta y pierna derecha doblada en 4 -->
+                    <path d="M90 148 L90 232" stroke="#7c3aed" stroke-width="21" stroke-linecap="round"/>
+                    <path d="M112 148 L148 180 L102 192" stroke="#7c3aed" stroke-width="19" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <ellipse cx="88" cy="238" rx="14" ry="7" fill="#f43f5e"/>
+                    <ellipse cx="102" cy="196" rx="11" ry="6" fill="#f43f5e" transform="rotate(-25 102 196)"/>
+                    <!-- Brazos abiertos para mantener el equilibrio -->
+                    <path d="M72 96 L26 78" stroke="#f5cba7" stroke-width="15" stroke-linecap="round"/>
+                    <path d="M128 96 L174 78" stroke="#f5cba7" stroke-width="15" stroke-linecap="round"/>
+                    <!-- Torso amarillo -->
+                    <rect x="72" y="84" width="56" height="66" rx="18" fill="#eab308"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="50" r="30" fill="#f5cba7"/>
+                    <path d="M70 45 C72 15, 128 15, 130 45 C115 32, 85 32, 70 45 Z" fill="#7c2d12"/>
+                    <circle cx="88" cy="50" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="50" r="5.5" fill="#1e1b18"/>
+                    <path d="M90 63 Q100 71 110 63" fill="none" stroke="#1e1b18" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'squat_frog',
+                name: 'En cuclillas / Sentadilla',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="60" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas flexionadas en sentadilla -->
+                    <path d="M82 168 L50 195 L68 234" stroke="#15803d" stroke-width="21" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M118 168 L150 195 L132 234" stroke="#15803d" stroke-width="21" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <ellipse cx="64" cy="238" rx="14" ry="7" fill="#ca8a04"/>
+                    <ellipse cx="136" cy="238" rx="14" ry="7" fill="#ca8a04"/>
+                    <!-- Torso más bajo por la sentadilla -->
+                    <rect x="72" y="106" width="56" height="64" rx="18" fill="#22c55e"/>
+                    <!-- Brazos al frente -->
+                    <path d="M74 120 L38 145" stroke="#edb98a" stroke-width="15" stroke-linecap="round"/>
+                    <path d="M126 120 L162 145" stroke="#edb98a" stroke-width="15" stroke-linecap="round"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="72" r="30" fill="#edb98a"/>
+                    <path d="M70 68 C72 38, 128 38, 130 68 C115 54, 85 54, 70 68 Z" fill="#1e293b"/>
+                    <circle cx="88" cy="72" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="72" r="5.5" fill="#1e1b18"/>
+                    <path d="M88 84 Q100 94 112 84" fill="none" stroke="#1e1b18" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'crossed_arms',
+                name: 'Brazos cruzados en el pecho',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="46" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas -->
+                    <path d="M85 150 L78 232 M115 150 L122 232" stroke="#1e293b" stroke-width="21" stroke-linecap="round"/>
+                    <ellipse cx="75" cy="238" rx="13" ry="7" fill="#06b6d4"/>
+                    <ellipse cx="125" cy="238" rx="13" ry="7" fill="#06b6d4"/>
+                    <!-- Torso turquesa -->
+                    <rect x="70" y="84" width="60" height="68" rx="18" fill="#06b6d4"/>
+                    <!-- Brazos cruzados en X sobre el pecho -->
+                    <path d="M68 98 L125 124" stroke="#8d5524" stroke-width="16" stroke-linecap="round"/>
+                    <path d="M132 98 L75 124" stroke="#8d5524" stroke-width="16" stroke-linecap="round"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="52" r="30" fill="#8d5524"/>
+                    <path d="M70 46 C70 15, 130 15, 130 46 C115 32, 85 32, 70 46 Z" fill="#09090b"/>
+                    <circle cx="88" cy="52" r="5.5" fill="#ffffff"/>
+                    <circle cx="88" cy="52" r="3" fill="#09090b"/>
+                    <circle cx="112" cy="52" r="5.5" fill="#ffffff"/>
+                    <circle cx="112" cy="52" r="3" fill="#09090b"/>
+                    <path d="M88 65 Q100 73 112 65" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'jumping_jack',
+                name: 'Salto de estrella (Piernas y brazos abiertos)',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="248" rx="34" ry="6" fill="rgba(0,0,0,0.10)"/>
+                    <!-- Piernas abiertas en el aire -->
+                    <path d="M86 138 L48 212 M114 138 L152 212" stroke="#be185d" stroke-width="21" stroke-linecap="round"/>
+                    <ellipse cx="44" cy="218" rx="13" ry="7" fill="#facc15" transform="rotate(-25 44 218)"/>
+                    <ellipse cx="156" cy="218" rx="13" ry="7" fill="#facc15" transform="rotate(25 156 218)"/>
+                    <!-- Brazos abiertos arriba -->
+                    <path d="M72 86 L34 32 M128 86 L166 32" stroke="#fed7aa" stroke-width="15" stroke-linecap="round"/>
+                    <!-- Torso morado -->
+                    <rect x="72" y="74" width="56" height="66" rx="18" fill="#9333ea"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="42" r="29" fill="#fed7aa"/>
+                    <path d="M70 38 C72 10, 128 10, 130 38 C115 26, 85 26, 70 38 Z" fill="#dc2626"/>
+                    <circle cx="88" cy="42" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="42" r="5.5" fill="#1e1b18"/>
+                    <path d="M88 53 Q100 65 112 53 Z" fill="#ef4444"/>
+                </svg>`
+            },
+            {
+                id: 'hands_on_knees',
+                name: 'Manos apoyadas en las rodillas',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="48" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas semiflexionadas -->
+                    <path d="M82 152 L68 192 L78 232" stroke="#0f766e" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M118 152 L132 192 L122 232" stroke="#0f766e" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <ellipse cx="75" cy="238" rx="13" ry="7" fill="#ef4444"/>
+                    <ellipse cx="125" cy="238" rx="13" ry="7" fill="#ef4444"/>
+                    <!-- Torso rojo inclinado -->
+                    <rect x="72" y="92" width="56" height="62" rx="18" fill="#ef4444"/>
+                    <!-- Brazos bajando directo a las rodillas -->
+                    <path d="M74 106 L68 188" stroke="#f3d2b3" stroke-width="14" stroke-linecap="round"/>
+                    <path d="M126 106 L132 188" stroke="#f3d2b3" stroke-width="14" stroke-linecap="round"/>
+                    <circle cx="68" cy="190" r="9" fill="#f3d2b3"/>
+                    <circle cx="132" cy="190" r="9" fill="#f3d2b3"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="60" r="30" fill="#f3d2b3"/>
+                    <path d="M70 55 C72 25, 128 25, 130 55 C115 42, 85 42, 70 55 Z" fill="#451a03"/>
+                    <circle cx="88" cy="60" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="60" r="5.5" fill="#1e1b18"/>
+                    <path d="M88 73 Q100 81 112 73" fill="none" stroke="#1e1b18" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'robot_arms',
+                name: 'Pose de Robot (Brazos en ángulo)',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="46" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas rectas -->
+                    <path d="M84 150 L84 232 M116 150 L116 232" stroke="#475569" stroke-width="20" stroke-linecap="round"/>
+                    <rect x="70" y="232" width="26" height="12" rx="5" fill="#6366f1"/>
+                    <rect x="104" y="232" width="26" height="12" rx="5" fill="#6366f1"/>
+                    <!-- un brazo arriba en 90 grados y otro abajo en 90 grados -->
+                    <path d="M72 100 L34 100 L34 52" stroke="#f1c27d" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M128 100 L166 100 L166 148" stroke="#f1c27d" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <!-- Torso índigo -->
+                    <rect x="70" y="84" width="60" height="68" rx="12" fill="#6366f1"/>
+                    <rect x="82" y="100" width="36" height="24" rx="4" fill="#e0e7ff"/>
+                    <!-- Cabeza -->
+                    <circle cx="100" cy="52" r="30" fill="#f1c27d"/>
+                    <path d="M70 46 C72 16, 128 16, 130 46 Z" fill="#1e1b18"/>
+                    <circle cx="88" cy="52" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="52" r="5.5" fill="#1e1b18"/>
+                    <line x1="88" y1="66" x2="112" y2="66" stroke="#1e1b18" stroke-width="4" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'runner_pose',
+                name: 'Pose de Corredor veloz',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="52" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas en zancada -->
+                    <path d="M90 148 L55 190 L42 232" stroke="#1e3a8a" stroke-width="21" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M110 148 L142 195 L165 182" stroke="#1e3a8a" stroke-width="21" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <ellipse cx="38" cy="238" rx="14" ry="7" fill="#22c55e"/>
+                    <ellipse cx="170" cy="180" rx="14" ry="7" fill="#22c55e" transform="rotate(-30 170 180)"/>
+                    <!-- Brazos de sprint -->
+                    <path d="M78 96 L45 120 L65 142" stroke="#c68642" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <path d="M122 96 L152 76 L138 50" stroke="#c68642" stroke-width="15" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    <!-- Torso lima -->
+                    <rect x="72" y="84" width="56" height="66" rx="18" fill="#84cc16" transform="rotate(-8 100 115)"/>
+                    <!-- Cabeza -->
+                    <circle cx="96" cy="50" r="30" fill="#c68642"/>
+                    <path d="M66 46 C70 16, 124 16, 126 46 Z" fill="#1c1917"/>
+                    <circle cx="84" cy="50" r="5.5" fill="#1e1b18"/>
+                    <circle cx="108" cy="50" r="5.5" fill="#1e1b18"/>
+                    <path d="M84 63 Q96 72 108 63" fill="none" stroke="#1e1b18" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            },
+            {
+                id: 'touch_toes',
+                name: 'Agacharse a tocar los pies',
+                svg: `
+                <svg viewBox="0 0 200 260" class="w-full h-full overflow-visible">
+                    <ellipse cx="100" cy="246" rx="50" ry="8" fill="rgba(0,0,0,0.12)"/>
+                    <!-- Piernas abiertas -->
+                    <path d="M82 145 L64 232 M118 145 L136 232" stroke="#374151" stroke-width="21" stroke-linecap="round"/>
+                    <ellipse cx="60" cy="238" rx="13" ry="7" fill="#38bdf8"/>
+                    <ellipse cx="140" cy="238" rx="13" ry="7" fill="#38bdf8"/>
+                    <!-- Torso inclinado hacia abajo -->
+                    <rect x="72" y="102" width="56" height="58" rx="18" fill="#ec4899"/>
+                    <!-- Brazos largos tocando los pies -->
+                    <path d="M76 125 L62 222" stroke="#fde0c4" stroke-width="14" stroke-linecap="round"/>
+                    <path d="M124 125 L138 222" stroke="#fde0c4" stroke-width="14" stroke-linecap="round"/>
+                    <circle cx="62" cy="225" r="8" fill="#fde0c4"/>
+                    <circle cx="138" cy="225" r="8" fill="#fde0c4"/>
+                    <!-- Cabeza mirando de frente abajo -->
+                    <circle cx="100" cy="82" r="28" fill="#fde0c4"/>
+                    <path d="M72 78 C74 50, 126 50, 128 78 Z" fill="#78350f"/>
+                    <circle cx="88" cy="82" r="5.5" fill="#1e1b18"/>
+                    <circle cx="112" cy="82" r="5.5" fill="#1e1b18"/>
+                    <path d="M89 94 Q100 102 111 94" fill="none" stroke="#1e1b18" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>`
+            }
+        ];
+
+        /* =========================================================================
+           2. ESTADO DEL JUEGO Y AUDIO SINTETIZADO (WEB AUDIO API)
+           ========================================================================= */
+        let selectedTables = new Set([2]); // Por defecto la tabla del 2 seleccionada
+        let orderMode = 'random';          // 'random' | 'ordered'
+        let paceMode = 'manual';           // 'manual' | 'auto'
+        let autoSeconds = 7;
+        let soundEnabled = true;
+
+        let questionsList = [];
+        let currentIndex = 0;
+        let score = 0;
+        let isRevealed = false;
+        let isAutoPaused = false;
+        let autoTimerInterval = null;
+        let nextSlideTimeout = null;
+        let timeLeftMs = 0;
+
+        // Web Audio Context
+        let audioCtx = null;
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = getAudioContext();
+                const now = ctx.currentTime;
+
+                if (type === 'click') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.exponentialRampToValueAtTime(780, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } 
+                else if (type === 'tick') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(800, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                }
+                else if (type === 'correct') {
+                    // Melodía alegre de victoria
+                    const notes = [523.25, 659.25, 783.99, 1046.50];
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + i * 0.09);
+                        gain.gain.setValueAtTime(0.22, now + i * 0.09);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.09 + 0.28);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + i * 0.09);
+                        osc.stop(now + i * 0.09 + 0.3);
+                    });
+                }
+                else if (type === 'wrong') {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.linearRampToValueAtTime(150, now + 0.25);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+                else if (type === 'fanfare') {
+                    const notes = [523.25, 659.25, 783.99, 659.25, 783.99, 1046.50];
+                    const times = [0, 0.12, 0.24, 0.36, 0.48, 0.62];
+                    notes.forEach((freq, i) => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + times[i]);
+                        gain.gain.setValueAtTime(0.25, now + times[i]);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + times[i] + 0.35);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + times[i]);
+                        osc.stop(now + times[i] + 0.38);
+                    });
+                }
+            } catch (e) {
+                // Ignorar si el navegador bloquea audio antes de interacción
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const icon = soundEnabled ? '🔊' : '🔇';
+            document.getElementById('setup-sound-icon').textContent = icon;
+            document.getElementById('setup-sound-text').textContent = soundEnabled ? 'Sonido: Sí' : 'Sonido: No';
+            document.getElementById('game-sound-btn').textContent = icon;
+            if (soundEnabled) playSound('click');
+        }
+
+        /* =========================================================================
+           3. LÓGICA DE LA PANTALLA DE CONFIGURACIÓN
+           ========================================================================= */
+        function renderTableButtons() {
+            const grid = document.getElementById('tables-grid');
+            grid.innerHTML = '';
+
+            for (let t = 1; t <= 10; t++) {
+                const isSelected = selectedTables.has(t);
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => toggleTable(t);
+                btn.className = `py-3 sm:py-4 rounded-2xl font-black text-xl sm:text-2xl transition transform hover:scale-105 flex flex-col items-center justify-center border-2 ${
+                    isSelected 
+                        ? 'bg-amber-400 border-amber-500 text-slate-950 shadow-[0_5px_0_#b45309] -translate-y-0.5' 
+                        : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'
+                }`;
+                btn.innerHTML = `
+                    <span class="text-xs font-bold uppercase tracking-wider opacity-75">Tabla</span>
+                    <span class="number-font text-2xl sm:text-3xl">${t}</span>
+                `;
+                grid.appendChild(btn);
+            }
+            updateSetupSummary();
+        }
+
+        function toggleTable(num) {
+            playSound('click');
+            if (selectedTables.has(num)) {
+                selectedTables.delete(num);
+            } else {
+                selectedTables.add(num);
+            }
+            document.getElementById('table-error-msg').classList.add('hidden');
+            renderTableButtons();
+        }
+
+        function selectPreset(arr) {
+            playSound('click');
+            selectedTables = new Set(arr);
+            document.getElementById('table-error-msg').classList.add('hidden');
+            renderTableButtons();
+        }
+
+        function setOrderMode(mode) {
+            playSound('click');
+            orderMode = mode;
+            const randBtn = document.getElementById('order-random-btn');
+            const seqBtn = document.getElementById('order-sequential-btn');
+
+            if (mode === 'random') {
+                randBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-indigo-600 bg-indigo-50 text-indigo-900';
+                seqBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100';
+            } else {
+                seqBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-indigo-600 bg-indigo-50 text-indigo-900';
+                randBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100';
+            }
+            updateSetupSummary();
+        }
+
+        function setPaceMode(mode) {
+            playSound('click');
+            paceMode = mode;
+            const manBtn = document.getElementById('pace-manual-btn');
+            const autoBtn = document.getElementById('pace-auto-btn');
+            const secSelector = document.getElementById('auto-seconds-selector');
+
+            if (mode === 'manual') {
+                manBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-emerald-600 bg-emerald-50 text-emerald-900';
+                autoBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100';
+                secSelector.classList.add('hidden');
+            } else {
+                autoBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-emerald-600 bg-emerald-50 text-emerald-900';
+                manBtn.className = 'p-3 rounded-xl border-2 font-bold text-left transition flex flex-col gap-1 border-slate-200 bg-white text-slate-700 hover:bg-slate-100';
+                secSelector.classList.remove('hidden');
+            }
+        }
+
+        function setAutoSeconds(sec) {
+            playSound('click');
+            autoSeconds = sec;
+            document.getElementById('auto-time-badge').textContent = `${sec} seg`;
+            document.querySelectorAll('.sec-btn').forEach(btn => {
+                if (Number(btn.dataset.sec) === sec) {
+                    btn.className = 'sec-btn px-2.5 py-1 rounded-lg font-bold bg-emerald-600 text-white';
+                } else {
+                    btn.className = 'sec-btn px-2.5 py-1 rounded-lg font-bold bg-slate-200 text-slate-700';
+                }
+            });
+        }
+
+        function updateSetupSummary() {
+            const summaryEl = document.getElementById('summary-text');
+            const arr = Array.from(selectedTables).sort((a, b) => a - b);
+            if (arr.length === 0) {
+                summaryEl.textContent = 'Ninguna tabla seleccionada';
+                return;
+            }
+            const totalQ = arr.length * 10;
+            const modeLabel = orderMode === 'random' ? 'en orden aleatorio' : 'en orden del 1 al 10';
+            if (arr.length === 1) {
+                summaryEl.textContent = `Tabla del ${arr[0]} (${totalQ} preguntas ${modeLabel})`;
+            } else if (arr.length === 10) {
+                summaryEl.textContent = `Todas las tablas del 1 al 10 (${totalQ} preguntas ${modeLabel})`;
+            } else {
+                summaryEl.textContent = `Tablas: ${arr.join(', ')} (${totalQ} preguntas ${modeLabel})`;
+            }
+        }
+
+        /* =========================================================================
+           4. GENERACIÓN DE PREGUNTAS Y DISTRACTORES INTELIGENTES
+           ========================================================================= */
+        function generateDistractor(a, b, correct) {
+            const candidates = new Set();
+            // Errores cercanos habituales en Primaria
+            if (b < 10) candidates.add(a * (b + 1));
+            if (b > 1) candidates.add(a * (b - 1));
+            if (a < 10) candidates.add((a + 1) * b);
+            if (a > 1) candidates.add((a - 1) * b);
+            candidates.add(correct + a);
+            candidates.add(correct + b);
+            candidates.add(correct + 2);
+            candidates.add(correct - 2);
+            candidates.add(correct + 10);
+            if (correct > 10) candidates.add(correct - 10);
+
+            // Filtrar válidos (>0 y distinto del correcto)
+            const valid = Array.from(candidates).filter(n => n > 0 && n !== correct);
+            if (valid.length === 0) return correct + 3;
+            return valid[Math.floor(Math.random() * valid.length)];
+        }
+
+        function buildQuestions() {
+            const tablesArr = Array.from(selectedTables).sort((a, b) => a - b);
+            let rawList = [];
+
+            tablesArr.forEach(t => {
+                for (let m = 1; m <= 10; m++) {
+                    rawList.push({ a: t, b: m, correct: t * m });
+                }
+            });
+
+            if (orderMode === 'random') {
+                for (let i = rawList.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [rawList[i], rawList[j]] = [rawList[j], rawList[i]];
+                }
+            }
+
+            // Asignar distractores y 2 posturas distintas a cada pregunta
+            let lastPairKey = '';
+            questionsList = rawList.map((item, idx) => {
+                const wrong = generateDistractor(item.a, item.b, item.correct);
+                const correctSide = Math.random() < 0.5 ? 'left' : 'right';
+
+                // Para la primera pregunta si sale 5x8 o cualquiera, garantizar dos posturas distintas muy claras
+                let poseIdx1 = Math.floor(Math.random() * POSES_CATALOG.length);
+                let poseIdx2 = Math.floor(Math.random() * POSES_CATALOG.length);
+                while (poseIdx2 === poseIdx1 || `${poseIdx1}-${poseIdx2}` === lastPairKey) {
+                    poseIdx2 = Math.floor(Math.random() * POSES_CATALOG.length);
+                }
+                lastPairKey = `${poseIdx1}-${poseIdx2}`;
+
+                // En la primera pregunta usamos las dos posturas icónicas de la imagen de referencia para sorprender al docente
+                if (idx === 0) {
+                    poseIdx1 = 0; // Inclinarse tocando el suelo
+                    poseIdx2 = 1; // Un brazo bien arriba
+                }
+
+                return {
+                    ...item,
+                    wrong,
+                    correctSide,
+                    leftValue: correctSide === 'left' ? item.correct : wrong,
+                    rightValue: correctSide === 'right' ? item.correct : wrong,
+                    leftPose: POSES_CATALOG[poseIdx1],
+                    rightPose: POSES_CATALOG[poseIdx2]
+                };
+            });
+        }
+
+        /* =========================================================================
+           5. FLUJO DE PARTIDA Y RENDERIZADO DE PREGUNTA
+           ========================================================================= */
+        function startGame() {
+            if (selectedTables.size === 0) {
+                document.getElementById('table-error-msg').classList.remove('hidden');
+                playSound('wrong');
+                return;
+            }
+
+            playSound('click');
+            buildQuestions();
+            currentIndex = 0;
+            score = 0;
+            isAutoPaused = false;
+
+            const arr = Array.from(selectedTables).sort((a, b) => a - b);
+            document.getElementById('active-tables-pill').textContent = 
+                arr.length === 10 ? 'Tablas: 1-10' : `Tablas: ${arr.join(', ')}`;
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('finish-modal').classList.add('hidden');
+            document.getElementById('finish-modal').classList.remove('flex');
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            renderCurrentQuestion();
+        }
+
+        function renderCurrentQuestion() {
+            clearTimers();
+            isRevealed = false;
+
+            const q = questionsList[currentIndex];
+            document.getElementById('current-q-num').textContent = currentIndex + 1;
+            document.getElementById('total-q-num').textContent = questionsList.length;
+            document.getElementById('score-counter').textContent = score;
+
+            // Barra de progreso inferior
+            const pct = ((currentIndex + 1) / questionsList.length) * 100;
+            document.getElementById('progress-bar-fill').style.width = `${pct}%`;
+
+            // Números del cartel amarillo superior
+            document.getElementById('factor-a').textContent = q.a;
+            document.getElementById('factor-b').textContent = q.b;
+
+            // Tarjetas izquierda y derecha
+            const cardLeft = document.getElementById('card-left');
+            const cardRight = document.getElementById('card-right');
+            cardLeft.className = 'answer-card-left cursor-pointer bg-white rounded-[2.5rem] w-[260px] sm:w-[330px] h-[220px] sm:h-[290px] flex flex-col items-center justify-center relative border-4 border-white select-none ml-14 sm:ml-20';
+            cardRight.className = 'answer-card-right cursor-pointer bg-white rounded-[2.5rem] w-[260px] sm:w-[330px] h-[220px] sm:h-[290px] flex flex-col items-center justify-center relative border-4 border-white select-none mr-14 sm:mr-20';
+
+            document.getElementById('number-left').textContent = q.leftValue;
+            document.getElementById('number-right').textContent = q.rightValue;
+
+            document.getElementById('pose-label-left').textContent = q.leftPose.name;
+            document.getElementById('pose-label-right').textContent = q.rightPose.name;
+
+            const charLeft = document.getElementById('char-container-left');
+            const charRight = document.getElementById('char-container-right');
+            charLeft.className = 'character-idle absolute -left-20 sm:-left-28 -bottom-3 sm:-bottom-4 w-36 sm:w-48 h-48 sm:h-64 pointer-events-none z-20 flex items-end justify-center drop-shadow-md';
+            charRight.className = 'character-idle absolute -right-20 sm:-right-28 -bottom-3 sm:-bottom-4 w-36 sm:w-48 h-48 sm:h-64 pointer-events-none z-20 flex items-end justify-center drop-shadow-md';
+
+            charLeft.innerHTML = q.leftPose.svg;
+            charRight.innerHTML = q.rightPose.svg;
+
+            document.getElementById('badge-left').classList.add('hidden');
+            document.getElementById('badge-right').classList.add('hidden');
+
+            // Textos de guía y botones
+            document.getElementById('instruction-text').textContent = '¡Haced la postura del resultado correcto con vuestro cuerpo!';
+            document.getElementById('center-btn-icon').textContent = '👁️';
+            document.getElementById('teacher-btn-text').textContent = '¡Revelar Respuesta!';
+            document.getElementById('main-teacher-btn').className = 'px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm sm:text-base shadow-lg btn-3d-indigo whitespace-nowrap flex items-center gap-2';
+
+            // Si está en modo automático, iniciar cuenta atrás
+            if (paceMode === 'auto') {
+                document.getElementById('timer-svg').classList.remove('hidden');
+                document.getElementById('auto-pause-btn').classList.remove('hidden');
+                startAutoCountdown();
+            } else {
+                document.getElementById('timer-svg').classList.add('hidden');
+                document.getElementById('auto-pause-btn').classList.add('hidden');
+            }
+        }
+
+        function handleCardClick(side) {
+            if (isRevealed) {
+                nextQuestion();
+                return;
+            }
+            revealAnswer(side);
+        }
+
+        function handleCenterAction() {
+            if (!isRevealed) {
+                revealAnswer(null);
+            } else {
+                nextQuestion();
+            }
+        }
+
+        function revealAnswer(chosenSide) {
+            if (isRevealed) return;
+            clearTimers();
+            isRevealed = true;
+
+            const q = questionsList[currentIndex];
+            const isLeftCorrect = q.correctSide === 'left';
+
+            const cardLeft = document.getElementById('card-left');
+            const cardRight = document.getElementById('card-right');
+            const badgeLeft = document.getElementById('badge-left');
+            const badgeRight = document.getElementById('badge-right');
+            const charLeft = document.getElementById('char-container-left');
+            const charRight = document.getElementById('char-container-right');
+
+            // Sumar estrella si reveló la clase o acertó la tarjeta
+            if (!chosenSide || chosenSide === q.correctSide) {
+                score++;
+                document.getElementById('score-counter').textContent = score;
+                playSound('correct');
+                launchConfetti(45);
+            } else {
+                playSound('wrong');
+            }
+
+            if (isLeftCorrect) {
+                cardLeft.classList.add('card-correct');
+                charLeft.classList.add('character-winner');
+                badgeLeft.textContent = '✓';
+                badgeLeft.className = 'absolute -top-4 -right-4 w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center text-2xl shadow-lg font-black';
+
+                if (chosenSide === 'right') {
+                    cardRight.classList.add('card-wrong-Picked');
+                    badgeRight.textContent = '✗';
+                    badgeRight.className = 'absolute -top-4 -left-4 w-12 h-12 rounded-full bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg font-black';
+                } else {
+                    cardRight.classList.add('card-dimmed');
+                }
+            } else {
+                cardRight.classList.add('card-correct');
+                charRight.classList.add('character-winner');
+                badgeRight.textContent = '✓';
+                badgeRight.className = 'absolute -top-4 -left-4 w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center text-2xl shadow-lg font-black';
+
+                if (chosenSide === 'left') {
+                    cardLeft.classList.add('card-wrong-Picked');
+                    badgeLeft.textContent = '✗';
+                    badgeLeft.className = 'absolute -top-4 -right-4 w-12 h-12 rounded-full bg-rose-500 text-white flex items-center justify-center text-2xl shadow-lg font-black';
+                } else {
+                    cardLeft.classList.add('card-dimmed');
+                }
+            }
+
+            const winningPose = isLeftCorrect ? q.leftPose.name : q.rightPose.name;
+            document.getElementById('instruction-text').innerHTML = 
+                `¡Correcto: <strong>${q.a} × ${q.b} = ${q.correct}</strong>! Postura: <strong>${winningPose}</strong>`;
+
+            document.getElementById('center-btn-icon').textContent = '➡️';
+            document.getElementById('teacher-btn-text').textContent = 'Siguiente Pregunta ➡️';
+            document.getElementById('main-teacher-btn').className = 'px-5 py-2.5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-sm sm:text-base shadow-lg btn-3d-emerald whitespace-nowrap flex items-center gap-2';
+
+            if (paceMode === 'auto' && !isAutoPaused) {
+                nextSlideTimeout = setTimeout(() => {
+                    nextQuestion();
+                }, 2800);
+            }
+        }
+
+        function nextQuestion() {
+            playSound('click');
+            if (currentIndex < questionsList.length - 1) {
+                currentIndex++;
+                renderCurrentQuestion();
+            } else {
+                showFinishModal();
+            }
+        }
+
+        function skipOrNextQuestion() {
+            nextQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                playSound('click');
+                currentIndex--;
+                renderCurrentQuestion();
+            }
+        }
+
+        /* =========================================================================
+           6. TEMPORIZADOR PARA MODO AUTOMÁTICO (ESTILO VÍDEO DE PAUSA ACTIVA)
+           ========================================================================= */
+        function startAutoCountdown() {
+            const totalMs = autoSeconds * 1000;
+            timeLeftMs = totalMs;
+            const circle = document.getElementById('timer-circle');
+            const circumference = 220;
+            circle.style.strokeDashoffset = 0;
+
+            let lastSecondTick = autoSeconds;
+
+            autoTimerInterval = setInterval(() => {
+                if (isAutoPaused) return;
+                timeLeftMs -= 100;
+                const ratio = Math.max(0, timeLeftMs / totalMs);
+                circle.style.strokeDashoffset = circumference * (1 - ratio);
+
+                const secRemaining = Math.ceil(timeLeftMs / 1000);
+                if (secRemaining !== lastSecondTick && secRemaining <= 3 && secRemaining > 0) {
+                    lastSecondTick = secRemaining;
+                    playSound('tick');
+                }
+
+                if (timeLeftMs <= 0) {
+                    clearInterval(autoTimerInterval);
+                    revealAnswer(null);
+                }
+            }, 100);
+        }
+
+        function toggleAutoPause() {
+            isAutoPaused = !isAutoPaused;
+            const btn = document.getElementById('auto-pause-btn');
+            btn.textContent = isAutoPaused ? '▶️ Reanudar tiempo' : '⏸️ Pausar tiempo';
+        }
+
+        function clearTimers() {
+            if (autoTimerInterval) clearInterval(autoTimerInterval);
+            if (nextSlideTimeout) clearTimeout(nextSlideTimeout);
+        }
+
+        /* =========================================================================
+           7. FIN DE PARTIDA, PANTALLA COMPLETA Y TECLADO
+           ========================================================================= */
+        function showFinishModal() {
+            clearTimers();
+            playSound('fanfare');
+            launchConfetti(110);
+
+            const arr = Array.from(selectedTables).sort((a, b) => a - b);
+            document.getElementById('final-total-q').textContent = questionsList.length;
+            document.getElementById('final-tables-practiced').textContent = 
+                arr.length === 10 ? 'Todas (1 al 10)' : `Tabla${arr.length > 1 ? 's' : ''}: ${arr.join(', ')}`;
+
+            const modal = document.getElementById('finish-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function replaySameTables() {
+            startGame();
+        }
+
+        function returnToSetup() {
+            clearTimers();
+            playSound('click');
+            document.getElementById('finish-modal').classList.add('hidden');
+            document.getElementById('finish-modal').classList.remove('flex');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('setup-screen').classList.remove('hidden');
+            renderTableButtons();
+        }
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        // Atajos de teclado para el docente en el aula
+        window.addEventListener('keydown', (e) => {
+            const gameVisible = !document.getElementById('game-screen').classList.contains('hidden');
+            const modalVisible = !document.getElementById('finish-modal').classList.contains('hidden');
+            if (!gameVisible || modalVisible) return;
+
+            if (e.code === 'Space' || e.code === 'Enter') {
+                e.preventDefault();
+                handleCenterAction();
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                if (!isRevealed) revealAnswer('left');
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                if (!isRevealed) revealAnswer('right');
+                else nextQuestion();
+            } else if (e.code === 'ArrowUp') {
+                e.preventDefault();
+                prevQuestion();
+            }
+        });
+
+        /* =========================================================================
+           8. SISTEMA LIGERO DE CONFETI EN CANVAS
+           ========================================================================= */
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+        let confettiParticles = [];
+        let confettiAnimId = null;
+
+        function resizeConfettiCanvas() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeConfettiCanvas);
+        resizeConfettiCanvas();
+
+        function launchConfetti(count = 50) {
+            const colors = ['#facc15', '#22c55e', '#3b82f6', '#ec4899', '#f97316', '#a855f7'];
+            for (let i = 0; i < count; i++) {
+                confettiParticles.push({
+                    x: window.innerWidth * (0.2 + Math.random() * 0.6),
+                    y: window.innerHeight * 0.35,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: -Math.random() * 12 - 4,
+                    size: Math.random() * 9 + 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rotation: Math.random() * 360,
+                    vr: (Math.random() - 0.5) * 12
+                });
+            }
+            if (!confettiAnimId) animateConfetti();
+        }
+
+        function animateConfetti() {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiParticles.forEach((p) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.35; // gravedad
+                p.rotation += p.vr;
+
+                confettiCtx.save();
+                confettiCtx.translate(p.x, p.y);
+                confettiCtx.rotate((p.rotation * Math.PI) / 180);
+                confettiCtx.fillStyle = p.color;
+                confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.65);
+                confettiCtx.restore();
+            });
+
+            confettiParticles = confettiParticles.filter(p => p.y < confettiCanvas.height + 30);
+            if (confettiParticles.length > 0) {
+                confettiAnimId = requestAnimationFrame(animateConfetti);
+            } else {
+                confettiAnimId = null;
+            }
+        }
+
+        // Inicializar interfaz al cargar
+        window.onload = function () {
+            renderTableButtons();
+        };
+    </script>
+</body>
+</html>
