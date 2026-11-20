@@ -1,0 +1,2347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Policubos Multiplicadores — 3.º de Primaria</title>
+
+  <!-- Tipografías redondeadas y muy legibles para pizarra digital -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fredoka', 'Nunito', 'sans-serif'],
+            sans: ['Nunito', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* =========================================================
+       ESTILOS PERSONALIZADOS — ESTÉTICA JUGUETE EDUCATIVO 3D
+       ========================================================= */
+    :root {
+      --bg-dot: #cbd5e1;
+    }
+
+    body {
+      font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+      background-color: #f0f9ff;
+      background-image:
+        radial-gradient(circle at 18% 12%, rgba(254, 240, 138, 0.55) 0%, transparent 32%),
+        radial-gradient(circle at 86% 18%, rgba(167, 243, 208, 0.5) 0%, transparent 34%),
+        radial-gradient(circle at 80% 88%, rgba(251, 207, 232, 0.45) 0%, transparent 35%),
+        radial-gradient(#cbd5e1 1.3px, transparent 1.3px);
+      background-size: 100% 100%, 100% 100%, 100% 100%, 26px 26px;
+      color: #1e293b;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', 'Nunito', sans-serif;
+    }
+
+    /* Botones táctiles con efecto 3D presionable */
+    .btn-3d {
+      position: relative;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.15s ease;
+      user-select: none;
+      cursor: pointer;
+    }
+    .btn-3d:hover:not(:disabled) {
+      filter: brightness(1.04);
+      transform: translateY(-1px);
+    }
+    .btn-3d:active:not(:disabled) {
+      transform: translateY(4px) !important;
+      box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.22) !important;
+    }
+    .btn-3d:disabled {
+      opacity: 0.52;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-blue   { background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%); box-shadow: 0 5px 0 #1d4ed8; color: #fff; }
+    .btn-green  { background: linear-gradient(180deg, #34d399 0%, #10b981 100%); box-shadow: 0 5px 0 #047857; color: #fff; }
+    .btn-amber  { background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%); box-shadow: 0 5px 0 #b45309; color: #fff; }
+    .btn-purple { background: linear-gradient(180deg, #a78bfa 0%, #8b5cf6 100%); box-shadow: 0 5px 0 #6d28d9; color: #fff; }
+    .btn-rose   { background: linear-gradient(180deg, #fb7185 0%, #f43f5e 100%); box-shadow: 0 5px 0 #be123c; color: #fff; }
+    .btn-teal   { background: linear-gradient(180deg, #2dd4bf 0%, #0d9488 100%); box-shadow: 0 5px 0 #0f766e; color: #fff; }
+    .btn-white  { background: #ffffff; box-shadow: 0 5px 0 #cbd5e1; color: #1e293b; border: 2px solid #e2e8f0; }
+
+    /* Ficha de selección de tabla */
+    .table-tile {
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+      user-select: none;
+    }
+    .table-tile.selected {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+      color: #ffffff;
+      border-color: #0369a1;
+      box-shadow: 0 5px 0 #0369a1;
+      transform: translateY(-2px);
+    }
+    .table-tile:not(.selected) {
+      background: #f8fafc;
+      color: #475569;
+      border-color: #cbd5e1;
+      box-shadow: 0 4px 0 #cbd5e1;
+    }
+    .table-tile:active {
+      transform: translateY(3px);
+      box-shadow: 0 1px 0 #64748b;
+    }
+
+    /* Tarjetas de modo de juego */
+    .mode-card {
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .mode-card.active {
+      border-color: #0284c7;
+      background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+      box-shadow: 0 6px 0 #0284c7;
+      transform: translateY(-2px);
+    }
+    .mode-card:not(.active) {
+      border-color: #e2e8f0;
+      background: #ffffff;
+      box-shadow: 0 4px 0 #cbd5e1;
+    }
+
+    /* =========================================================
+       POLICUBOS ENCAJABLES 3D REALISTAS (CSS PURO)
+       ========================================================= */
+    .policubo-stage {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(241,245,249,0.95) 100%);
+      border: 3px dashed #bae6fd;
+      border-radius: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Base o mesa sobre la que se apoyan las columnas */
+    .policubo-shelf {
+      border-bottom: 6px solid #cbd5e1;
+      border-radius: 0 0 12px 12px;
+      padding-bottom: 6px;
+      position: relative;
+    }
+
+    /* Cada columna vertical de policubos */
+    .cube-column {
+      display: flex;
+      flex-direction: column-reverse; /* Apila de abajo hacia arriba */
+      align-items: center;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+      padding: 2px;
+      border-radius: 12px;
+    }
+    .cube-column:hover {
+      transform: translateY(-4px);
+    }
+    .cube-column.highlighted {
+      transform: translateY(-7px) scale(1.05);
+      filter: drop-shadow(0 8px 12px rgba(15, 23, 42, 0.22));
+    }
+    .cube-column.dimmed {
+      opacity: 0.42;
+      filter: saturate(0.6);
+    }
+
+    /* Insignia numérica encima de cada columna (conteo a saltos) */
+    .col-count-badge {
+      position: absolute;
+      top: -34px;
+      left: 50%;
+      transform: translateX(-50%) scale(0);
+      background: #0f172a;
+      color: #fde047;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      min-width: 30px;
+      height: 28px;
+      padding: 0 7px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+      border: 2px solid #ffffff;
+      opacity: 0;
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease;
+      pointer-events: none;
+      z-index: 30;
+      white-space: nowrap;
+    }
+    .col-count-badge.visible {
+      transform: translateX(-50%) scale(1);
+      opacity: 1;
+    }
+
+    /* El bloque policubo individual */
+    .policubo {
+      width: var(--cube-size, 42px);
+      height: var(--cube-size, 42px);
+      background-color: var(--c-main, #3b82f6);
+      border-radius: calc(var(--cube-size, 42px) * 0.16);
+      border: 2px solid var(--c-dark, #1d4ed8);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: -2px; /* Encaje sutil entre cubos */
+      box-shadow:
+        inset 3px 3px 0 rgba(255, 255, 255, 0.42),
+        inset -3px -4px 0 rgba(0, 0, 0, 0.2),
+        0 3px 5px rgba(15, 23, 42, 0.16);
+      transition: transform 0.2s ease;
+    }
+
+    /* Pivote / conector superior (stud) de policubo encajable */
+    .policubo::before {
+      content: '';
+      position: absolute;
+      top: calc(var(--cube-size, 42px) * -0.2);
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(var(--cube-size, 42px) * 0.44);
+      height: calc(var(--cube-size, 42px) * 0.2);
+      background-color: var(--c-main, #3b82f6);
+      border: 2px solid var(--c-dark, #1d4ed8);
+      border-bottom: none;
+      border-radius: 4px 4px 0 0;
+      box-shadow: inset 2px 2px 0 rgba(255, 255, 255, 0.45);
+      pointer-events: none;
+    }
+
+    /* Detalle circular/agujero lateral sutil típico de los policubos Mathlink */
+    .policubo::after {
+      content: '';
+      position: absolute;
+      width: calc(var(--cube-size, 42px) * 0.26);
+      height: calc(var(--cube-size, 42px) * 0.26);
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.1);
+      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.16), 1px 1px 0 rgba(255, 255, 255, 0.22);
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    /* Número dentro de cada cubo al contar */
+    .policubo-num {
+      position: relative;
+      z-index: 5;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+      font-size: calc(var(--cube-size, 42px) * 0.42);
+      line-height: 1;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      pointer-events: none;
+    }
+    .policubo.numbered::after {
+      opacity: 0.12;
+    }
+    .policubo.numbered .policubo-num {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Animaciones de caída, celebración, giro y error */
+    @keyframes cubeDrop {
+      0%   { opacity: 0; transform: translateY(-38px) scale(0.72); }
+      65%  { opacity: 1; transform: translateY(3px) scale(1.06, 0.94); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-cube-drop {
+      animation: cubeDrop 0.34s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
+    }
+
+    @keyframes happyHop {
+      0%, 100% { transform: translateY(0) scale(1); }
+      35%      { transform: translateY(-14px) scale(1.06); }
+      65%      { transform: translateY(-4px) scale(0.98); }
+    }
+    .animate-happy-hop {
+      animation: happyHop 0.55s ease-in-out;
+    }
+
+    @keyframes gentleShake {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px) rotate(-1.5deg); }
+      40%      { transform: translateX(8px) rotate(1.5deg); }
+      60%      { transform: translateX(-6px) rotate(-1deg); }
+      80%      { transform: translateX(5px) rotate(1deg); }
+    }
+    .animate-shake {
+      animation: gentleShake 0.42s ease-in-out;
+    }
+
+    @keyframes stageRotatePop {
+      0%   { transform: scale(0.92) rotate(-3deg); opacity: 0.5; }
+      60%  { transform: scale(1.03) rotate(1deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .animate-rotate-pop {
+      animation: stageRotatePop 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes mascotFloat {
+      0%, 100% { transform: translateY(0px); }
+      50%      { transform: translateY(-5px); }
+    }
+    .mascot-float {
+      animation: mascotFloat 2.8s ease-in-out infinite;
+    }
+
+    @keyframes starPop {
+      0%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+      70%  { transform: scale(1.22) rotate(8deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .animate-star-pop {
+      animation: starPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Interruptor (Toggle Switch) */
+    .toggle-track {
+      width: 50px;
+      height: 28px;
+      border-radius: 999px;
+      background: #cbd5e1;
+      position: relative;
+      transition: background 0.2s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .toggle-track.on {
+      background: #10b981;
+    }
+    .toggle-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .toggle-track.on .toggle-thumb {
+      transform: translateX(22px);
+    }
+
+    /* Canvas de confeti superpuesto sin bloquear clics */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-amber-200 selection:text-slate-900">
+
+  <!-- Canvas para explosiones de confeti -->
+  <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
+  <!-- Contenedor principal -->
+  <div id="app" class="max-w-5xl mx-auto px-3 sm:px-5 py-3 sm:py-5 min-h-screen flex flex-col">
+
+    <!-- =========================================================
+         PANTALLA 1: MENÚ PRINCIPAL DE CONFIGURACIÓN
+         ========================================================= -->
+    <section id="menuScreen" class="flex-1 flex flex-col justify-center gap-4 sm:gap-5">
+
+      <!-- Cabecera del Menú con Mascota Cubi -->
+      <header class="bg-white/95 backdrop-blur rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-sky-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <!-- Mascota SVG Cubi (Policubo sonriente) -->
+          <div class="w-20 h-20 sm:w-24 sm:h-24 shrink-0 mascot-float" id="menuMascotBox"></div>
+          <div class="text-center sm:text-left">
+            <span class="inline-block bg-amber-100 text-amber-800 font-extrabold text-xs sm:text-sm px-3 py-1 rounded-full mb-1 border border-amber-300">
+              3.º de Educación Primaria
+            </span>
+            <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-800 tracking-tight leading-tight">
+              <span class="text-sky-600">Policubos</span>
+              <span class="text-rose-500">Multiplicadores</span>
+            </h1>
+            <p class="text-slate-600 font-bold text-sm sm:text-base mt-0.5">
+              ¡Aprende y practica las tablas viendo y construyendo bloques!
+            </p>
+          </div>
+        </div>
+
+        <!-- Botón de sonido en el menú -->
+        <button id="menuSoundBtn" type="button"
+          class="btn-3d btn-white rounded-2xl px-4 py-3 font-extrabold text-slate-700 flex items-center gap-2 text-sm sm:text-base shrink-0"
+          aria-label="Activar o silenciar sonido">
+          <span class="sound-icon text-xl">🔊</span>
+          <span class="sound-label">Sonido: SÍ</span>
+        </button>
+      </header>
+
+      <!-- Cuerpo de configuración en 2 bloques responsivos -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
+
+        <!-- COLUMNA IZQUIERDA: Selector flexible de Tablas (1 al 10) -->
+        <div id="tablesCard" class="lg:col-span-7 bg-white/95 rounded-3xl p-4 sm:p-6 shadow-lg border-4 border-emerald-200 flex flex-col justify-between gap-4">
+          <div>
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h2 class="text-xl sm:text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <span class="text-2xl">🎯</span> ¿Qué tablas repasamos?
+              </h2>
+              <span id="selectedTablesBadge" class="bg-sky-100 text-sky-800 font-extrabold text-xs sm:text-sm px-3 py-1 rounded-full border border-sky-300">
+                10 seleccionadas
+              </span>
+            </div>
+
+            <!-- Atajos rápidos -->
+            <div class="flex flex-wrap gap-2 mb-4">
+              <button type="button" data-preset="all" class="preset-btn btn-3d bg-sky-100 hover:bg-sky-200 text-sky-900 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl shadow-[0_3px_0_#7dd3fc]">
+                Todas (1-10)
+              </button>
+              <button type="button" data-preset="none" class="preset-btn btn-3d bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl shadow-[0_3px_0_#cbd5e1]">
+                Ninguna
+              </button>
+              <button type="button" data-preset="easy" class="preset-btn btn-3d bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl shadow-[0_3px_0_#6ee7b7]">
+                Fáciles (2, 5, 10)
+              </button>
+              <button type="button" data-preset="medium" class="preset-btn btn-3d bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl shadow-[0_3px_0_#fcd34d]">
+                Intermedias (3, 4, 6)
+              </button>
+              <button type="button" data-preset="hard" class="preset-btn btn-3d bg-rose-100 hover:bg-rose-200 text-rose-900 font-extrabold text-xs sm:text-sm px-3 py-2 rounded-xl shadow-[0_3px_0_#fda4af]">
+                Reto (7, 8, 9)
+              </button>
+            </div>
+
+            <!-- Cuadrícula de fichas del 1 al 10 -->
+            <div id="tableTilesGrid" class="grid grid-cols-5 gap-2.5 sm:gap-3">
+              <!-- Se rellena dinámicamente por JS -->
+            </div>
+
+            <!-- Mensaje de validación visual si no hay tablas seleccionadas -->
+            <div id="tablesErrorMsg" class="hidden mt-3 bg-rose-50 border-2 border-rose-300 text-rose-700 font-extrabold rounded-2xl px-4 py-2.5 text-sm flex items-center gap-2">
+              <span class="text-xl">⚠️</span>
+              <span>¡Elige al menos una tabla del 1 al 10 para empezar a jugar!</span>
+            </div>
+          </div>
+
+          <!-- Opciones rápidas para el docente -->
+          <div class="pt-3 border-t-2 border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label class="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl px-3.5 py-2.5 border-2 border-slate-200 cursor-pointer">
+              <div>
+                <div class="font-extrabold text-sm text-slate-800">🧱 Policubos siempre</div>
+                <div class="text-xs text-slate-500 font-bold">Mostrarlos sin pulsar ayuda</div>
+              </div>
+              <div id="menuAlwaysShowToggle" class="toggle-track" role="switch" aria-checked="false" tabindex="0">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+
+            <label class="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl px-3.5 py-2.5 border-2 border-slate-200 cursor-pointer">
+              <div>
+                <div class="font-extrabold text-sm text-slate-800">⌨️ Teclado numérico</div>
+                <div class="text-xs text-slate-500 font-bold">Escribir en vez de 4 opciones</div>
+              </div>
+              <div id="menuKeypadToggle" class="toggle-track" role="switch" aria-checked="false" tabindex="0">
+                <div class="toggle-thumb"></div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- COLUMNA DERECHA: Modos de juego + Duración + Botón Jugar -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+
+          <!-- Selector de Modo de Juego -->
+          <div class="bg-white/95 rounded-3xl p-4 sm:p-5 shadow-lg border-4 border-purple-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
+              <span class="text-2xl">🎮</span> Elige cómo jugar
+            </h2>
+            <div class="grid grid-cols-1 gap-3">
+              <div id="modeChallengeCard" class="mode-card active rounded-2xl p-3.5 border-3 flex items-start gap-3" data-mode="challenge" role="button" tabindex="0">
+                <div class="text-3xl bg-sky-100 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0">⚡</div>
+                <div>
+                  <div class="font-display font-bold text-lg text-slate-800 leading-tight">Desafío de Tablas</div>
+                  <p class="text-xs sm:text-sm text-slate-600 font-bold mt-0.5">
+                    Resuelve multiplicaciones y pulsa «Ver con Policubos» cuando necesites ayuda visual.
+                  </p>
+                </div>
+              </div>
+
+              <div id="modeBuilderCard" class="mode-card rounded-2xl p-3.5 border-3 flex items-start gap-3" data-mode="builder" role="button" tabindex="0">
+                <div class="text-3xl bg-amber-100 w-12 h-12 rounded-2xl flex items-center justify-center shrink-0">🏗️</div>
+                <div>
+                  <div class="font-display font-bold text-lg text-slate-800 leading-tight">Taller Constructor</div>
+                  <p class="text-xs sm:text-sm text-slate-600 font-bold mt-0.5">
+                    ¡Construye tú las columnas y alturas con policubos y descubre el resultado total!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Duración de la partida -->
+          <div class="bg-white/95 rounded-3xl p-4 sm:p-5 shadow-lg border-4 border-amber-200">
+            <h2 class="text-lg font-bold text-slate-800 mb-2.5 flex items-center gap-2">
+              <span class="text-xl">⏱️</span> Duración de la partida
+            </h2>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" id="dur10Btn" data-duration="10"
+                class="duration-btn btn-3d btn-amber rounded-2xl py-2.5 px-3 font-extrabold text-sm sm:text-base flex flex-col items-center">
+                <span>🏆 10 preguntas</span>
+                <span class="text-[11px] opacity-90 font-bold">Con trofeo final</span>
+              </button>
+              <button type="button" id="durInfBtn" data-duration="infinite"
+                class="duration-btn btn-3d btn-white rounded-2xl py-2.5 px-3 font-extrabold text-sm sm:text-base flex flex-col items-center">
+                <span>♾️ Modo Clase</span>
+                <span class="text-[11px] text-slate-500 font-bold">Infinito en pizarra</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Gran Botón ¡A JUGAR! -->
+          <button id="startGameBtn" type="button"
+            class="btn-3d btn-green rounded-3xl py-4 px-6 font-display font-bold text-2xl sm:text-3xl tracking-wide flex items-center justify-center gap-3 shadow-lg">
+            <span>🚀</span> ¡EMPEZAR A JUGAR!
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================================================
+         PANTALLA 2: ÁREA DE JUEGO ACTIVA
+         ========================================================= -->
+    <section id="gameScreen" class="hidden flex-1 flex flex-col gap-3 sm:gap-4">
+
+      <!-- Cabecera limpia de la partida (HUD) -->
+      <header class="bg-white/95 backdrop-blur rounded-3xl px-3 sm:px-5 py-2.5 sm:py-3 shadow-md border-4 border-sky-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <button id="backToMenuBtn" type="button"
+            class="btn-3d btn-white rounded-2xl px-3 sm:px-4 py-2 font-extrabold text-sm sm:text-base flex items-center gap-1.5">
+            <span>🏠</span> <span class="hidden sm:inline">Menú</span>
+          </button>
+          <button id="finishInfiniteBtn" type="button"
+            class="hidden btn-3d btn-purple rounded-2xl px-3 py-2 font-extrabold text-xs sm:text-sm flex items-center gap-1">
+            <span>🏁</span> Terminar
+          </button>
+        </div>
+
+        <!-- Progreso / Número de pregunta -->
+        <div class="flex flex-col items-center flex-1 min-w-[130px] max-w-xs px-2">
+          <div id="questionProgressText" class="font-display font-bold text-sm sm:text-base text-slate-700">
+            Pregunta 1 de 10
+          </div>
+          <div id="progressBarWrap" class="w-full h-3 bg-slate-200 rounded-full overflow-hidden mt-1 border border-slate-300">
+            <div id="progressBarFill" class="h-full bg-gradient-to-r from-sky-400 to-emerald-400 rounded-full transition-all duration-300" style="width: 10%"></div>
+          </div>
+        </div>
+
+        <!-- Contadores de Gamificación + Sonido -->
+        <div class="flex items-center gap-2 sm:gap-2.5">
+          <div class="bg-amber-100 border-2 border-amber-300 rounded-2xl px-3 py-1.5 flex items-center gap-1.5 font-display font-bold text-amber-800 text-base sm:text-lg" title="Estrellas conseguidas">
+            <span>⭐</span>
+            <span id="starsCount">0</span>
+          </div>
+          <div class="bg-orange-100 border-2 border-orange-300 rounded-2xl px-3 py-1.5 flex items-center gap-1.5 font-display font-bold text-orange-700 text-base sm:text-lg" title="Racha de aciertos seguidos">
+            <span>🔥</span>
+            <span id="streakCount">0</span>
+          </div>
+          <button id="gameSoundBtn" type="button"
+            class="btn-3d btn-white rounded-2xl w-11 h-11 flex items-center justify-center text-xl"
+            aria-label="Activar o silenciar sonido">
+            <span class="sound-icon">🔊</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Tarjeta Principal del Reto -->
+      <main class="bg-white/95 rounded-3xl p-4 sm:p-6 shadow-xl border-4 border-indigo-100 flex-1 flex flex-col justify-between gap-4">
+
+        <!-- Fila superior: Mascota + Bocadillo motivador + Ecuación gigante -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-center">
+
+          <!-- Mascota Cubi y su bocadillo -->
+          <div class="md:col-span-5 flex items-center gap-3 bg-sky-50/90 border-2 border-sky-200 rounded-2xl p-2.5 sm:p-3">
+            <div id="gameMascotBox" class="w-16 h-16 sm:w-20 sm:h-20 shrink-0"></div>
+            <div class="flex-1 min-w-0">
+              <div class="text-[11px] uppercase tracking-wider font-extrabold text-sky-600">Cubi dice:</div>
+              <p id="mascotMessage" class="font-extrabold text-slate-700 text-sm sm:text-base leading-snug">
+                ¡Vamos a multiplicar! ¿Cuánto es?
+              </p>
+            </div>
+          </div>
+
+          <!-- Multiplicación principal en tamaño pizarra digital -->
+          <div class="md:col-span-7 flex flex-col items-center justify-center bg-gradient-to-b from-indigo-50 to-white border-3 border-indigo-200 rounded-3xl py-3 px-4 relative">
+            <div id="modeBadgeLabel" class="text-xs font-extrabold uppercase tracking-wider text-indigo-500 mb-0.5">
+              Desafío de Tablas
+            </div>
+            <div id="equationDisplay" class="font-display font-bold text-4xl sm:text-6xl text-slate-800 tracking-wide flex items-center justify-center gap-2 sm:gap-3">
+              <span id="eqA" class="text-sky-600">2</span>
+              <span class="text-rose-500">×</span>
+              <span id="eqB" class="text-emerald-600">3</span>
+              <span class="text-slate-400">=</span>
+              <span id="eqResult" class="inline-flex items-center justify-center min-w-[68px] sm:min-w-[92px] h-12 sm:h-16 px-3 rounded-2xl bg-amber-100 border-3 border-dashed border-amber-400 text-amber-700">?</span>
+            </div>
+
+            <!-- Botón rápido para ver con policubos en modo Desafío -->
+            <div id="challengeQuickTools" class="mt-2.5 flex flex-wrap items-center justify-center gap-2">
+              <button id="revealPolicubosBtn" type="button"
+                class="btn-3d btn-amber rounded-2xl px-4 py-2 font-display font-bold text-sm sm:text-base flex items-center gap-2">
+                <span>🧱</span> Ver con Policubos
+              </button>
+              <button id="inGameAlwaysBtn" type="button"
+                class="btn-3d btn-white rounded-2xl px-3 py-2 font-extrabold text-xs sm:text-sm text-slate-600 flex items-center gap-1.5"
+                title="Mostrar policubos automáticamente en cada pregunta">
+                <span id="inGameAlwaysDot" class="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block"></span>
+                <span>Siempre visibles</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             ESCENARIO DE POLICUBOS (ZONA VISUAL PRINCIPAL)
+             ========================================================= -->
+        <div id="policuboSection" class="policubo-stage p-3 sm:p-4 flex flex-col gap-3 transition-all">
+
+          <!-- Estado oculto (cuando el alumno aún no ha pedido ver policubos en modo Desafío) -->
+          <div id="policuboHiddenState" class="hidden py-6 sm:py-8 flex flex-col items-center justify-center text-center gap-2">
+            <div class="text-4xl sm:text-5xl opacity-80">🧱✨</div>
+            <p class="font-display font-bold text-slate-600 text-lg sm:text-xl">
+              ¿Quieres imaginar esta multiplicación con bloques?
+            </p>
+            <p class="text-slate-500 font-bold text-sm max-w-md">
+              Pulsa el botón <strong>«🧱 Ver con Policubos»</strong> arriba para ver cómo se apilan las columnas de colores.
+            </p>
+          </div>
+
+          <!-- Estado visible de los policubos -->
+          <div id="policuboVisibleState" class="flex flex-col gap-3">
+
+            <!-- Barra explicativa y herramientas didácticas -->
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-white/90 rounded-2xl px-3.5 py-2.5 border-2 border-sky-100 shadow-sm">
+              <!-- Etiqueta conceptual + suma repetida -->
+              <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span id="conceptLabel" class="font-display font-bold text-sky-800 bg-sky-100 px-3 py-1 rounded-xl text-sm sm:text-base">
+                  2 columnas de 3 policubos
+                </span>
+                <span id="repeatedSumLabel" class="font-extrabold text-slate-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-xl text-sm sm:text-base">
+                  Suma: 3 + 3
+                </span>
+              </div>
+
+              <!-- Botones didácticos: Contar cubos + Girar (Propiedad conmutativa) -->
+              <div class="flex flex-wrap items-center gap-2">
+                <button id="countCubesBtn" type="button"
+                  class="btn-3d btn-teal rounded-xl px-3 py-1.5 font-extrabold text-xs sm:text-sm flex items-center gap-1.5">
+                  <span>🔢</span> Contar cubos
+                </button>
+                <button id="rotateCommutativeBtn" type="button"
+                  class="btn-3d btn-purple rounded-xl px-3 py-1.5 font-extrabold text-xs sm:text-sm flex items-center gap-1.5">
+                  <span>🔄</span> Girar (Conmutativa)
+                </button>
+              </div>
+            </div>
+
+            <!-- Nota informativa cuando se activa la propiedad conmutativa -->
+            <div id="commutativeBanner" class="hidden bg-purple-100 border-2 border-purple-300 text-purple-900 rounded-2xl px-4 py-2 text-xs sm:text-sm font-extrabold text-center">
+              <!-- Se rellena dinámicamente -->
+            </div>
+
+            <!-- Contenedor de las columnas de policubos con escalado inteligente -->
+            <div id="policuboCanvasArea" class="w-full min-h-[165px] sm:min-h-[210px] max-h-[340px] flex items-end justify-center pt-10 pb-2 px-2 overflow-hidden">
+              <div id="policuboColumnsWrap" class="policubo-shelf flex items-end justify-center gap-2 sm:gap-4 transition-all">
+                <!-- Columnas de policubos generadas por JS -->
+              </div>
+            </div>
+
+            <!-- Ayuda interactiva sutil -->
+            <div id="stageTipText" class="text-center text-xs font-bold text-slate-400">
+              💡 Consejo: Haz clic en cualquier columna o pulsa «Contar cubos» para contar en voz alta.
+            </div>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             CONTROLES DEL TALLER CONSTRUCTOR (SOLO MODO CONSTRUCTOR)
+             ========================================================= -->
+        <div id="builderControlsArea" class="hidden bg-amber-50/90 border-3 border-amber-200 rounded-3xl p-3 sm:p-4 flex flex-col gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Control de columnas (Factor A) -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-sky-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-xs uppercase font-extrabold text-sky-600">Columnas</div>
+                <div id="builderColsReadout" class="font-display font-bold text-2xl text-slate-800">1 columna</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="subColBtn" type="button" class="btn-3d btn-rose rounded-2xl px-3.5 py-2.5 font-extrabold text-sm sm:text-base">
+                  − Quitar
+                </button>
+                <button id="addColBtn" type="button" class="btn-3d btn-blue rounded-2xl px-3.5 py-2.5 font-extrabold text-sm sm:text-base">
+                  + Columna
+                </button>
+              </div>
+            </div>
+
+            <!-- Control de altura / cubos por columna (Factor B) -->
+            <div class="bg-white rounded-2xl p-3 border-2 border-emerald-200 flex items-center justify-between gap-2">
+              <div>
+                <div class="text-xs uppercase font-extrabold text-emerald-600">Cubos en cada columna</div>
+                <div id="builderRowsReadout" class="font-display font-bold text-2xl text-slate-800">1 cubo</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="subCubeBtn" type="button" class="btn-3d btn-rose rounded-2xl px-3.5 py-2.5 font-extrabold text-sm sm:text-base">
+                  − Quitar
+                </button>
+                <button id="addCubeBtn" type="button" class="btn-3d btn-green rounded-2xl px-3.5 py-2.5 font-extrabold text-sm sm:text-base">
+                  + Cubo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-center">
+            <button id="checkBuildBtn" type="button"
+              class="btn-3d btn-amber rounded-2xl px-7 py-3 font-display font-bold text-lg sm:text-xl flex items-center gap-2">
+              <span>✅</span> ¡Comprobar mi construcción!
+            </button>
+          </div>
+        </div>
+
+        <!-- =========================================================
+             ZONA DE RESPUESTAS (4 OPCIONES O TECLADO NUMÉRICO)
+             ========================================================= -->
+        <div id="answerSection" class="flex flex-col gap-3">
+
+          <!-- A) 4 Botones grandes de respuesta -->
+          <div id="choicesGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <!-- Generado dinámicamente por JS -->
+          </div>
+
+          <!-- B) Teclado numérico integrado -->
+          <div id="keypadArea" class="hidden max-w-md mx-auto w-full bg-slate-50 border-3 border-slate-200 rounded-3xl p-3 sm:p-4">
+            <div class="flex items-center gap-2 mb-3">
+              <div id="keypadDisplay"
+                class="flex-1 h-14 bg-white border-3 border-sky-300 rounded-2xl flex items-center justify-center font-display font-bold text-3xl text-slate-800 tracking-wider">
+                <span class="text-slate-300">Escribe...</span>
+              </div>
+              <button id="keypadBackspace" type="button" class="btn-3d btn-rose rounded-2xl h-14 px-4 font-extrabold text-xl" aria-label="Borrar dígito">
+                ⌫
+              </button>
+              <button id="keypadSubmit" type="button" class="btn-3d btn-green rounded-2xl h-14 px-5 font-display font-bold text-lg">
+                OK ✓
+              </button>
+            </div>
+            <div class="grid grid-cols-5 gap-2">
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="1">1</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="2">2</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="3">3</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="4">4</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="5">5</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="6">6</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="7">7</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="8">8</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="9">9</button>
+              <button type="button" class="kp-digit btn-3d btn-white rounded-xl py-2.5 font-display font-bold text-2xl" data-digit="0">0</button>
+            </div>
+          </div>
+
+          <!-- Botón grande "Siguiente ➜" tras acertar -->
+          <div id="nextBtnWrap" class="hidden flex justify-center pt-1">
+            <button id="nextQuestionBtn" type="button"
+              class="btn-3d btn-green rounded-3xl px-10 py-3.5 font-display font-bold text-2xl sm:text-3xl flex items-center gap-3 shadow-lg">
+              <span>Siguiente</span> <span>➜</span>
+            </button>
+          </div>
+        </div>
+      </main>
+    </section>
+
+    <!-- =========================================================
+         PANTALLA 3: RESUMEN FINAL Y TROFEO
+         ========================================================= -->
+    <section id="summaryScreen" class="hidden flex-1 flex items-center justify-center py-4">
+      <div class="bg-white/95 rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-amber-300 max-w-2xl w-full text-center flex flex-col items-center gap-5">
+        <!-- Mascota celebrando -->
+        <div id="summaryMascotBox" class="w-24 h-24 sm:w-28 sm:h-28 mascot-float"></div>
+
+        <div>
+          <h2 id="summaryTitle" class="font-display font-bold text-3xl sm:text-4xl text-slate-800">
+            ¡Misión completada!
+          </h2>
+          <p id="summarySubtitle" class="text-slate-600 font-bold text-base sm:text-lg mt-1">
+            ¡Qué gran trabajo con los policubos!
+          </p>
+        </div>
+
+        <!-- 1 a 3 Estrellas gigantes -->
+        <div id="summaryStarsRow" class="flex items-center justify-center gap-4 text-5xl sm:text-6xl my-1">
+          <!-- Generado por JS -->
+        </div>
+
+        <!-- Tarjetas de estadísticas -->
+        <div class="grid grid-cols-3 gap-3 w-full">
+          <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3">
+            <div class="text-xs font-extrabold text-sky-600 uppercase">Aciertos</div>
+            <div id="statScore" class="font-display font-bold text-2xl sm:text-3xl text-slate-800 mt-0.5">10/10</div>
+          </div>
+          <div class="bg-amber-50 border-2 border-amber-200 rounded-2xl p-3">
+            <div class="text-xs font-extrabold text-amber-600 uppercase">Estrellas</div>
+            <div id="statStars" class="font-display font-bold text-2xl sm:text-3xl text-slate-800 mt-0.5">⭐ 10</div>
+          </div>
+          <div class="bg-orange-50 border-2 border-orange-200 rounded-2xl p-3">
+            <div class="text-xs font-extrabold text-orange-600 uppercase">Mejor racha</div>
+            <div id="statBestStreak" class="font-display font-bold text-2xl sm:text-3xl text-slate-800 mt-0.5">🔥 5</div>
+          </div>
+        </div>
+
+        <!-- Resumen de multiplicaciones a repasar (si hubo fallos) -->
+        <div id="reviewBox" class="w-full bg-rose-50 border-2 border-rose-200 rounded-2xl p-4 text-left">
+          <h3 class="font-display font-bold text-rose-700 text-lg mb-2 flex items-center gap-2">
+            <span>📌</span> Multiplicaciones para repasar:
+          </h3>
+          <div id="reviewList" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <!-- Medalla de pleno perfecto si no hubo ningún fallo -->
+        <div id="perfectBox" class="hidden w-full bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 text-emerald-800 font-extrabold text-base sm:text-lg flex items-center justify-center gap-2">
+          <span class="text-2xl">🏆</span> ¡Pleno perfecto sin ningún fallo! ¡Eres un maestro de los policubos!
+        </div>
+
+        <!-- Botones de acción final -->
+        <div class="flex flex-wrap items-center justify-center gap-3 w-full pt-2">
+          <button id="playAgainBtn" type="button"
+            class="btn-3d btn-green rounded-2xl px-6 py-3.5 font-display font-bold text-xl flex items-center gap-2">
+            <span>🔄</span> Jugar otra vez
+          </button>
+          <button id="changeTablesBtn" type="button"
+            class="btn-3d btn-blue rounded-2xl px-6 py-3.5 font-display font-bold text-xl flex items-center gap-2">
+            <span>⚙️</span> Cambiar tablas
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * POLICUBOS MULTIPLICADORES — MOTOR DEL JUEGO (3.º DE EDUCACIÓN PRIMARIA)
+     * =========================================================================
+     * Arquitectura modular en un único archivo:
+     *  1. SoundFX       : Generador de sonidos alegres con Web Audio API.
+     *  2. ConfettiEngine: Animación de confeti en canvas redimensionable.
+     *  3. MascotSVG     : Mascota "Cubi" con expresiones dinámicas en SVG.
+     *  4. GameState     : Estado global, configuración y lógica pedagógica.
+     *  5. PolicuboStage : Renderizado 3D, escalado inteligente, conteo y giro.
+     *  6. UI & Flow     : Menú, Desafío de Tablas, Taller Constructor y Resumen.
+     */
+
+    /* -----------------------------------------------------------------------
+       1. PALETA DE 10 COLORES VIBRANTES PARA LAS COLUMNAS DE POLICUBOS
+       ----------------------------------------------------------------------- */
+    const COLUMN_COLORS = [
+      { name: 'Azul',       main: '#3b82f6', dark: '#1d4ed8' }, // Col 1
+      { name: 'Coral',      main: '#f43f5e', dark: '#be123c' }, // Col 2
+      { name: 'Amarillo',   main: '#facc15', dark: '#ca8a04' }, // Col 3
+      { name: 'Esmeralda',  main: '#10b981', dark: '#047857' }, // Col 4
+      { name: 'Morado',     main: '#8b5cf6', dark: '#6d28d9' }, // Col 5
+      { name: 'Naranja',    main: '#f97316', dark: '#c2410c' }, // Col 6
+      { name: 'Turquesa',   main: '#06b6d4', dark: '#0e7490' }, // Col 7
+      { name: 'Rosa',       main: '#ec4899', dark: '#be185d' }, // Col 8
+      { name: 'Lima',       main: '#84cc16', dark: '#4d7c0f' }, // Col 9
+      { name: 'Índigo',     main: '#6366f1', dark: '#4338ca' }, // Col 10
+    ];
+
+    /* -----------------------------------------------------------------------
+       2. MOTOR DE SONIDO (WEB AUDIO API — SIN ARCHIVOS EXTERNOS)
+       ----------------------------------------------------------------------- */
+    const SoundFX = (() => {
+      let ctx = null;
+      let enabled = true;
+
+      function ensureContext() {
+        if (!enabled) return null;
+        try {
+          if (!ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) ctx = new AudioCtx();
+          }
+          if (ctx && ctx.state === 'suspended') {
+            ctx.resume();
+          }
+          return ctx;
+        } catch (e) {
+          return null;
+        }
+      }
+
+      // Nota sintética suave con envolvente tipo juguete/xilófono
+      function playTone(freq, duration = 0.14, type = 'sine', volume = 0.14, delay = 0) {
+        const audio = ensureContext();
+        if (!audio) return;
+        const now = audio.currentTime + delay;
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.exponentialRampToValueAtTime(volume, now + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        osc.start(now);
+        osc.stop(now + duration + 0.02);
+      }
+
+      // Efecto "pop" al apilarse un policubo
+      function playPop(pitchStep = 0) {
+        const audio = ensureContext();
+        if (!audio) return;
+        const now = audio.currentTime;
+        const osc = audio.createOscillator();
+        const gain = audio.createGain();
+        const baseFreq = 320 + Math.min(pitchStep, 14) * 32;
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq * 0.72, now);
+        osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.28, now + 0.07);
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.11, now + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.09);
+
+        osc.connect(gain);
+        gain.connect(audio.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      }
+
+      function playClick() {
+        playTone(540, 0.055, 'triangle', 0.08);
+      }
+
+      // Escala musical alegre para contar columnas
+      function playCountNote(index) {
+        const scale = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0];
+        const freq = scale[index % scale.length];
+        playTone(freq, 0.22, 'triangle', 0.16);
+      }
+
+      function playCorrect() {
+        playTone(523.25, 0.12, 'triangle', 0.15, 0.00); // Do
+        playTone(659.25, 0.12, 'triangle', 0.15, 0.09); // Mi
+        playTone(783.99, 0.14, 'triangle', 0.16, 0.18); // Sol
+        playTone(1046.5, 0.28, 'sine',     0.17, 0.27); // Do alto
+      }
+
+      // Sonido suave y amable al fallar (nunca estridente)
+      function playWrong() {
+        playTone(270, 0.14, 'sine', 0.11, 0.00);
+        playTone(220, 0.20, 'sine', 0.10, 0.11);
+      }
+
+      function playFlip() {
+        playTone(440, 0.09, 'sine', 0.10, 0.00);
+        playTone(587.33, 0.12, 'sine', 0.11, 0.06);
+      }
+
+      function playFanfare() {
+        const notes = [
+          [523.25, 0.00, 0.13],
+          [659.25, 0.11, 0.13],
+          [783.99, 0.22, 0.13],
+          [1046.5, 0.34, 0.22],
+          [783.99, 0.52, 0.12],
+          [1046.5, 0.65, 0.42],
+        ];
+        notes.forEach(([f, d, len]) => playTone(f, len, 'triangle', 0.17, d));
+      }
+
+      return {
+        isEnabled: () => enabled,
+        toggle() {
+          enabled = !enabled;
+          if (enabled) playClick();
+          return enabled;
+        },
+        playPop,
+        playClick,
+        playCountNote,
+        playCorrect,
+        playWrong,
+        playFlip,
+        playFanfare,
+      };
+    })();
+
+    /* -----------------------------------------------------------------------
+       3. MOTOR DE CONFETI EN CANVAS
+       ----------------------------------------------------------------------- */
+    const ConfettiEngine = (() => {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      let rafId = null;
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function burst(count = 55, originY = 0.45) {
+        const palette = COLUMN_COLORS.map(c => c.main);
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const speed = 4 + Math.random() * 9;
+          particles.push({
+            x: canvas.width * (0.25 + Math.random() * 0.5),
+            y: canvas.height * originY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 5.5,
+            size: 7 + Math.random() * 7,
+            color: palette[Math.floor(Math.random() * palette.length)],
+            rot: Math.random() * 360,
+            vRot: (Math.random() - 0.5) * 14,
+            gravity: 0.24 + Math.random() * 0.08,
+            life: 1,
+            shape: Math.random() > 0.35 ? 'rect' : 'circle',
+          });
+        }
+        if (!rafId) loop();
+      }
+
+      function loop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = particles.length - 1; i >= 0; i--) {
+          const p = particles[i];
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += p.gravity;
+          p.vx *= 0.99;
+          p.rot += p.vRot;
+          p.life -= 0.013;
+
+          if (p.life <= 0 || p.y > canvas.height + 30) {
+            particles.splice(i, 1);
+            continue;
+          }
+
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.life);
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rot * Math.PI) / 180);
+          ctx.fillStyle = p.color;
+          if (p.shape === 'rect') {
+            ctx.fillRect(-p.size / 2, -p.size / 3, p.size, p.size * 0.65);
+          } else {
+            ctx.beginPath();
+            ctx.arc(0, 0, p.size * 0.45, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+
+        if (particles.length > 0) {
+          rafId = requestAnimationFrame(loop);
+        } else {
+          rafId = null;
+        }
+      }
+
+      return { burst };
+    })();
+
+    /* -----------------------------------------------------------------------
+       4. MASCOTA SVG "CUBI" (POLICUBO SONRIENTE CON EXPRESIONES)
+       ----------------------------------------------------------------------- */
+    function renderMascotSVG(mood = 'happy') {
+      // Colores según estado de ánimo
+      const colors = {
+        happy:      { body: '#38bdf8', dark: '#0284c7', cheek: '#fb7185' },
+        excited:    { body: '#34d399', dark: '#059669', cheek: '#f472b6' },
+        thinking:   { body: '#fbbf24', dark: '#d97706', cheek: '#fb923c' },
+        encourage:  { body: '#a78bfa', dark: '#7c3aed', cheek: '#f472b6' },
+      };
+      const c = colors[mood] || colors.happy;
+
+      // Ojos y boca según emoción
+      let eyes = `
+        <circle cx="38" cy="56" r="5.5" fill="#0f172a"/>
+        <circle cx="36" cy="54" r="2" fill="#ffffff"/>
+        <circle cx="62" cy="56" r="5.5" fill="#0f172a"/>
+        <circle cx="60" cy="54" r="2" fill="#ffffff"/>
+      `;
+      let mouth = `<path d="M 38 69 Q 50 80 62 69" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round" fill="none"/>`;
+
+      if (mood === 'excited') {
+        eyes = `
+          <path d="M 32 57 Q 38 49 44 57" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+          <path d="M 56 57 Q 62 49 68 57" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+        `;
+        mouth = `
+          <path d="M 36 67 Q 50 84 64 67 Z" fill="#0f172a"/>
+          <path d="M 43 75 Q 50 81 57 75" fill="#fb7185"/>
+        `;
+      } else if (mood === 'thinking') {
+        eyes = `
+          <circle cx="38" cy="55" r="5.2" fill="#0f172a"/>
+          <circle cx="39.5" cy="53" r="2" fill="#ffffff"/>
+          <circle cx="62" cy="55" r="5.2" fill="#0f172a"/>
+          <circle cx="63.5" cy="53" r="2" fill="#ffffff"/>
+        `;
+        mouth = `<path d="M 42 71 Q 50 68 58 71" stroke="#0f172a" stroke-width="4" stroke-linecap="round" fill="none"/>`;
+      } else if (mood === 'encourage') {
+        mouth = `<path d="M 40 70 Q 50 77 60 70" stroke="#0f172a" stroke-width="4.2" stroke-linecap="round" fill="none"/>`;
+      }
+
+      return `
+        <svg viewBox="0 0 100 105" class="w-full h-full drop-shadow-md" aria-hidden="true">
+          <!-- Conector superior (pivote del policubo) -->
+          <rect x="33" y="8" width="34" height="17" rx="6" fill="${c.body}" stroke="${c.dark}" stroke-width="4"/>
+          <rect x="38" y="12" width="10" height="5" rx="2.5" fill="#ffffff" opacity="0.45"/>
+
+          <!-- Cuerpo principal del policubo -->
+          <rect x="14" y="23" width="72" height="70" rx="16" fill="${c.body}" stroke="${c.dark}" stroke-width="4.5"/>
+
+          <!-- Brillo superior -->
+          <path d="M 24 31 H 74" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.4"/>
+
+          <!-- Mejillas sonrojadas -->
+          <ellipse cx="29" cy="66" rx="5.5" ry="3.5" fill="${c.cheek}" opacity="0.55"/>
+          <ellipse cx="71" cy="66" rx="5.5" ry="3.5" fill="${c.cheek}" opacity="0.55"/>
+
+          ${eyes}
+          ${mouth}
+        </svg>
+      `;
+    }
+
+    const PRAISE_MESSAGES = [
+      '¡Toma ya! ¡Lo has clavado! 🎉',
+      '¡Súper bien! ¡Eres una máquina de multiplicar! ⭐',
+      '¡Brutal! ¡Qué rapidez calculando! 🚀',
+      '¡Exacto! Los policubos bailan de alegría 🧱',
+      '¡Genial! ¡Sigue con esa súper racha! 🔥',
+      '¡Fantástico! ¡Así se hace en 3.º de Primaria! 🏆',
+    ];
+
+    const TRY_AGAIN_MESSAGES = [
+      '¡Casi! Mira los policubos y vuelve a intentarlo 🧱',
+      '¡Buen intento! Prueba a contar las columnas una a una 🔢',
+      '¡Uy, por poquito! Pulsa «Contar cubos» para comprobarlo 💡',
+      '¡No pasa nada! Equivocarse ayuda a aprender. ¡Prueba otra vez! 💪',
+    ];
+
+    /* -----------------------------------------------------------------------
+       5. ESTADO GLOBAL DEL JUEGO
+       ----------------------------------------------------------------------- */
+    const state = {
+      selectedTables: new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+      mode: 'challenge',          // 'challenge' | 'builder'
+      duration: '10',             // '10' | 'infinite'
+      alwaysShowPolicubos: false,
+      useKeypad: false,
+
+      // Estado de la partida en curso
+      questionIndex: 0,
+      totalQuestions: 10,
+      stars: 0,
+      streak: 0,
+      bestStreak: 0,
+      firstTryCorrect: 0,
+      hadMistakeThisQuestion: false,
+      mistakesMap: new Map(),     // "A×B" -> { a, b, ans }
+      questionBag: [],
+
+      // Pregunta actual
+      currentA: 2,
+      currentB: 3,
+      isRotated: false,           // Propiedad conmutativa visual
+      policubosVisible: false,
+      answered: false,
+      countingTimer: null,
+      countingInProgress: false,
+      revealedColumnsCount: 0,
+
+      // Estado exclusivo del Taller Constructor
+      builderCols: 1,
+      builderRows: 1,
+      builderStructureSolved: false,
+
+      // Entrada del teclado numérico
+      keypadValue: '',
+    };
+
+    /* -----------------------------------------------------------------------
+       6. REFERENCIAS DEL DOM
+       ----------------------------------------------------------------------- */
+    const DOM = {
+      menuScreen: document.getElementById('menuScreen'),
+      gameScreen: document.getElementById('gameScreen'),
+      summaryScreen: document.getElementById('summaryScreen'),
+
+      menuMascotBox: document.getElementById('menuMascotBox'),
+      gameMascotBox: document.getElementById('gameMascotBox'),
+      summaryMascotBox: document.getElementById('summaryMascotBox'),
+      mascotMessage: document.getElementById('mascotMessage'),
+
+      tablesCard: document.getElementById('tablesCard'),
+      tableTilesGrid: document.getElementById('tableTilesGrid'),
+      selectedTablesBadge: document.getElementById('selectedTablesBadge'),
+      tablesErrorMsg: document.getElementById('tablesErrorMsg'),
+      menuAlwaysShowToggle: document.getElementById('menuAlwaysShowToggle'),
+      menuKeypadToggle: document.getElementById('menuKeypadToggle'),
+
+      modeChallengeCard: document.getElementById('modeChallengeCard'),
+      modeBuilderCard: document.getElementById('modeBuilderCard'),
+      dur10Btn: document.getElementById('dur10Btn'),
+      durInfBtn: document.getElementById('durInfBtn'),
+      startGameBtn: document.getElementById('startGameBtn'),
+
+      // HUD
+      backToMenuBtn: document.getElementById('backToMenuBtn'),
+      finishInfiniteBtn: document.getElementById('finishInfiniteBtn'),
+      questionProgressText: document.getElementById('questionProgressText'),
+      progressBarWrap: document.getElementById('progressBarWrap'),
+      progressBarFill: document.getElementById('progressBarFill'),
+      starsCount: document.getElementById('starsCount'),
+      streakCount: document.getElementById('streakCount'),
+
+      // Ecuación
+      modeBadgeLabel: document.getElementById('modeBadgeLabel'),
+      eqA: document.getElementById('eqA'),
+      eqB: document.getElementById('eqB'),
+      eqResult: document.getElementById('eqResult'),
+      challengeQuickTools: document.getElementById('challengeQuickTools'),
+      revealPolicubosBtn: document.getElementById('revealPolicubosBtn'),
+      inGameAlwaysBtn: document.getElementById('inGameAlwaysBtn'),
+      inGameAlwaysDot: document.getElementById('inGameAlwaysDot'),
+
+      // Escenario Policubos
+      policuboHiddenState: document.getElementById('policuboHiddenState'),
+      policuboVisibleState: document.getElementById('policuboVisibleState'),
+      conceptLabel: document.getElementById('conceptLabel'),
+      repeatedSumLabel: document.getElementById('repeatedSumLabel'),
+      countCubesBtn: document.getElementById('countCubesBtn'),
+      rotateCommutativeBtn: document.getElementById('rotateCommutativeBtn'),
+      commutativeBanner: document.getElementById('commutativeBanner'),
+      policuboCanvasArea: document.getElementById('policuboCanvasArea'),
+      policuboColumnsWrap: document.getElementById('policuboColumnsWrap'),
+      stageTipText: document.getElementById('stageTipText'),
+
+      // Controles Taller Constructor
+      builderControlsArea: document.getElementById('builderControlsArea'),
+      builderColsReadout: document.getElementById('builderColsReadout'),
+      builderRowsReadout: document.getElementById('builderRowsReadout'),
+      addColBtn: document.getElementById('addColBtn'),
+      subColBtn: document.getElementById('subColBtn'),
+      addCubeBtn: document.getElementById('addCubeBtn'),
+      subCubeBtn: document.getElementById('subCubeBtn'),
+      checkBuildBtn: document.getElementById('checkBuildBtn'),
+
+      // Zona de respuestas
+      answerSection: document.getElementById('answerSection'),
+      choicesGrid: document.getElementById('choicesGrid'),
+      keypadArea: document.getElementById('keypadArea'),
+      keypadDisplay: document.getElementById('keypadDisplay'),
+      keypadBackspace: document.getElementById('keypadBackspace'),
+      keypadSubmit: document.getElementById('keypadSubmit'),
+      nextBtnWrap: document.getElementById('nextBtnWrap'),
+      nextQuestionBtn: document.getElementById('nextQuestionBtn'),
+
+      // Resumen final
+      summaryTitle: document.getElementById('summaryTitle'),
+      summarySubtitle: document.getElementById('summarySubtitle'),
+      summaryStarsRow: document.getElementById('summaryStarsRow'),
+      statScore: document.getElementById('statScore'),
+      statStars: document.getElementById('statStars'),
+      statBestStreak: document.getElementById('statBestStreak'),
+      reviewBox: document.getElementById('reviewBox'),
+      reviewList: document.getElementById('reviewList'),
+      perfectBox: document.getElementById('perfectBox'),
+      playAgainBtn: document.getElementById('playAgainBtn'),
+      changeTablesBtn: document.getElementById('changeTablesBtn'),
+    };
+
+    /* -----------------------------------------------------------------------
+       7. UTILIDADES DE INTERFAZ Y MENSAJES
+       ----------------------------------------------------------------------- */
+    function updateSoundButtons() {
+      const on = SoundFX.isEnabled();
+      document.querySelectorAll('.sound-icon').forEach(el => {
+        el.textContent = on ? '🔊' : '🔇';
+      });
+      document.querySelectorAll('.sound-label').forEach(el => {
+        el.textContent = on ? 'Sonido: SÍ' : 'Sonido: NO';
+      });
+    }
+
+    function setMascot(mood, message) {
+      DOM.gameMascotBox.innerHTML = renderMascotSVG(mood);
+      if (message) DOM.mascotMessage.textContent = message;
+    }
+
+    function plural(n, singular, pluralWord) {
+      return `${n} ${n === 1 ? singular : pluralWord}`;
+    }
+
+    function randomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function stopCountingAnimation() {
+      if (state.countingTimer) {
+        clearTimeout(state.countingTimer);
+        state.countingTimer = null;
+      }
+      state.countingInProgress = false;
+    }
+
+    /* -----------------------------------------------------------------------
+       8. CONFIGURACIÓN DEL MENÚ PRINCIPAL
+       ----------------------------------------------------------------------- */
+    function renderTableTiles() {
+      DOM.tableTilesGrid.innerHTML = '';
+      for (let t = 1; t <= 10; t++) {
+        const isSel = state.selectedTables.has(t);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `table-tile rounded-2xl py-3 sm:py-3.5 border-2 font-display font-bold text-xl sm:text-2xl flex flex-col items-center justify-center ${isSel ? 'selected' : ''}`;
+        btn.innerHTML = `
+          <span>×${t}</span>
+          <span class="text-[10px] font-sans font-extrabold opacity-80">${isSel ? '✓ Activa' : 'Tabla'}</span>
+        `;
+        btn.addEventListener('click', () => {
+          SoundFX.playClick();
+          if (state.selectedTables.has(t)) {
+            state.selectedTables.delete(t);
+          } else {
+            state.selectedTables.add(t);
+          }
+          DOM.tablesErrorMsg.classList.add('hidden');
+          renderTableTiles();
+        });
+        DOM.tableTilesGrid.appendChild(btn);
+      }
+
+      const count = state.selectedTables.size;
+      DOM.selectedTablesBadge.textContent =
+        count === 0
+          ? 'Ninguna seleccionada'
+          : count === 1
+          ? `Tabla del ${[...state.selectedTables][0]}`
+          : count === 10
+          ? 'Todas (1-10)'
+          : `${count} tablas elegidas`;
+
+      DOM.selectedTablesBadge.className =
+        count === 0
+          ? 'bg-rose-100 text-rose-700 font-extrabold text-xs sm:text-sm px-3 py-1 rounded-full border border-rose-300'
+          : 'bg-sky-100 text-sky-800 font-extrabold text-xs sm:text-sm px-3 py-1 rounded-full border border-sky-300';
+    }
+
+    function applyTablePreset(preset) {
+      SoundFX.playClick();
+      const presets = {
+        all: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        none: [],
+        easy: [2, 5, 10],
+        medium: [3, 4, 6],
+        hard: [7, 8, 9],
+      };
+      state.selectedTables = new Set(presets[preset] || []);
+      DOM.tablesErrorMsg.classList.add('hidden');
+      renderTableTiles();
+    }
+
+    function syncMenuToggles() {
+      DOM.menuAlwaysShowToggle.classList.toggle('on', state.alwaysShowPolicubos);
+      DOM.menuAlwaysShowToggle.setAttribute('aria-checked', String(state.alwaysShowPolicubos));
+
+      DOM.menuKeypadToggle.classList.toggle('on', state.useKeypad);
+      DOM.menuKeypadToggle.setAttribute('aria-checked', String(state.useKeypad));
+
+      DOM.inGameAlwaysDot.className = state.alwaysShowPolicubos
+        ? 'w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block'
+        : 'w-2.5 h-2.5 rounded-full bg-slate-300 inline-block';
+    }
+
+    function setGameMode(mode) {
+      SoundFX.playClick();
+      state.mode = mode;
+      DOM.modeChallengeCard.classList.toggle('active', mode === 'challenge');
+      DOM.modeBuilderCard.classList.toggle('active', mode === 'builder');
+    }
+
+    function setDuration(dur) {
+      SoundFX.playClick();
+      state.duration = dur;
+      if (dur === '10') {
+        DOM.dur10Btn.className = 'duration-btn btn-3d btn-amber rounded-2xl py-2.5 px-3 font-extrabold text-sm sm:text-base flex flex-col items-center';
+        DOM.durInfBtn.className = 'duration-btn btn-3d btn-white rounded-2xl py-2.5 px-3 font-extrabold text-sm sm:text-base flex flex-col items-center';
+      } else {
+        DOM.dur10Btn.className = 'duration-btn btn-3d btn-white rounded-2xl py-2.5 px-3 font-extrabold text-sm sm:text-base flex flex-col items-center';
+        DOM.durInfBtn.className = 'duration-btn btn-3d btn-amber rounded-2xl py-2.5 px-3 font-extrabold text-sm sm:text-base flex flex-col items-center';
+      }
+    }
+
+    /* -----------------------------------------------------------------------
+       9. GENERACIÓN DE MULTIPLICACIONES Y OPCIONES DE RESPUESTA
+       ----------------------------------------------------------------------- */
+    function refillQuestionBag() {
+      const tables = [...state.selectedTables];
+      const pool = [];
+      tables.forEach(t => {
+        for (let f = 1; f <= 10; f++) {
+          // A = tabla elegida, B = factor (ej. tabla del 2 -> 2 × 3: 2 columnas de 3 cubos)
+          pool.push({ a: t, b: f });
+        }
+      });
+      // Barajado Fisher-Yates
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      state.questionBag = pool;
+    }
+
+    function pickNextMultiplication() {
+      if (state.questionBag.length === 0) {
+        refillQuestionBag();
+      }
+      let next = state.questionBag.pop();
+      // Evita repetir exactamente la misma pregunta seguida si hay variedad
+      if (
+        state.questionBag.length > 0 &&
+        next.a === state.currentA &&
+        next.b === state.currentB
+      ) {
+        const alt = state.questionBag.pop();
+        state.questionBag.unshift(next);
+        next = alt;
+      }
+      return next;
+    }
+
+    function generateChoices(a, b) {
+      const correct = a * b;
+      const set = new Set([correct]);
+
+      // Distractores pedagógicamente realistas (múltiplos cercanos o suma)
+      const candidates = [
+        a * (b + 1),
+        a * Math.max(1, b - 1),
+        (a + 1) * b,
+        Math.max(1, a - 1) * b,
+        a + b,
+        correct + a,
+        correct - a,
+        correct + 2,
+        correct - 2,
+        correct + 1,
+        correct - 1,
+      ].filter(v => v > 0 && v <= 110 && v !== correct);
+
+      // Barajar candidatos
+      for (let i = candidates.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
+
+      for (const val of candidates) {
+        if (set.size >= 4) break;
+        set.add(val);
+      }
+
+      // Relleno de seguridad si aún faltan opciones
+      let offset = 1;
+      while (set.size < 4) {
+        if (correct + offset > 0) set.add(correct + offset);
+        offset++;
+      }
+
+      const arr = [...set];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    /* -----------------------------------------------------------------------
+       10. MOTOR VISUAL DE POLICUBOS (ESCALADO INTELIGENTE, CONTEO Y GIRO)
+       ----------------------------------------------------------------------- */
+    function computeSmartCubeSize(cols, rows) {
+      const areaWidth = Math.max(260, DOM.policuboCanvasArea.clientWidth - 28);
+      const isSmallScreen = window.innerWidth < 640;
+      const maxStageHeight = isSmallScreen ? 185 : 235;
+
+      // Espacio horizontal teniendo en cuenta separaciones entre columnas
+      const gap = cols >= 8 ? (isSmallScreen ? 5 : 10) : (isSmallScreen ? 8 : 16);
+      const maxWidthPerCube = Math.floor((areaWidth - gap * (cols - 1) - 16) / cols);
+      // Espacio vertical (incluye el espacio para el pivote superior)
+      const maxHeightPerCube = Math.floor((maxStageHeight - 16) / rows);
+
+      const maxIdeal = isSmallScreen ? 42 : 52;
+      const minCube = isSmallScreen ? 15 : 20;
+
+      const size = Math.max(minCube, Math.min(maxIdeal, maxWidthPerCube, maxHeightPerCube));
+      return { size, gap };
+    }
+
+    /**
+     * Dibuja `cols` columnas separadas de `rows` policubos cada una.
+     * Cada columna tiene su propio color vibrante de la paleta de 10 colores.
+     */
+    function renderPolicubos(cols, rows, options = {}) {
+      const { animateDrop = true, playSounds = false, showSumResult = false } = options;
+      stopCountingAnimation();
+      state.revealedColumnsCount = 0;
+
+      const { size, gap } = computeSmartCubeSize(cols, rows);
+      DOM.policuboColumnsWrap.style.gap = `${gap}px`;
+      DOM.policuboColumnsWrap.style.setProperty('--cube-size', `${size}px`);
+      DOM.policuboColumnsWrap.innerHTML = '';
+
+      // Actualiza las etiquetas conceptuales y de suma repetida
+      DOM.conceptLabel.textContent = `${plural(cols, 'columna', 'columnas')} de ${plural(rows, 'policubo', 'policubos')}`;
+
+      const sumParts = Array(cols).fill(rows).join(' + ');
+      const total = cols * rows;
+      const shouldShowTotal = showSumResult || state.answered;
+      if (cols === 1) {
+        DOM.repeatedSumLabel.textContent = shouldShowTotal ? `Total: ${total}` : `Grupo: ${rows}`;
+      } else {
+        DOM.repeatedSumLabel.textContent = shouldShowTotal
+          ? `Suma: ${sumParts} = ${total}`
+          : `Suma: ${sumParts}`;
+      }
+
+      // Genera cada columna con su color distinto
+      let globalCubeIndex = 0;
+      for (let c = 0; c < cols; c++) {
+        const palette = COLUMN_COLORS[c % COLUMN_COLORS.length];
+        const colEl = document.createElement('div');
+        colEl.className = 'cube-column';
+        colEl.dataset.colIndex = c;
+        colEl.setAttribute('title', `Haz clic para contar la columna ${c + 1}`);
+
+        // Insignia de conteo acumulado sobre la columna (ej. 3, 6, 9...)
+        const badge = document.createElement('div');
+        badge.className = 'col-count-badge';
+        badge.textContent = (c + 1) * rows;
+        colEl.appendChild(badge);
+
+        // Apila `rows` policubos de abajo hacia arriba
+        for (let r = 0; r < rows; r++) {
+          globalCubeIndex++;
+          const cube = document.createElement('div');
+          cube.className = 'policubo' + (animateDrop ? ' animate-cube-drop' : '');
+          cube.style.setProperty('--c-main', palette.main);
+          cube.style.setProperty('--c-dark', palette.dark);
+          cube.style.zIndex = r + 1;
+
+          // Etiqueta numérica interna (oculta hasta pulsar "Contar cubos")
+          const numSpan = document.createElement('span');
+          numSpan.className = 'policubo-num';
+          numSpan.textContent = globalCubeIndex;
+          cube.appendChild(numSpan);
+
+          if (animateDrop) {
+            const delayMs = c * 75 + r * 42;
+            cube.style.animationDelay = `${delayMs}ms`;
+            if (playSounds && (cols * rows <= 36 || r === rows - 1)) {
+              setTimeout(() => {
+                if (!DOM.gameScreen.classList.contains('hidden')) {
+                  SoundFX.playPop(c + r * 0.5);
+                }
+              }, delayMs);
+            }
+          }
+
+          colEl.appendChild(cube);
+        }
+
+        // Interacción directa: clic en una columna para contar hasta ella
+        colEl.addEventListener('click', () => handleColumnClick(c, cols, rows));
+        DOM.policuboColumnsWrap.appendChild(colEl);
+      }
+    }
+
+    /**
+     * Al hacer clic en una columna concreta, ilumina y numera hasta esa columna
+     * para ayudar al conteo a saltos en pizarra digital.
+     */
+    function handleColumnClick(colIdx, cols, rows) {
+      stopCountingAnimation();
+      const colEls = [...DOM.policuboColumnsWrap.querySelectorAll('.cube-column')];
+      SoundFX.playCountNote(colIdx);
+
+      colEls.forEach((el, idx) => {
+        const badge = el.querySelector('.col-count-badge');
+        const cubes = el.querySelectorAll('.policubo');
+        if (idx <= colIdx) {
+          el.classList.remove('dimmed');
+          el.classList.toggle('highlighted', idx === colIdx);
+          badge.classList.add('visible');
+          cubes.forEach(cb => cb.classList.add('numbered'));
+        } else {
+          el.classList.remove('highlighted');
+          el.classList.add('dimmed');
+          badge.classList.remove('visible');
+          cubes.forEach(cb => cb.classList.remove('numbered'));
+        }
+      });
+
+      const subtotal = (colIdx + 1) * rows;
+      setMascot(
+        'happy',
+        `¡Llevamos ${plural(colIdx + 1, 'columna', 'columnas')} de ${rows}: son ${subtotal} policubos!`
+      );
+
+      if (colIdx === cols - 1) {
+        updateRepeatedSumWithTotal(cols, rows);
+      }
+    }
+
+    function updateRepeatedSumWithTotal(cols, rows) {
+      const total = cols * rows;
+      if (cols === 1) {
+        DOM.repeatedSumLabel.textContent = `Total: ${total}`;
+      } else {
+        DOM.repeatedSumLabel.textContent = `Suma: ${Array(cols).fill(rows).join(' + ')} = ${total}`;
+      }
+    }
+
+    /**
+     * Botón "🔢 Contar cubos": recorre las columnas una a una haciendo conteo a saltos
+     * (3, 6, 9...) e iluminando cada policubo con su número.
+     */
+    function startCountingColumns() {
+      stopCountingAnimation();
+      const colEls = [...DOM.policuboColumnsWrap.querySelectorAll('.cube-column')];
+      if (colEls.length === 0) return;
+
+      const { cols, rows } = getCurrentVisualDimensions();
+      state.countingInProgress = true;
+
+      // Reinicia aspecto visual antes de empezar a contar
+      colEls.forEach(el => {
+        el.classList.add('dimmed');
+        el.classList.remove('highlighted');
+        el.querySelector('.col-count-badge').classList.remove('visible');
+        el.querySelectorAll('.policubo').forEach(cb => cb.classList.remove('numbered'));
+      });
+
+      let step = 0;
+      const stepDelay = cols > 6 ? 420 : 560;
+
+      function nextStep() {
+        if (step >= colEls.length) {
+          colEls.forEach(el => el.classList.remove('highlighted', 'dimmed'));
+          state.countingInProgress = false;
+          updateRepeatedSumWithTotal(cols, rows);
+          setMascot('excited', `¡Contados todos! En total hay ${cols * rows} policubos. 🔢✨`);
+          return;
+        }
+
+        const currentCol = colEls[step];
+        colEls.forEach((el, i) => {
+          if (i < step) {
+            el.classList.remove('highlighted', 'dimmed');
+          }
+        });
+
+        currentCol.classList.remove('dimmed');
+        currentCol.classList.add('highlighted');
+        currentCol.querySelector('.col-count-badge').classList.add('visible');
+        currentCol.querySelectorAll('.policubo').forEach(cb => cb.classList.add('numbered'));
+
+        SoundFX.playCountNote(step);
+        const cumulative = (step + 1) * rows;
+        setMascot('happy', `Contando a saltos de ${rows}: ¡${cumulative}!`);
+
+        step++;
+        state.countingTimer = setTimeout(nextStep, stepDelay);
+      }
+
+      nextStep();
+    }
+
+    /**
+     * Devuelve las dimensiones actuales mostradas en el escenario de policubos.
+     */
+    function getCurrentVisualDimensions() {
+      if (state.mode === 'builder' && !state.builderStructureSolved) {
+        return { cols: state.builderCols, rows: state.builderRows };
+      }
+      if (state.isRotated) {
+        return { cols: state.currentB, rows: state.currentA };
+      }
+      return { cols: state.currentA, rows: state.currentB };
+    }
+
+    /**
+     * Botón "🔄 Girar (Propiedad conmutativa)": alterna A × B y B × A con explicación.
+     */
+    function toggleCommutativeRotation() {
+      SoundFX.playFlip();
+      state.isRotated = !state.isRotated;
+      const { cols, rows } = getCurrentVisualDimensions();
+
+      DOM.policuboColumnsWrap.classList.remove('animate-rotate-pop');
+      void DOM.policuboColumnsWrap.offsetWidth; // Reinicia animación CSS
+      DOM.policuboColumnsWrap.classList.add('animate-rotate-pop');
+
+      renderPolicubos(cols, rows, { animateDrop: false, playSounds: false });
+
+      DOM.commutativeBanner.classList.remove('hidden');
+      if (state.currentA === state.currentB) {
+        DOM.commutativeBanner.textContent =
+          `🔄 ¡Es un cuadrado! ${state.currentA} × ${state.currentB} tiene las mismas columnas que cubos de altura.`;
+      } else if (state.isRotated) {
+        DOM.commutativeBanner.textContent =
+          `🔄 ¡Propiedad conmutativa! Hemos girado ${state.currentA} × ${state.currentB} a ${state.currentB} × ${state.currentA}: ¡el total de policubos es exactamente el mismo!`;
+      } else {
+        DOM.commutativeBanner.textContent =
+          `🔄 Volvemos a la posición original: ${state.currentA} columnas de ${state.currentB} policubos (${state.currentA} × ${state.currentB}).`;
+      }
+    }
+
+    function celebratePolicubosHop() {
+      const colEls = DOM.policuboColumnsWrap.querySelectorAll('.cube-column');
+      colEls.forEach((col, i) => {
+        col.classList.remove('animate-happy-hop');
+        setTimeout(() => {
+          col.classList.add('animate-happy-hop');
+        }, i * 65);
+      });
+    }
+
+    // Reajuste automático de tamaño si se cambia el tamaño de pantalla o se gira la tablet
+    window.addEventListener('resize', () => {
+      if (!DOM.gameScreen.classList.contains('hidden') && state.policubosVisible) {
+        const { cols, rows } = getCurrentVisualDimensions();
+        const { size, gap } = computeSmartCubeSize(cols, rows);
+        DOM.policuboColumnsWrap.style.gap = `${gap}px`;
+        DOM.policuboColumnsWrap.style.setProperty('--cube-size', `${size}px`);
+      }
+    });
+
+    /* -----------------------------------------------------------------------
+       11. FLUJO DE PARTIDA: DESAFÍO DE TABLAS Y TALLER CONSTRUCTOR
+       ----------------------------------------------------------------------- */
+    function startGame() {
+      if (state.selectedTables.size === 0) {
+        SoundFX.playWrong();
+        DOM.tablesErrorMsg.classList.remove('hidden');
+        DOM.tablesCard.classList.remove('animate-shake');
+        void DOM.tablesCard.offsetWidth;
+        DOM.tablesCard.classList.add('animate-shake');
+        return;
+      }
+
+      SoundFX.playClick();
+      state.questionIndex = 0;
+      state.totalQuestions = state.duration === '10' ? 10 : Infinity;
+      state.stars = 0;
+      state.streak = 0;
+      state.bestStreak = 0;
+      state.firstTryCorrect = 0;
+      state.mistakesMap.clear();
+      refillQuestionBag();
+
+      DOM.menuScreen.classList.add('hidden');
+      DOM.summaryScreen.classList.add('hidden');
+      DOM.gameScreen.classList.remove('hidden');
+
+      DOM.finishInfiniteBtn.classList.toggle('hidden', state.duration !== 'infinite');
+      DOM.progressBarWrap.classList.toggle('hidden', state.duration === 'infinite');
+
+      syncMenuToggles();
+      updateHUD();
+      loadNextQuestion();
+    }
+
+    function updateHUD() {
+      DOM.starsCount.textContent = state.stars;
+      DOM.streakCount.textContent = state.streak;
+
+      if (state.duration === 'infinite') {
+        DOM.questionProgressText.textContent = `Modo Clase · Reto #${state.questionIndex + 1}`;
+      } else {
+        const shownIdx = Math.min(state.questionIndex + 1, state.totalQuestions);
+        DOM.questionProgressText.textContent = `Pregunta ${shownIdx} de ${state.totalQuestions}`;
+        const pct = Math.round((shownIdx / state.totalQuestions) * 100);
+        DOM.progressBarFill.style.width = `${pct}%`;
+      }
+    }
+
+    function loadNextQuestion() {
+      stopCountingAnimation();
+      const { a, b } = pickNextMultiplication();
+      state.currentA = a;
+      state.currentB = b;
+      state.isRotated = false;
+      state.answered = false;
+      state.hadMistakeThisQuestion = false;
+      state.keypadValue = '';
+
+      // Actualiza cabecera de ecuación
+      DOM.eqA.textContent = a;
+      DOM.eqB.textContent = b;
+      DOM.eqResult.textContent = '?';
+      DOM.eqResult.className =
+        'inline-flex items-center justify-center min-w-[68px] sm:min-w-[92px] h-12 sm:h-16 px-3 rounded-2xl bg-amber-100 border-3 border-dashed border-amber-400 text-amber-700';
+
+      DOM.commutativeBanner.classList.add('hidden');
+      DOM.nextBtnWrap.classList.add('hidden');
+      updateHUD();
+
+      if (state.mode === 'challenge') {
+        setupChallengeQuestion(a, b);
+      } else {
+        setupBuilderQuestion(a, b);
+      }
+    }
+
+    /* --- MODO 1: DESAFÍO DE TABLAS --- */
+    function setupChallengeQuestion(a, b) {
+      DOM.modeBadgeLabel.textContent = '⚡ Desafío de Tablas';
+      DOM.challengeQuickTools.classList.remove('hidden');
+      DOM.builderControlsArea.classList.add('hidden');
+      DOM.answerSection.classList.remove('hidden');
+      DOM.rotateCommutativeBtn.classList.remove('hidden');
+      DOM.countCubesBtn.classList.remove('hidden');
+
+      setMascot('thinking', `¿Cuánto es ${a} × ${b}? Si necesitas ayuda, pulsa «Ver con Policubos».`);
+
+      if (state.alwaysShowPolicubos) {
+        showPolicubosVisual(true);
+      } else {
+        state.policubosVisible = false;
+        DOM.policuboHiddenState.classList.remove('hidden');
+        DOM.policuboVisibleState.classList.add('hidden');
+        DOM.revealPolicubosBtn.disabled = false;
+        DOM.revealPolicubosBtn.innerHTML = '<span>🧱</span> Ver con Policubos';
+      }
+
+      renderAnswerInput(a, b);
+    }
+
+    function showPolicubosVisual(playSoundCascade = true) {
+      state.policubosVisible = true;
+      DOM.policuboHiddenState.classList.add('hidden');
+      DOM.policuboVisibleState.classList.remove('hidden');
+      DOM.revealPolicubosBtn.disabled = true;
+      DOM.revealPolicubosBtn.innerHTML = '<span>✅</span> Policubos visibles';
+
+      const { cols, rows } = getCurrentVisualDimensions();
+      renderPolicubos(cols, rows, { animateDrop: true, playSounds: playSoundCascade });
+    }
+
+    /* --- MODO 2: TALLER CONSTRUCTOR --- */
+    function setupBuilderQuestion(a, b) {
+      DOM.modeBadgeLabel.textContent = `🏗️ Taller Constructor: ¡Construye ${a} × ${b}!`;
+      DOM.challengeQuickTools.classList.add('hidden');
+      DOM.builderControlsArea.classList.remove('hidden');
+      DOM.answerSection.classList.add('hidden'); // Primero construye, luego responde el total
+      DOM.rotateCommutativeBtn.classList.add('hidden'); // Se habilita tras construir bien
+      DOM.countCubesBtn.classList.remove('hidden');
+
+      state.builderCols = 1;
+      state.builderRows = 1;
+      state.builderStructureSolved = false;
+      state.policubosVisible = true;
+
+      DOM.policuboHiddenState.classList.add('hidden');
+      DOM.policuboVisibleState.classList.remove('hidden');
+
+      setMascot(
+        'happy',
+        `¡Manos a la obra! Construye ${plural(a, 'columna', 'columnas')} con ${plural(b, 'policubo', 'policubos')} cada una.`
+      );
+      updateBuilderView(false);
+    }
+
+    function updateBuilderView(playPopSound = true) {
+      DOM.builderColsReadout.textContent = plural(state.builderCols, 'columna', 'columnas');
+      DOM.builderRowsReadout.textContent = plural(state.builderRows, 'cubo', 'cubos');
+
+      DOM.subColBtn.disabled = state.builderCols <= 1;
+      DOM.addColBtn.disabled = state.builderCols >= 10;
+      DOM.subCubeBtn.disabled = state.builderRows <= 1;
+      DOM.addCubeBtn.disabled = state.builderRows >= 10;
+
+      if (playPopSound) SoundFX.playPop(state.builderCols + state.builderRows);
+      renderPolicubos(state.builderCols, state.builderRows, { animateDrop: false, playSounds: false });
+    }
+
+    function checkBuilderStructure() {
+      const targetA = state.currentA;
+      const targetB = state.currentB;
+
+      if (state.builderCols === targetA && state.builderRows === targetB) {
+        // ¡Construcción exacta! Pasamos a elegir el resultado total
+        SoundFX.playCorrect();
+        ConfettiEngine.burst(30, 0.55);
+        state.builderStructureSolved = true;
+
+        DOM.builderControlsArea.classList.add('hidden');
+        DOM.rotateCommutativeBtn.classList.remove('hidden');
+        DOM.answerSection.classList.remove('hidden');
+        celebratePolicubosHop();
+
+        setMascot(
+          'excited',
+          `¡Construcción perfecta! (${targetA} columnas de ${targetB}). Ahora dinos: ¿cuántos policubos hay en total?`
+        );
+        renderAnswerInput(targetA, targetB);
+      } else if (state.builderCols === targetB && state.builderRows === targetA) {
+        // Caso didáctico especial: construyó la conmutativa
+        SoundFX.playWrong();
+        DOM.builderControlsArea.classList.remove('animate-shake');
+        void DOM.builderControlsArea.offsetWidth;
+        DOM.builderControlsArea.classList.add('animate-shake');
+        setMascot(
+          'encourage',
+          `¡Casi! Has hecho ${targetB} columnas de ${targetA} (¡tienen los mismos cubos!), pero el reto pide ${plural(targetA, 'columna', 'columnas')} de ${targetB}. ¡Ajústalo!`
+        );
+      } else {
+        SoundFX.playWrong();
+        DOM.builderControlsArea.classList.remove('animate-shake');
+        void DOM.builderControlsArea.offsetWidth;
+        DOM.builderControlsArea.classList.add('animate-shake');
+
+        let hint = `Necesitamos ${plural(targetA, 'columna', 'columnas')} y ${plural(targetB, 'cubo', 'cubos')} en cada una.`;
+        if (state.builderCols !== targetA) {
+          hint = state.builderCols < targetA
+            ? `¡Te faltan columnas! Tienes ${state.builderCols} y necesitas ${targetA}.`
+            : `¡Te sobran columnas! Tienes ${state.builderCols} y necesitas ${targetA}.`;
+        } else if (state.builderRows !== targetB) {
+          hint = state.builderRows < targetB
+            ? `Las columnas están genial, ¡pero añade cubos hasta llegar a ${targetB} de altura!`
+            : `Las columnas están genial, ¡pero quita cubos hasta dejar ${targetB} de altura!`;
+        }
+        setMascot('encourage', hint);
+      }
+    }
+
+    /* --- RENDERIZADO DE RESPUESTAS (4 BOTONES O TECLADO NUMÉRICO) --- */
+    function renderAnswerInput(a, b) {
+      if (state.useKeypad) {
+        DOM.choicesGrid.classList.add('hidden');
+        DOM.keypadArea.classList.remove('hidden');
+        state.keypadValue = '';
+        updateKeypadDisplay();
+      } else {
+        DOM.keypadArea.classList.add('hidden');
+        DOM.choicesGrid.classList.remove('hidden');
+        DOM.choicesGrid.innerHTML = '';
+
+        const choices = generateChoices(a, b);
+        const btnThemes = ['btn-blue', 'btn-purple', 'btn-teal', 'btn-amber'];
+
+        choices.forEach((val, idx) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.dataset.value = val;
+          btn.className = `choice-btn btn-3d ${btnThemes[idx]} rounded-3xl py-4 sm:py-5 font-display font-bold text-3xl sm:text-4xl tracking-wide`;
+          btn.textContent = val;
+          btn.addEventListener('click', () => handleAnswerAttempt(val, btn));
+          DOM.choicesGrid.appendChild(btn);
+        });
+      }
+    }
+
+    function updateKeypadDisplay() {
+      if (!state.keypadValue) {
+        DOM.keypadDisplay.innerHTML = '<span class="text-slate-300 text-2xl">Escribe...</span>';
+      } else {
+        DOM.keypadDisplay.textContent = state.keypadValue;
+      }
+    }
+
+    /* --- COMPROBACIÓN DE RESPUESTA --- */
+    function handleAnswerAttempt(value, buttonEl = null) {
+      if (state.answered) return;
+      const correct = state.currentA * state.currentB;
+
+      if (Number(value) === correct) {
+        // ¡ACIERTO!
+        state.answered = true;
+        SoundFX.playCorrect();
+
+        state.stars += 1;
+        state.streak += 1;
+        if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+        if (!state.hadMistakeThisQuestion) state.firstTryCorrect += 1;
+
+        updateHUD();
+
+        // Completa la igualdad visualmente
+        DOM.eqResult.textContent = correct;
+        DOM.eqResult.className =
+          'inline-flex items-center justify-center min-w-[68px] sm:min-w-[92px] h-12 sm:h-16 px-3 rounded-2xl bg-emerald-100 border-3 border-emerald-500 text-emerald-700 animate-star-pop';
+
+        // Si los policubos estaban ocultos, se muestran automáticamente para celebrar
+        if (!state.policubosVisible) {
+          showPolicubosVisual(false);
+        }
+        const { cols, rows } = getCurrentVisualDimensions();
+        updateRepeatedSumWithTotal(cols, rows);
+        celebratePolicubosHop();
+
+        // Resalta opción ganadora y desactiva las demás
+        if (buttonEl) {
+          document.querySelectorAll('.choice-btn').forEach(b => {
+            if (b === buttonEl) {
+              b.className = 'choice-btn btn-3d btn-green rounded-3xl py-4 sm:py-5 font-display font-bold text-3xl sm:text-4xl ring-4 ring-emerald-300';
+            } else {
+              b.disabled = true;
+            }
+          });
+        }
+        DOM.keypadArea.classList.add('hidden');
+
+        // Confeti (extra grande en rachas de 3, 5, 10...)
+        const burstSize = state.streak >= 3 ? 80 : 42;
+        ConfettiEngine.burst(burstSize, 0.42);
+
+        const streakNote = state.streak >= 3 ? ` (¡Racha de ${state.streak}! 🔥)` : '';
+        setMascot('excited', randomItem(PRAISE_MESSAGES) + streakNote);
+
+        // Botón Siguiente
+        DOM.nextQuestionBtn.innerHTML =
+          state.duration === '10' && state.questionIndex + 1 >= state.totalQuestions
+            ? '<span>Ver mi trofeo</span> <span>🏆</span>'
+            : '<span>Siguiente</span> <span>➜</span>';
+        DOM.nextBtnWrap.classList.remove('hidden');
+      } else {
+        // FALLO AMABLE (SIN CASTIGO)
+        SoundFX.playWrong();
+        state.streak = 0;
+        state.hadMistakeThisQuestion = true;
+        updateHUD();
+
+        // Guarda para la tarjeta de repaso final
+        const key = `${state.currentA}×${state.currentB}`;
+        state.mistakesMap.set(key, { a: state.currentA, b: state.currentB, ans: correct });
+
+        if (buttonEl) {
+          buttonEl.disabled = true;
+          buttonEl.classList.remove('btn-blue', 'btn-purple', 'btn-teal', 'btn-amber');
+          buttonEl.classList.add('bg-rose-100', 'text-rose-500', 'border-2', 'border-rose-300', 'animate-shake');
+          buttonEl.style.boxShadow = 'none';
+        } else {
+          // Teclado numérico: sacudida suave y limpiar
+          DOM.keypadDisplay.classList.remove('animate-shake');
+          void DOM.keypadDisplay.offsetWidth;
+          DOM.keypadDisplay.classList.add('animate-shake');
+          state.keypadValue = '';
+          updateKeypadDisplay();
+        }
+
+        // Muestra automáticamente los policubos si aún estaban ocultos para ayudarle
+        if (!state.policubosVisible) {
+          showPolicubosVisual(true);
+          setMascot(
+            'encourage',
+            '¡Casi! Te he sacado los policubos para ayudarte. ¡Cuéntalos y vuelve a intentarlo!'
+          );
+        } else {
+          setMascot('encourage', randomItem(TRY_AGAIN_MESSAGES));
+        }
+      }
+    }
+
+    function advanceAfterAnswer() {
+      SoundFX.playClick();
+      state.questionIndex += 1;
+
+      if (state.duration === '10' && state.questionIndex >= state.totalQuestions) {
+        showSummaryScreen();
+      } else {
+        loadNextQuestion();
+      }
+    }
+
+    /* -----------------------------------------------------------------------
+       12. PANTALLA FINAL DE TROFEO Y RESUMEN
+       ----------------------------------------------------------------------- */
+    function showSummaryScreen() {
+      stopCountingAnimation();
+      SoundFX.playFanfare();
+      ConfettiEngine.burst(110, 0.35);
+      setTimeout(() => ConfettiEngine.burst(75, 0.5), 450);
+
+      DOM.gameScreen.classList.add('hidden');
+      DOM.summaryScreen.classList.remove('hidden');
+
+      const totalCompleted = state.duration === '10' ? state.totalQuestions : Math.max(1, state.stars);
+      const ratio = state.firstTryCorrect / totalCompleted;
+
+      // Estrellas de trofeo (1 a 3)
+      let trophyStars = 1;
+      if (ratio >= 0.9) trophyStars = 3;
+      else if (ratio >= 0.65) trophyStars = 2;
+
+      DOM.summaryMascotBox.innerHTML = renderMascotSVG('excited');
+      DOM.summaryTitle.textContent =
+        trophyStars === 3
+          ? '¡Súper Campeón de Policubos!'
+          : trophyStars === 2
+          ? '¡Muy buen trabajo!'
+          : '¡Reto completado!';
+      DOM.summarySubtitle.textContent =
+        trophyStars === 3
+          ? '¡Dominas estas tablas de maravilla!'
+          : '¡Cada partida te hace más rápido multiplicando!';
+
+      // Dibuja las 3 estrellas (doradas conseguidas + apagadas)
+      DOM.summaryStarsRow.innerHTML = '';
+      for (let i = 1; i <= 3; i++) {
+        const span = document.createElement('span');
+        const earned = i <= trophyStars;
+        span.textContent = earned ? '⭐' : '☆';
+        span.className = earned ? 'animate-star-pop inline-block drop-shadow' : 'text-slate-300 inline-block';
+        span.style.animationDelay = `${i * 180}ms`;
+        DOM.summaryStarsRow.appendChild(span);
+      }
+
+      DOM.statScore.textContent =
+        state.duration === '10'
+          ? `${state.firstTryCorrect}/${state.totalQuestions}`
+          : `${state.stars}`;
+      DOM.statStars.textContent = `⭐ ${state.stars}`;
+      DOM.statBestStreak.textContent = `🔥 ${state.bestStreak}`;
+
+      // Lista de multiplicaciones a repasar
+      if (state.mistakesMap.size > 0) {
+        DOM.reviewBox.classList.remove('hidden');
+        DOM.perfectBox.classList.add('hidden');
+        DOM.reviewList.innerHTML = '';
+        state.mistakesMap.forEach(({ a, b, ans }) => {
+          const pill = document.createElement('span');
+          pill.className =
+            'bg-white border-2 border-rose-300 text-rose-800 font-display font-bold text-lg px-3.5 py-1.5 rounded-xl shadow-sm';
+          pill.textContent = `${a} × ${b} = ${ans}`;
+          DOM.reviewList.appendChild(pill);
+        });
+      } else {
+        DOM.reviewBox.classList.add('hidden');
+        DOM.perfectBox.classList.remove('hidden');
+      }
+    }
+
+    function returnToMenu() {
+      stopCountingAnimation();
+      SoundFX.playClick();
+      DOM.gameScreen.classList.add('hidden');
+      DOM.summaryScreen.classList.add('hidden');
+      DOM.menuScreen.classList.remove('hidden');
+      renderTableTiles();
+      syncMenuToggles();
+    }
+
+    /* -----------------------------------------------------------------------
+       13. ASIGNACIÓN DE EVENTOS (CLIC, TÁCTIL Y TECLADO FÍSICO)
+       ----------------------------------------------------------------------- */
+    function bindEvents() {
+      // Botones de sonido
+      document.getElementById('menuSoundBtn').addEventListener('click', () => {
+        SoundFX.toggle();
+        updateSoundButtons();
+      });
+      document.getElementById('gameSoundBtn').addEventListener('click', () => {
+        SoundFX.toggle();
+        updateSoundButtons();
+      });
+
+      // Atajos rápidos de tablas
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => applyTablePreset(btn.dataset.preset));
+      });
+
+      // Interruptores del menú
+      const toggleAlways = () => {
+        SoundFX.playClick();
+        state.alwaysShowPolicubos = !state.alwaysShowPolicubos;
+        syncMenuToggles();
+      };
+      DOM.menuAlwaysShowToggle.parentElement.addEventListener('click', toggleAlways);
+
+      const toggleKeypad = () => {
+        SoundFX.playClick();
+        state.useKeypad = !state.useKeypad;
+        syncMenuToggles();
+      };
+      DOM.menuKeypadToggle.parentElement.addEventListener('click', toggleKeypad);
+
+      // Modos y duración
+      DOM.modeChallengeCard.addEventListener('click', () => setGameMode('challenge'));
+      DOM.modeBuilderCard.addEventListener('click', () => setGameMode('builder'));
+      DOM.dur10Btn.addEventListener('click', () => setDuration('10'));
+      DOM.durInfBtn.addEventListener('click', () => setDuration('infinite'));
+
+      // Iniciar partida
+      DOM.startGameBtn.addEventListener('click', startGame);
+
+      // Botones de navegación en partida
+      DOM.backToMenuBtn.addEventListener('click', returnToMenu);
+      DOM.finishInfiniteBtn.addEventListener('click', () => {
+        SoundFX.playClick();
+        showSummaryScreen();
+      });
+
+      // Herramientas de policubos en partida
+      DOM.revealPolicubosBtn.addEventListener('click', () => {
+        SoundFX.playClick();
+        showPolicubosVisual(true);
+        setMascot(
+          'happy',
+          `¡Mira! ${state.currentA} × ${state.currentB} son ${plural(state.currentA, 'columna', 'columnas')} de ${state.currentB} policubos.`
+        );
+      });
+
+      DOM.inGameAlwaysBtn.addEventListener('click', () => {
+        SoundFX.playClick();
+        state.alwaysShowPolicubos = !state.alwaysShowPolicubos;
+        syncMenuToggles();
+        if (state.alwaysShowPolicubos && !state.policubosVisible) {
+          showPolicubosVisual(true);
+        }
+      });
+
+      DOM.countCubesBtn.addEventListener('click', startCountingColumns);
+      DOM.rotateCommutativeBtn.addEventListener('click', toggleCommutativeRotation);
+
+      // Controles del Taller Constructor
+      DOM.addColBtn.addEventListener('click', () => {
+        if (state.builderCols < 10) {
+          state.builderCols++;
+          updateBuilderView(true);
+        }
+      });
+      DOM.subColBtn.addEventListener('click', () => {
+        if (state.builderCols > 1) {
+          state.builderCols--;
+          updateBuilderView(true);
+        }
+      });
+      DOM.addCubeBtn.addEventListener('click', () => {
+        if (state.builderRows < 10) {
+          state.builderRows++;
+          updateBuilderView(true);
+        }
+      });
+      DOM.subCubeBtn.addEventListener('click', () => {
+        if (state.builderRows > 1) {
+          state.builderRows--;
+          updateBuilderView(true);
+        }
+      });
+      DOM.checkBuildBtn.addEventListener('click', checkBuilderStructure);
+
+      // Teclado numérico en pantalla
+      document.querySelectorAll('.kp-digit').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (state.answered) return;
+          SoundFX.playClick();
+          if (state.keypadValue.length < 3) {
+            state.keypadValue += btn.dataset.digit;
+            updateKeypadDisplay();
+          }
+        });
+      });
+
+      DOM.keypadBackspace.addEventListener('click', () => {
+        if (state.answered) return;
+        SoundFX.playClick();
+        state.keypadValue = state.keypadValue.slice(0, -1);
+        updateKeypadDisplay();
+      });
+
+      DOM.keypadSubmit.addEventListener('click', () => {
+        if (state.answered || !state.keypadValue) return;
+        handleAnswerAttempt(Number(state.keypadValue), null);
+      });
+
+      // Botón Siguiente
+      DOM.nextQuestionBtn.addEventListener('click', advanceAfterAnswer);
+
+      // Botones del Resumen Final
+      DOM.playAgainBtn.addEventListener('click', startGame);
+      DOM.changeTablesBtn.addEventListener('click', returnToMenu);
+
+      // Soporte de teclado físico (para ordenadores en clase)
+      window.addEventListener('keydown', e => {
+        if (DOM.gameScreen.classList.contains('hidden')) return;
+
+        if (e.key === 'Enter' && state.answered) {
+          e.preventDefault();
+          advanceAfterAnswer();
+          return;
+        }
+
+        if (state.useKeypad && !state.answered && !DOM.keypadArea.classList.contains('hidden')) {
+          if (/^[0-9]$/.test(e.key) && state.keypadValue.length < 3) {
+            SoundFX.playClick();
+            state.keypadValue += e.key;
+            updateKeypadDisplay();
+          } else if (e.key === 'Backspace') {
+            SoundFX.playClick();
+            state.keypadValue = state.keypadValue.slice(0, -1);
+            updateKeypadDisplay();
+          } else if (e.key === 'Enter' && state.keypadValue) {
+            handleAnswerAttempt(Number(state.keypadValue), null);
+          }
+        }
+      });
+    }
+
+    /* -----------------------------------------------------------------------
+       14. INICIALIZACIÓN AL CARGAR LA PÁGINA
+       ----------------------------------------------------------------------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      DOM.menuMascotBox.innerHTML = renderMascotSVG('happy');
+      renderTableTiles();
+      syncMenuToggles();
+      updateSoundButtons();
+      bindEvents();
+    });
+  </script>
+</body>
+</html>
