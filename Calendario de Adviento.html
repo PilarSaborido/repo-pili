@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>El Calendario de Adviento del Elfo · 3.º de Primaria</title>
+    <!-- Tailwind CSS para utilidades responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuentes redondeadas y muy legibles para pizarra digital -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================================
+           ESTILOS GENERALES Y AMBIENTACIÓN NAVIDEÑA
+           ========================================================= */
+        :root {
+            --red-festive: #c81e2b;
+            --red-dark: #8f111c;
+            --green-pine: #165b33;
+            --green-light: #22844b;
+            --gold-bright: #fbbf24;
+            --gold-deep: #d97706;
+            --cream-warm: #fffbf0;
+        }
+
+        body {
+            font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #1d3b58 0%, #0e2236 45%, #07131f 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        h1, h2, h3, .font-display {
+            font-family: 'Fredoka', 'Nunito', sans-serif;
+        }
+
+        /* Canvas de nieve y confeti en capas fijas */
+        #snowCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        #confettiCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 60;
+        }
+
+        .app-shell {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* =========================================================
+           GUIRNALDA DE LUCES DE NAVIDAD SUPERIOR
+           ========================================================= */
+        .lights-garland {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-start;
+            width: 100%;
+            height: 36px;
+            overflow: hidden;
+            position: relative;
+            background: linear-gradient(180deg, rgba(6, 17, 29, 0.95) 0%, rgba(6, 17, 29, 0) 100%);
+            padding: 0 8px;
+        }
+
+        .lights-wire {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 14px;
+            border-bottom: 3px solid #1e293b;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .bulb {
+            position: relative;
+            width: 14px;
+            height: 20px;
+            border-radius: 50% 50% 45% 45%;
+            margin-top: 8px;
+            flex-shrink: 0;
+            animation: twinkle 1.8s infinite ease-in-out;
+        }
+
+        .bulb::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: 3px;
+            width: 8px;
+            height: 6px;
+            background: #334155;
+            border-radius: 2px;
+        }
+
+        .bulb-red { background: #ff4d5a; box-shadow: 0 0 12px 3px rgba(255, 77, 90, 0.85); animation-delay: 0s; }
+        .bulb-gold { background: #ffd43b; box-shadow: 0 0 12px 3px rgba(255, 212, 59, 0.85); animation-delay: 0.45s; }
+        .bulb-green { background: #38d989; box-shadow: 0 0 12px 3px rgba(56, 217, 137, 0.85); animation-delay: 0.9s; }
+        .bulb-blue { background: #4dabf7; box-shadow: 0 0 12px 3px rgba(77, 171, 247, 0.85); animation-delay: 1.35s; }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.45; transform: scale(0.92); }
+        }
+
+        /* =========================================================
+           ELFO ANIMADO Y BOCADILLO
+           ========================================================= */
+        .elf-float {
+            animation: elfBob 3.2s ease-in-out infinite;
+            transform-origin: center bottom;
+        }
+
+        @keyframes elfBob {
+            0%, 100% { transform: translateY(0px) rotate(-1deg); }
+            50% { transform: translateY(-5px) rotate(1.5deg); }
+        }
+
+        .speech-bubble {
+            position: relative;
+            background: var(--cream-warm);
+            color: #1e293b;
+            border: 3px solid var(--gold-bright);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (min-width: 768px) {
+            .speech-bubble::before {
+                content: '';
+                position: absolute;
+                left: -14px;
+                top: 50%;
+                transform: translateY(-50%);
+                border-width: 10px 14px 10px 0;
+                border-style: solid;
+                border-color: transparent var(--gold-bright) transparent transparent;
+            }
+            .speech-bubble::after {
+                content: '';
+                position: absolute;
+                left: -9px;
+                top: 50%;
+                transform: translateY(-50%);
+                border-width: 7px 11px 7px 0;
+                border-style: solid;
+                border-color: transparent var(--cream-warm) transparent transparent;
+            }
+        }
+
+        /* =========================================================
+           BARRA DE PROGRESO BASTÓN DE CARAMELO
+           ========================================================= */
+        .candy-progress {
+            background-image: repeating-linear-gradient(
+                -45deg,
+                #e11d48 0px,
+                #e11d48 12px,
+                #fbbf24 12px,
+                #fbbf24 24px
+            );
+            background-size: 34px 34px;
+            animation: moveStripes 1.6s linear infinite;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes moveStripes {
+            0% { background-position: 0 0; }
+            100% { background-position: 34px 0; }
+        }
+
+        /* =========================================================
+           TARJETAS / PUERTAS DE ADVIENTO (1 AL 24)
+           ========================================================= */
+        .advent-card {
+            position: relative;
+            border-radius: 1.25rem;
+            cursor: pointer;
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+            overflow: hidden;
+            border: 3px solid rgba(251, 191, 36, 0.65);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.25);
+        }
+
+        .advent-card:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 16px 28px rgba(0, 0, 0, 0.45), 0 0 22px rgba(251, 191, 36, 0.45);
+            border-color: #fde68a;
+        }
+
+        .advent-card:active {
+            transform: scale(0.97);
+        }
+
+        /* Lazo decorativo de regalo */
+        .advent-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 14px;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.14);
+            pointer-events: none;
+        }
+
+        .advent-card::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: 14px;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.14);
+            pointer-events: none;
+        }
+
+        .card-theme-red {
+            background: linear-gradient(145deg, #dc2626 0%, #991b1b 100%);
+        }
+        .card-theme-green {
+            background: linear-gradient(145deg, #16a34a 0%, #14532d 100%);
+        }
+        .card-theme-gold {
+            background: linear-gradient(145deg, #d97706 0%, #92400e 100%);
+        }
+        .card-theme-berry {
+            background: linear-gradient(145deg, #be123c 0%, #7f1d1d 100%);
+        }
+
+        .advent-card.completed {
+            border-color: #fde047;
+            box-shadow: 0 8px 20px rgba(250, 204, 21, 0.35), inset 0 0 18px rgba(254, 240, 138, 0.28);
+        }
+
+        .advent-card.special-day {
+            border-width: 4px;
+            border-color: #fde047;
+        }
+
+        /* Animación de apertura al hacer clic */
+        @keyframes doorPop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.1) rotate(-2deg); }
+            100% { transform: scale(1); }
+        }
+        .door-opening {
+            animation: doorPop 0.38s ease;
+        }
+
+        /* =========================================================
+           BOTONES CON ESTILO FESTIVO / JUEGO
+           ========================================================= */
+        .btn-festive {
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+            box-shadow: 0 5px 0 rgba(0, 0, 0, 0.32);
+        }
+        .btn-festive:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.06);
+        }
+        .btn-festive:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.32);
+        }
+
+        /* =========================================================
+           MODALES Y ANIMACIONES
+           ========================================================= */
+        .modal-backdrop {
+            background: rgba(5, 14, 26, 0.8);
+            backdrop-filter: blur(6px);
+        }
+
+        @keyframes modalIn {
+            0% { opacity: 0; transform: scale(0.86) translateY(20px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-card {
+            animation: modalIn 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Scrollbar personalizada para listas largas */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(251, 191, 36, 0.55);
+            border-radius: 999px;
+        }
+
+        /* Toast de notificaciones (reemplazo elegante de alert) */
+        .toast-enter {
+            animation: toastSlide 0.3s ease forwards;
+        }
+        @keyframes toastSlide {
+            from { opacity: 0; transform: translate(-50%, 16px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Lienzo de nieve cayendo en segundo plano -->
+    <canvas id="snowCanvas" aria-hidden="true"></canvas>
+    <!-- Lienzo de confeti festivo en primer plano -->
+    <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
+    <div class="app-shell flex flex-col min-h-screen">
+        <!-- Guirnalda superior de luces de Navidad -->
+        <div id="lightsGarland" class="lights-garland" aria-hidden="true">
+            <div class="lights-wire"></div>
+        </div>
+
+        <!-- =========================================================
+             BARRA SUPERIOR: REPRODUCTOR DE VILLANCICOS Y CONTROLES
+             ========================================================= -->
+        <nav class="w-full max-w-7xl mx-auto px-3 sm:px-6 pt-1 pb-3">
+            <div class="bg-slate-900/75 backdrop-blur-md border-2 border-amber-400/40 rounded-3xl px-4 py-3 shadow-xl flex flex-wrap items-center justify-between gap-3">
+                <!-- Controles del reproductor musical -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                    <span class="hidden sm:inline-flex items-center gap-1.5 text-amber-300 font-display font-semibold text-base pr-1">
+                        🎵 Villancicos:
+                    </span>
+                    <button id="prevSongBtn" title="Villancico anterior" class="btn-festive bg-slate-800 hover:bg-slate-700 text-amber-200 border border-amber-400/40 rounded-2xl px-3 py-2 text-lg">
+                        ⏮️
+                    </button>
+                    <button id="playPauseBtn" class="btn-festive bg-gradient-to-b from-emerald-500 to-emerald-700 text-white font-bold rounded-2xl px-4 py-2 text-base sm:text-lg flex items-center gap-2 border border-emerald-300/50">
+                        <span id="playPauseIcon">▶️</span>
+                        <span id="playPauseText">Música</span>
+                    </button>
+                    <button id="nextSongBtn" title="Siguiente villancico" class="btn-festive bg-slate-800 hover:bg-slate-700 text-amber-200 border border-amber-400/40 rounded-2xl px-3 py-2 text-lg">
+                        ⏭️
+                    </button>
+
+                    <!-- Selector desplegable de los 5 villancicos -->
+                    <select id="songSelect" aria-label="Elegir villancico" class="bg-slate-800 text-amber-100 font-bold text-sm sm:text-base border-2 border-amber-400/40 rounded-2xl px-3 py-2 focus:outline-none focus:border-amber-300 cursor-pointer max-w-[220px] sm:max-w-xs">
+                        <option value="0">1. Navidad, Navidad (Jingle Bells)</option>
+                        <option value="1">2. Campana sobre campana</option>
+                        <option value="2">3. Noche de Paz</option>
+                        <option value="3">4. We Wish You a Merry Christmas</option>
+                        <option value="4">5. Deck the Halls</option>
+                    </select>
+                </div>
+
+                <!-- Volumen, SFX y botón de Ruleta de Ayudante -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 ml-auto">
+                    <div class="flex items-center gap-2 bg-slate-800/80 border border-slate-600/60 rounded-2xl px-3 py-1.5">
+                        <span class="text-base" aria-hidden="true">🔊</span>
+                        <input id="volumeSlider" type="range" min="0" max="1" step="0.05" value="0.55" aria-label="Volumen de la música" class="w-20 sm:w-24 accent-amber-400 cursor-pointer">
+                    </div>
+
+                    <button id="toggleSfxBtn" title="Activar o silenciar efectos de sonido" class="btn-festive bg-slate-800 hover:bg-slate-700 text-amber-200 border border-amber-400/40 rounded-2xl px-3 py-2 text-sm sm:text-base font-bold flex items-center gap-1.5">
+                        <span id="sfxIcon">🔔</span>
+                        <span class="hidden md:inline" id="sfxLabel">Efectos ON</span>
+                    </button>
+
+                    <button id="openHelperModalBtn" class="btn-festive bg-gradient-to-b from-amber-400 to-amber-600 text-slate-950 font-extrabold rounded-2xl px-4 py-2 text-sm sm:text-base flex items-center gap-2 border-2 border-amber-200">
+                        <span>🎡</span>
+                        <span>Elegir ayudante del día</span>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- =========================================================
+             CABECERA: ELFO ILUSTRADO, TÍTULO Y PROGRESO
+             ========================================================= -->
+        <header class="w-full max-w-7xl mx-auto px-3 sm:px-6 pb-4">
+            <div class="bg-gradient-to-r from-red-900/75 via-emerald-950/80 to-red-900/75 backdrop-blur-md border-2 border-amber-400/50 rounded-3xl p-4 sm:p-6 shadow-2xl">
+                <div class="flex flex-col md:flex-row items-center gap-5">
+                    <!-- Elfo Navideño en SVG -->
+                    <div class="flex-shrink-0 flex flex-col items-center">
+                        <div id="elfAvatar" class="elf-float cursor-pointer" title="¡Haz clic para que el elfo os salude!">
+                            <svg width="116" height="128" viewBox="0 0 180 198" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Elfo navideño sonriente">
+                                <!-- Resplandor detrás -->
+                                <circle cx="90" cy="110" r="70" fill="rgba(251, 191, 36, 0.16)"></circle>
+                                <!-- Orejas puntiagudas -->
+                                <path d="M44,108 L14,84 Q10,80 15,89 L38,132 Z" fill="#f9cfa8" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"></path>
+                                <path d="M40,113 L23,97 L36,125 Z" fill="#f2a68d"></path>
+                                <path d="M136,108 L166,84 Q170,80 165,89 L142,132 Z" fill="#f9cfa8" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"></path>
+                                <path d="M140,113 L157,97 L144,125 Z" fill="#f2a68d"></path>
+                                <!-- Cara -->
+                                <ellipse cx="90" cy="118" rx="48" ry="44" fill="#f9cfa8" stroke="#1e293b" stroke-width="4"></ellipse>
+                                <!-- Flequillo -->
+                                <path d="M46,90 Q62,107 76,92 Q90,108 106,92 Q120,106 134,90 L130,78 L50,78 Z" fill="#9a5528" stroke="#1e293b" stroke-width="3.5" stroke-linejoin="round"></path>
+                                <!-- Gorro verde -->
+                                <path d="M40,84 C48,34 94,10 148,6 C135,34 132,62 138,84 Z" fill="#16a34a" stroke="#1e293b" stroke-width="4" stroke-linejoin="round"></path>
+                                <path d="M62,76 C78,44 104,24 134,14" fill="none" stroke="#14532d" stroke-width="4" stroke-linecap="round"></path>
+                                <!-- Cascabel dorado -->
+                                <circle cx="154" cy="14" r="12" fill="#fbbf24" stroke="#1e293b" stroke-width="3.5"></circle>
+                                <circle cx="154" cy="10" r="2.2" fill="#1e293b"></circle>
+                                <path d="M147,18 Q154,23 161,18" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round"></path>
+                                <!-- Banda roja con lunares -->
+                                <rect x="34" y="74" width="112" height="22" rx="11" fill="#dc2626" stroke="#1e293b" stroke-width="4"></rect>
+                                <circle cx="50" cy="85" r="3" fill="#ffffff"></circle>
+                                <circle cx="70" cy="85" r="3" fill="#ffffff"></circle>
+                                <circle cx="90" cy="85" r="3" fill="#ffffff"></circle>
+                                <circle cx="110" cy="85" r="3" fill="#ffffff"></circle>
+                                <circle cx="130" cy="85" r="3" fill="#ffffff"></circle>
+                                <!-- Ojos brillantes -->
+                                <ellipse cx="72" cy="120" rx="6.5" ry="8" fill="#1e293b"></ellipse>
+                                <circle cx="74" cy="117" r="2.4" fill="#ffffff"></circle>
+                                <ellipse cx="108" cy="120" rx="6.5" ry="8" fill="#1e293b"></ellipse>
+                                <circle cx="110" cy="117" r="2.4" fill="#ffffff"></circle>
+                                <!-- Mejillas -->
+                                <circle cx="58" cy="136" r="8.5" fill="#fb7185" opacity="0.65"></circle>
+                                <circle cx="122" cy="136" r="8.5" fill="#fb7185" opacity="0.65"></circle>
+                                <!-- Nariz -->
+                                <circle cx="90" cy="131" r="4.5" fill="#f2a68d" stroke="#1e293b" stroke-width="2.5"></circle>
+                                <!-- Sonrisa -->
+                                <path d="M74,142 Q90,157 106,142" fill="none" stroke="#1e293b" stroke-width="4" stroke-linecap="round"></path>
+                                <!-- Bufanda a rayas -->
+                                <rect x="50" y="158" width="80" height="24" rx="10" fill="#dc2626" stroke="#1e293b" stroke-width="4"></rect>
+                                <line x1="66" y1="158" x2="58" y2="182" stroke="#ffffff" stroke-width="6"></line>
+                                <line x1="88" y1="158" x2="80" y2="182" stroke="#ffffff" stroke-width="6"></line>
+                                <line x1="110" y1="158" x2="102" y2="182" stroke="#ffffff" stroke-width="6"></line>
+                                <rect x="50" y="158" width="80" height="24" rx="10" fill="none" stroke="#1e293b" stroke-width="4"></rect>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Título, bocadillo dinámico y barra de progreso -->
+                    <div class="flex-1 w-full text-center md:text-left">
+                        <div class="flex flex-wrap items-center justify-center md:justify-between gap-2 mb-2">
+                            <div>
+                                <span class="inline-block bg-amber-400/20 text-amber-300 border border-amber-400/40 rounded-full px-3 py-0.5 text-xs sm:text-sm font-extrabold tracking-wide uppercase mb-1">
+                                    ✨ 3.º de Educación Primaria ✨
+                                </span>
+                                <h1 class="text-2xl sm:text-4xl lg:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-100 drop-shadow">
+                                    El Calendario de Adviento del Elfo
+                                </h1>
+                            </div>
+                        </div>
+
+                        <!-- Bocadillo dinámico del elfo -->
+                        <div class="speech-bubble rounded-2xl px-4 py-2.5 sm:px-5 sm:py-3 mt-2 mb-4">
+                            <p id="elfSpeech" class="text-base sm:text-lg font-extrabold text-slate-800 leading-snug">
+                                ¡Hola, clase de 3.º! 🎄 Elegid el número de hoy para descubrir mi reto navideño. ¡Si lo superáis, ganáis una estrella dorada!
+                            </p>
+                        </div>
+
+                        <!-- Barra de progreso + botón discreto de reiniciar -->
+                        <div class="flex flex-col sm:flex-row items-center gap-3">
+                            <div class="flex-1 w-full">
+                                <div class="flex justify-between items-center text-sm sm:text-base font-extrabold mb-1">
+                                    <span class="text-amber-200 flex items-center gap-1.5">
+                                        ⭐ Progreso de la clase:
+                                        <span id="progressText" class="text-white bg-emerald-700/80 border border-emerald-400/50 px-2.5 py-0.5 rounded-full">0 / 24 retos superados</span>
+                                    </span>
+                                    <span id="progressPercent" class="text-amber-300">0%</span>
+                                </div>
+                                <div class="w-full h-4 bg-slate-900/90 rounded-full overflow-hidden border-2 border-amber-400/40 p-0.5">
+                                    <div id="progressBar" class="candy-progress h-full rounded-full" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <button id="resetProgressBtn" class="text-xs sm:text-sm font-bold text-slate-300 hover:text-rose-300 bg-slate-900/60 hover:bg-slate-900/90 border border-slate-600/60 rounded-xl px-3 py-2 transition cursor-pointer flex-shrink-0">
+                                🔄 Reiniciar progreso
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- =========================================================
+             TABLERO PRINCIPAL: 24 CASILLAS DE ADVIENTO
+             ========================================================= -->
+        <main class="w-full max-w-7xl mx-auto px-3 sm:px-6 pb-10 flex-1">
+            <div id="adventGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-5">
+                <!-- Se renderiza dinámicamente desde JavaScript -->
+            </div>
+        </main>
+
+        <!-- Pie de página -->
+        <footer class="text-center text-xs sm:text-sm text-slate-300/80 pb-5 px-4">
+            🎅 Hecho con magia navideña para proyectar en el aula · Todo vuestro progreso se guarda automáticamente en este equipo.
+        </footer>
+    </div>
+
+    <!-- =========================================================
+         MODAL 1: RETO DEL DÍA + TEMPORIZADOR + EDICIÓN
+         ========================================================= -->
+    <div id="challengeModal" class="fixed inset-0 z-40 hidden items-center justify-center p-3 sm:p-5 modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalDayTitle">
+        <div class="modal-card bg-gradient-to-b from-amber-50 to-orange-50 text-slate-900 w-full max-w-3xl rounded-3xl border-4 border-amber-400 shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
+            <!-- Cabecera del modal -->
+            <div class="bg-gradient-to-r from-red-700 via-red-600 to-emerald-700 text-white px-5 py-4 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div id="modalIcon" class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/20 border-2 border-amber-300 flex items-center justify-center text-3xl sm:text-4xl shadow-inner">
+                        🎄
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span id="modalDayBadge" class="bg-amber-400 text-slate-950 font-display font-bold text-sm sm:text-base px-3 py-0.5 rounded-full">
+                                DÍA 1
+                            </span>
+                            <span id="modalCategoryBadge" class="bg-white/20 text-white font-extrabold text-xs sm:text-sm px-3 py-0.5 rounded-full border border-white/30">
+                                Lengua
+                            </span>
+                            <span id="modalCompletedPill" class="hidden bg-emerald-400 text-emerald-950 font-extrabold text-xs sm:text-sm px-3 py-0.5 rounded-full">
+                                ⭐ ¡Superado!
+                            </span>
+                        </div>
+                        <h2 id="modalDayTitle" class="text-xl sm:text-3xl font-bold mt-1 leading-tight drop-shadow-sm">
+                            Título del reto
+                        </h2>
+                    </div>
+                </div>
+                <button id="closeChallengeModalBtn" aria-label="Cerrar ventana" class="bg-white/20 hover:bg-white/30 text-white rounded-2xl w-11 h-11 flex items-center justify-center text-2xl font-bold transition cursor-pointer flex-shrink-0">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Contenido principal del reto -->
+            <div class="p-5 sm:p-7 overflow-y-auto custom-scroll flex-1">
+                <!-- Vista normal de lectura -->
+                <div id="challengeViewMode">
+                    <div class="bg-white rounded-2xl border-2 border-amber-300/80 p-5 sm:p-7 shadow-md mb-6">
+                        <p id="modalChallengeText" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-800 leading-relaxed text-center">
+                            Texto del reto...
+                        </p>
+                    </div>
+
+                    <!-- Temporizador opcional integrado -->
+                    <div class="bg-emerald-950/95 text-white rounded-2xl p-4 sm:p-5 border-2 border-emerald-500/50 shadow-lg mb-6">
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl" aria-hidden="true">⏱️</span>
+                                <div>
+                                    <p class="text-xs uppercase tracking-wider font-bold text-emerald-300">Temporizador del reto</p>
+                                    <div id="timerDisplay" class="font-display text-4xl sm:text-5xl font-bold text-amber-300 tracking-wider tabular-nums">
+                                        01:00
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Botones rápidos de tiempo -->
+                            <div class="flex flex-wrap items-center justify-center gap-2">
+                                <button data-seconds="20" class="timer-preset bg-slate-800 hover:bg-slate-700 text-amber-200 font-bold text-sm px-3 py-2 rounded-xl border border-amber-400/30 cursor-pointer">20 seg</button>
+                                <button data-seconds="60" class="timer-preset bg-slate-800 hover:bg-slate-700 text-amber-200 font-bold text-sm px-3 py-2 rounded-xl border border-amber-400/30 cursor-pointer">1 min</button>
+                                <button data-seconds="120" class="timer-preset bg-slate-800 hover:bg-slate-700 text-amber-200 font-bold text-sm px-3 py-2 rounded-xl border border-amber-400/30 cursor-pointer">2 min</button>
+                                <button data-seconds="180" class="timer-preset bg-slate-800 hover:bg-slate-700 text-amber-200 font-bold text-sm px-3 py-2 rounded-xl border border-amber-400/30 cursor-pointer">3 min</button>
+                            </div>
+
+                            <!-- Controles iniciar/pausar/reiniciar -->
+                            <div class="flex items-center gap-2">
+                                <button id="timerStartPauseBtn" class="btn-festive bg-amber-400 hover:bg-amber-300 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-base cursor-pointer">
+                                    ▶️ Iniciar
+                                </button>
+                                <button id="timerResetBtn" title="Reiniciar reloj" class="btn-festive bg-slate-700 hover:bg-slate-600 text-white font-bold px-3 py-2.5 rounded-xl text-base cursor-pointer">
+                                    🔄
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Barra de progreso del temporizador -->
+                        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden mt-3">
+                            <div id="timerProgressBar" class="h-full bg-gradient-to-r from-emerald-400 to-amber-400 transition-all duration-300" style="width: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de acción principales -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <button id="editChallengeBtn" class="w-full sm:w-auto btn-festive bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold px-5 py-3 rounded-2xl text-base flex items-center justify-center gap-2 cursor-pointer">
+                            ✏️ Editar reto
+                        </button>
+
+                        <button id="completeChallengeBtn" class="w-full sm:w-auto flex-1 btn-festive bg-gradient-to-b from-emerald-500 to-emerald-700 text-white font-display font-bold px-6 py-4 rounded-2xl text-xl sm:text-2xl flex items-center justify-center gap-2.5 border-2 border-emerald-300 cursor-pointer">
+                            <span>🌟</span>
+                            <span id="completeBtnLabel">¡Reto superado!</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Vista de edición del reto (para la profe) -->
+                <div id="challengeEditMode" class="hidden space-y-4">
+                    <div class="bg-amber-100/80 border-2 border-amber-300 rounded-2xl p-4">
+                        <h3 class="font-display text-xl font-bold text-amber-900 mb-3">✏️ Personalizar el reto de este día</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                            <div>
+                                <label for="editTitleInput" class="block text-sm font-extrabold text-slate-700 mb-1">Título del reto</label>
+                                <input id="editTitleInput" type="text" class="w-full rounded-xl border-2 border-slate-300 px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-none">
+                            </div>
+                            <div>
+                                <label for="editCategorySelect" class="block text-sm font-extrabold text-slate-700 mb-1">Categoría</label>
+                                <select id="editCategorySelect" class="w-full rounded-xl border-2 border-slate-300 px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-none">
+                                    <option value="Lengua">Lengua</option>
+                                    <option value="Mates">Mates</option>
+                                    <option value="Creatividad">Creatividad</option>
+                                    <option value="Cooperativo">Cooperativo</option>
+                                    <option value="Música">Música</option>
+                                    <option value="Humor">Humor</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="editTextInput" class="block text-sm font-extrabold text-slate-700 mb-1">Descripción del reto</label>
+                            <textarea id="editTextInput" rows="4" class="w-full rounded-xl border-2 border-slate-300 px-3 py-2 text-base font-bold text-slate-900 focus:border-emerald-600 focus:outline-none"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <button id="restoreDefaultChallengeBtn" class="btn-festive bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold px-4 py-2.5 rounded-xl text-sm cursor-pointer">
+                            ↩️ Restaurar original
+                        </button>
+                        <div class="flex items-center gap-2 ml-auto">
+                            <button id="cancelEditBtn" class="btn-festive bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-5 py-2.5 rounded-xl text-base cursor-pointer">
+                                Cancelar
+                            </button>
+                            <button id="saveEditBtn" class="btn-festive bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold px-6 py-2.5 rounded-xl text-base cursor-pointer">
+                                💾 Guardar cambios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL 2: RULETA NAVIDEÑA "ELEGIR AYUDANTE DEL DÍA"
+         ========================================================= -->
+    <div id="helperModal" class="fixed inset-0 z-40 hidden items-center justify-center p-3 sm:p-5 modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="helperModalTitle">
+        <div class="modal-card bg-gradient-to-b from-slate-900 to-emerald-950 text-white w-full max-w-5xl rounded-3xl border-4 border-amber-400 shadow-2xl overflow-hidden flex flex-col max-h-[94vh]">
+            <!-- Cabecera -->
+            <div class="bg-gradient-to-r from-red-700 via-amber-600 to-emerald-700 px-5 py-3.5 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🎡</span>
+                    <div>
+                        <h2 id="helperModalTitle" class="text-xl sm:text-3xl font-bold leading-tight">
+                            Elegir ayudante del día
+                        </h2>
+                        <p class="text-xs sm:text-sm text-amber-100 font-bold">
+                            ¿Quién saldrá hoy a destapar la casilla del elfo en la pared?
+                        </p>
+                    </div>
+                </div>
+                <button id="closeHelperModalBtn" aria-label="Cerrar ruleta" class="bg-white/20 hover:bg-white/30 text-white rounded-2xl w-11 h-11 flex items-center justify-center text-2xl font-bold transition cursor-pointer">
+                    ✕
+                </button>
+            </div>
+
+            <!-- Cuerpo de la ruleta + lista de clase -->
+            <div class="p-4 sm:p-6 overflow-y-auto custom-scroll flex-1">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <!-- Columna izquierda: Ruleta en Canvas -->
+                    <div class="lg:col-span-7 flex flex-col items-center">
+                        <div class="relative flex items-center justify-center w-full max-w-[400px] aspect-square">
+                            <!-- Flecha puntero superior -->
+                            <div class="absolute -top-2 left-1/2 -translate-x-1/2 z-20 drop-shadow-lg" aria-hidden="true">
+                                <svg width="42" height="42" viewBox="0 0 40 40">
+                                    <polygon points="20,38 5,6 35,6" fill="#fbbf24" stroke="#7f1d1d" stroke-width="3" stroke-linejoin="round"></polygon>
+                                </svg>
+                            </div>
+                            <canvas id="wheelCanvas" class="w-full h-full rounded-full shadow-2xl"></canvas>
+                        </div>
+
+                        <!-- Resultado ganador -->
+                        <div id="winnerBanner" class="w-full mt-4 bg-slate-800/80 border-2 border-amber-400/50 rounded-2xl p-3.5 text-center min-h-[76px] flex flex-col items-center justify-center">
+                            <p id="winnerLabel" class="text-base sm:text-lg font-bold text-amber-200">
+                                Pulsa «¡Girar la ruleta!» para sortear al ayudante de hoy 🎅
+                            </p>
+                            <div id="winnerActions" class="hidden mt-2 flex flex-wrap items-center justify-center gap-2">
+                                <button id="markWinnerDoneBtn" class="btn-festive bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-4 py-1.5 rounded-xl text-sm cursor-pointer">
+                                    ✅ Marcar que ya ha salido
+                                </button>
+                            </div>
+                        </div>
+
+                        <button id="spinWheelBtn" class="mt-4 w-full max-w-sm btn-festive bg-gradient-to-b from-amber-400 to-amber-600 text-slate-950 font-display font-bold text-2xl py-3.5 px-6 rounded-2xl border-2 border-amber-200 cursor-pointer">
+                            🎄 ¡Girar la ruleta! 🎄
+                        </button>
+                    </div>
+
+                    <!-- Columna derecha: Gestión de los 23 alumnos -->
+                    <div class="lg:col-span-5 bg-slate-900/70 border-2 border-emerald-500/40 rounded-2xl p-4 flex flex-col max-h-[480px]">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <h3 class="font-display text-lg sm:text-xl font-bold text-amber-300">
+                                👥 Clase (<span id="remainingCount">23</span> por salir)
+                            </h3>
+                            <button id="toggleEditStudentsBtn" class="text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-amber-200 border border-amber-400/40 px-2.5 py-1.5 rounded-xl cursor-pointer">
+                                ✏️ Editar lista
+                            </button>
+                        </div>
+
+                        <label class="flex items-center gap-2 text-xs sm:text-sm font-bold text-emerald-200 mb-3 cursor-pointer">
+                            <input id="autoMarkCheckbox" type="checkbox" checked class="w-4 h-4 accent-amber-400 rounded cursor-pointer">
+                            <span>Marcar automáticamente al salir (sin repetir)</span>
+                        </label>
+
+                        <!-- Lista visual interactiva -->
+                        <div id="studentsListView" class="flex-1 overflow-y-auto custom-scroll pr-1 space-y-1.5">
+                            <!-- Se rellena por JS -->
+                        </div>
+
+                        <!-- Editor de lista de nombres -->
+                        <div id="studentsEditView" class="hidden flex-1 flex flex-col gap-2">
+                            <p class="text-xs text-slate-300">Escribe un nombre por línea:</p>
+                            <textarea id="studentsTextarea" rows="10" class="w-full flex-1 bg-slate-800 text-white font-bold text-sm rounded-xl border-2 border-amber-400/40 p-2.5 focus:outline-none focus:border-amber-300"></textarea>
+                            <div class="flex gap-2 justify-end">
+                                <button id="cancelStudentsEditBtn" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs px-3 py-2 rounded-xl cursor-pointer">Cancelar</button>
+                                <button id="saveStudentsEditBtn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs px-4 py-2 rounded-xl cursor-pointer">💾 Guardar lista</button>
+                            </div>
+                        </div>
+
+                        <!-- Pie del panel de alumnos -->
+                        <div class="mt-3 pt-3 border-t border-slate-700/80 flex items-center justify-between gap-2">
+                            <button id="resetStudentsTurnBtn" class="w-full btn-festive bg-slate-800 hover:bg-slate-700 text-amber-200 border border-amber-400/30 font-bold text-sm py-2 px-3 rounded-xl cursor-pointer">
+                                🔄 Reiniciar turnos (que puedan salir todos)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL 3: CONFIRMACIÓN (SIN USAR window.confirm)
+         ========================================================= -->
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 modal-backdrop" role="dialog" aria-modal="true">
+        <div class="modal-card bg-slate-900 text-white w-full max-w-md rounded-3xl border-4 border-amber-400 p-6 shadow-2xl text-center">
+            <div class="text-5xl mb-3">🎅</div>
+            <h3 id="confirmTitle" class="font-display text-2xl font-bold text-amber-300 mb-2">¿Reiniciar progreso?</h3>
+            <p id="confirmMessage" class="text-slate-200 font-semibold mb-6">
+                Se borrarán las estrellas de los retos superados para empezar el calendario desde cero. Los retos editados se mantendrán.
+            </p>
+            <div class="flex items-center justify-center gap-3">
+                <button id="confirmCancelBtn" class="btn-festive bg-slate-700 hover:bg-slate-600 text-white font-bold px-5 py-2.5 rounded-2xl cursor-pointer">
+                    Cancelar
+                </button>
+                <button id="confirmAcceptBtn" class="btn-festive bg-rose-600 hover:bg-rose-500 text-white font-extrabold px-5 py-2.5 rounded-2xl cursor-pointer">
+                    Sí, reiniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor de avisos Toast -->
+    <div id="toastContainer" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 pointer-events-none"></div>
+
+    <script>
+        /* =========================================================
+           DATOS INICIALES: 24 RETOS DE 3.º DE PRIMARIA Y ALUMNOS
+           ========================================================= */
+        const DEFAULT_CHALLENGES = [
+            { day: 1, title: "Palabras prohibidas", category: "Lengua", icon: "🎄", defaultSec: 180, text: "Durante 3 minutos seguidos nadie puede decir «sí», «no» ni «Navidad». Si alguien cae, ¡hace 3 saltos de reno!" },
+            { day: 2, title: "Cálculo relámpago", category: "Mates", icon: "⭐", defaultSec: 120, text: "La clase tiene 2 minutos para resolver en equipo 5 multiplicaciones navideñas que diga la profe en la pizarra." },
+            { day: 3, title: "Mímica del Polo Norte", category: "Humor", icon: "🦌", defaultSec: 120, text: "3 voluntarios salen a imitar acciones navideñas (envolver un regalo, patinar sobre hielo, comerse las uvas) sin hablar hasta que la clase acierte." },
+            { day: 4, title: "Villancico con la U", category: "Música", icon: "🍪", defaultSec: 60, text: "Cantad entre todos el estribillo de un villancico sustituyendo TODAS las vocales por la letra U. ¡Prohibido reírse!" },
+            { day: 5, title: "Reto en silencio total", category: "Cooperativo", icon: "🔔", defaultSec: 120, text: "Ordenaos de menor a mayor según vuestra fecha de cumpleaños (día y mes) en menos de 2 minutos sin decir ni una palabra." },
+            { day: 6, title: "Dibujo a ciegas", category: "Creatividad", icon: "⛄", defaultSec: 120, text: "Un voluntario dibuja un muñeco de nieve en la pizarra con los ojos tapados siguiendo solo las indicaciones de sus compañeros." },
+            { day: 7, title: "Trabalenguas congelado", category: "Lengua", icon: "🛷", defaultSec: 60, text: "Toda la clase debe decir al unísono y sin trabarse tres veces seguidas: «Tres tristes trineos traen turrón tradicional»." },
+            { day: 8, title: "¡Bautizamos al elfo!", category: "Creatividad", icon: "🧝", defaultSec: 180, text: "Entre toda la clase tenéis que votar y elegir el nombre oficial de vuestro elfo y su apellido navideño." },
+            { day: 9, title: "Cuento loco en cadena", category: "Lengua", icon: "📖", defaultSec: 60, text: "Inventad una historia navideña de 1 minuto donde cada niño añade una frase empezando por «Y de repente...»." },
+            { day: 10, title: "Rimas de invierno", category: "Lengua", icon: "❄️", defaultSec: 120, text: "Encontrad en equipo al menos 6 palabras que rimen con «estrella» y 6 que rimen con «regalo» antes de que acabe el tiempo." },
+            { day: 11, title: "Estatua navideña", category: "Música", icon: "🪩", defaultSec: 120, text: "Bailad al ritmo de un villancico y, cuando la música se pare, quedaos congelados haciendo una pose de adorno de Navidad." },
+            { day: 12, title: "Teléfono escacharrado navideño", category: "Humor", icon: "🧣", defaultSec: 120, text: "Pasad en secreto de oído en oído una frase larga sobre renos y polvorones. ¿Llegará igual al final?" },
+            { day: 13, title: "Telediario del Polo Norte", category: "Creatividad", icon: "🎙️", defaultSec: 60, text: "Dos reporteros improvisan durante 1 minuto las noticias de última hora sobre un atasco de trineos en el cielo." },
+            { day: 14, title: "Ahorcado navideño", category: "Lengua", icon: "🎅", defaultSec: 180, text: "Adivinad en la pizarra la palabra secreta de Navidad que proponga la profe antes de dibujar al muñeco de nieve completo." },
+            { day: 15, title: "La bola de nieve", category: "Cooperativo", icon: "⚪", defaultSec: 120, text: "Pasaos una bola de papel de uno en uno sin que se caiga al suelo mientras decís una palabra relacionada con el invierno sin repetir." },
+            { day: 16, title: "Multiplicación en cadena", category: "Mates", icon: "🧮", defaultSec: 120, text: "En círculo, decid la tabla del 6 o del 7 pasándoos el turno súper rápido sin fallar. Si se falla, ¡se vuelve a empezar!" },
+            { day: 17, title: "Elogio secreto", category: "Cooperativo", icon: "💝", defaultSec: 60, text: "Cada uno tiene 1 minuto para decirle algo bonito o agradecer algo a su compañero de al lado." },
+            { day: 18, title: "Adivina la canción", category: "Música", icon: "🎶", defaultSec: 120, text: "La profe tararea (o pone 3 segundos de) 3 villancicos y tenéis que adivinar el título antes de contar hasta 5." },
+            { day: 19, title: "Reto del equilibrio", category: "Humor", icon: "🧦", defaultSec: 20, text: "Toda la clase debe aguantar 20 segundos a la pata coja cantando «Campana sobre campana» sin apoyar el otro pie." },
+            { day: 20, title: "Detectives en el aula", category: "Mates", icon: "🔍", defaultSec: 60, text: "En 1 minuto, señalad desde vuestro sitio 5 objetos rojos, 5 verdes y 5 con forma de rectángulo que haya en clase." },
+            { day: 21, title: "El coro de animales", category: "Humor", icon: "🐶", defaultSec: 120, text: "Cantad «Navidad, Navidad» imitando primero a perros, luego a gatos y por último a patos." },
+            { day: 22, title: "Postal exprés", category: "Creatividad", icon: "✉️", defaultSec: 180, text: "En 3 minutos, dibujad en un trocito de papel un deseo bonito para la clase en el nuevo año y compartid 3 en voz alta." },
+            { day: 23, title: "Desfile de elfos", category: "Cooperativo", icon: "🕯️", defaultSec: 60, text: "Caminad por la clase en fila india sin hacer absolutamente nada de ruido, como elfos repartiendo regalos por la noche." },
+            { day: 24, title: "¡Gran Misión Cumplida!", category: "Cooperativo", icon: "🎁", defaultSec: 120, text: "Haced entre todos la foto o pose más divertida de la Navidad, gritad «¡FELIZ NAVIDAD!» y preparaos para la sorpresa final del elfo." }
+        ];
+
+        const DEFAULT_STUDENTS = [
+            "Lola B", "Estefanía", "Esperanza", "Lucía", "Ana S", "María",
+            "Sofía", "Ana G", "Daniela", "Manuel G", "Alex", "Gala",
+            "Changhao", "Lucas", "Allegra", "Leyre", "Thiago", "Manuela",
+            "Lola", "Argentina", "Jesús", "Manuel S", "Pablo"
+        ];
+
+        const CATEGORY_STYLES = {
+            "Lengua": "bg-sky-500/90 text-white",
+            "Mates": "bg-violet-500/90 text-white",
+            "Creatividad": "bg-pink-500/90 text-white",
+            "Cooperativo": "bg-emerald-500/90 text-white",
+            "Música": "bg-amber-400 text-slate-950",
+            "Humor": "bg-orange-500/90 text-white"
+        };
+
+        const ELF_QUOTES = [
+            "¡Hola, clase de 3.º! 🎄 Elegid el número de hoy para descubrir mi reto navideño.",
+            "¡Qué energía tenéis hoy! ✨ Recordad que trabajando en equipo todo sale genial.",
+            "¿Habéis probado a poner un villancico mientras hacéis el reto? 🎵 ¡Da poderes mágicos!",
+            "¡Los renos me han chivado que esta clase es la mejor del cole! 🦌⭐",
+            "Si necesitáis elegir quién quita la casilla de la pared, ¡usad mi ruleta navideña! 🎡"
+        ];
+
+        /* =========================================================
+           ESTADO GLOBAL Y PERSISTENCIA EN LOCALSTORAGE
+           ========================================================= */
+        const STORAGE_KEY = "calendario_elfo_3primaria_v1";
+
+        let state = {
+            challenges: JSON.parse(JSON.stringify(DEFAULT_CHALLENGES)),
+            completedDays: [],
+            students: DEFAULT_STUDENTS.map(name => ({ name, done: false })),
+            sfxEnabled: true
+        };
+
+        function loadState() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed.challenges) && parsed.challenges.length === 24) {
+                    state.challenges = parsed.challenges;
+                }
+                if (Array.isArray(parsed.completedDays)) {
+                    state.completedDays = parsed.completedDays;
+                }
+                if (Array.isArray(parsed.students) && parsed.students.length > 0) {
+                    state.students = parsed.students;
+                }
+                if (typeof parsed.sfxEnabled === "boolean") {
+                    state.sfxEnabled = parsed.sfxEnabled;
+                }
+            } catch (err) {
+                console.warn("No se pudo cargar el progreso guardado:", err);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            } catch (err) {
+                console.warn("No se pudo guardar el progreso:", err);
+            }
+        }
+
+        /* =========================================================
+           MOTOR MUSICAL Y DE EFECTOS SONOROS (WEB AUDIO API)
+           Sonido cálido tipo caja de música / celesta navideña
+           ========================================================= */
+        const NOTE_FREQ = {
+            'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00, 'Bb4': 466.16, 'B4': 493.88,
+            'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25, 'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00, 'Bb5': 932.33, 'B5': 987.77,
+            'C6': 1046.50, 'R': 0
+        };
+
+        // 5 villancicos reconocibles con melodía + bajo suave opcional [nota, duraciónEnTiempos, bajoOpcional]
+        const SONGS = [
+            {
+                name: "Navidad, Navidad (Jingle Bells)",
+                tempo: 155,
+                notes: [
+                    ['E5',1,'C4'],['E5',1],['E5',2,'G4'],
+                    ['E5',1,'C4'],['E5',1],['E5',2,'G4'],
+                    ['E5',1,'C4'],['G5',1],['C5',1.5,'E4'],['D5',0.5],['E5',4,'C4'],
+                    ['F5',1,'F4'],['F5',1],['F5',1.5,'C4'],['F5',0.5],
+                    ['F5',1,'C4'],['E5',1],['E5',1,'G4'],['E5',0.5],['E5',0.5],
+                    ['E5',1,'D4'],['D5',1],['D5',1,'G4'],['E5',1],['D5',2,'G4'],['G5',2,'G4'],
+                    ['E5',1,'C4'],['E5',1],['E5',2,'G4'],
+                    ['E5',1,'C4'],['E5',1],['E5',2,'G4'],
+                    ['E5',1,'C4'],['G5',1],['C5',1.5,'E4'],['D5',0.5],['E5',4,'C4'],
+                    ['F5',1,'F4'],['F5',1],['F5',1.5,'C4'],['F5',0.5],
+                    ['F5',1,'C4'],['E5',1],['E5',1,'G4'],['E5',0.5],['E5',0.5],
+                    ['G5',1,'G4'],['G5',1],['F5',1,'G4'],['D5',1],['C5',4,'C4']
+                ]
+            },
+            {
+                name: "Campana sobre campana",
+                tempo: 132,
+                notes: [
+                    // Campana sobre campana...
+                    ['E5',1,'C4'],['E5',1],['E5',1,'G4'],['E5',0.5],['D5',0.5],
+                    ['E5',1,'C4'],['F5',1],['D5',2,'G4'],
+                    ['D5',1,'G4'],['D5',1],['F5',1,'G4'],['F5',0.5],['E5',0.5],
+                    ['D5',1,'G4'],['E5',1],['C5',2,'C4'],
+                    // Asómate a la ventana...
+                    ['E5',1,'C4'],['E5',1],['E5',1,'G4'],['E5',0.5],['D5',0.5],
+                    ['E5',1,'C4'],['F5',1],['D5',2,'G4'],
+                    ['D5',1,'G4'],['D5',1],['F5',1,'G4'],['F5',0.5],['E5',0.5],
+                    ['D5',1,'G4'],['E5',1],['C5',2,'C4'],
+                    // Belén, campanas de Belén...
+                    ['G5',1.5,'C4'],['G5',0.5],['G5',1,'E4'],['A5',1],
+                    ['G5',1,'C4'],['F5',1],['E5',2,'C4'],
+                    ['F5',1,'F4'],['F5',1],['F5',1,'F4'],['G5',1],
+                    ['F5',1,'G4'],['E5',1],['D5',2,'G4'],
+                    ['G5',1.5,'C4'],['G5',0.5],['G5',1,'E4'],['A5',1],
+                    ['G5',1,'C4'],['F5',1],['E5',2,'C4'],
+                    ['D5',1,'G4'],['E5',1],['F5',1,'G4'],['D5',1],
+                    ['C5',4,'C4']
+                ]
+            },
+            {
+                name: "Noche de Paz",
+                tempo: 96,
+                notes: [
+                    ['G4',1.5,'C4'],['A4',0.5],['G4',1],['E4',3,'C4'],
+                    ['G4',1.5,'C4'],['A4',0.5],['G4',1],['E4',3,'C4'],
+                    ['D5',2,'G4'],['D5',1],['B4',3,'G4'],
+                    ['C5',2,'C4'],['C5',1],['G4',3,'C4'],
+                    ['A4',2,'F4'],['A4',1],['C5',1.5,'F4'],['B4',0.5],['A4',1],
+                    ['G4',1.5,'C4'],['A4',0.5],['G4',1],['E4',3,'C4'],
+                    ['A4',2,'F4'],['A4',1],['C5',1.5,'F4'],['B4',0.5],['A4',1],
+                    ['G4',1.5,'C4'],['A4',0.5],['G4',1],['E4',3,'C4'],
+                    ['D5',2,'G4'],['D5',1],['F5',1.5,'G4'],['D5',0.5],['B4',1],
+                    ['C5',3,'C4'],['E5',3,'C4'],
+                    ['C5',1.5,'C4'],['G4',0.5],['E4',1],['G4',1.5,'G4'],['F4',0.5],['D4',1],
+                    ['C4',6,'C4']
+                ]
+            },
+            {
+                name: "We Wish You a Merry Christmas",
+                tempo: 146,
+                notes: [
+                    ['G4',1,'C4'],
+                    ['C5',1,'C4'],['C5',0.5],['D5',0.5],['C5',0.5],['B4',0.5],
+                    ['A4',1,'F4'],['A4',1],['A4',1],
+                    ['D5',1,'G4'],['D5',0.5],['E5',0.5],['D5',0.5],['C5',0.5],
+                    ['B4',1,'G4'],['G4',1],['G4',1],
+                    ['E5',1,'C4'],['E5',0.5],['F5',0.5],['E5',0.5],['D5',0.5],
+                    ['C5',1,'A4'],['A4',1],['G4',0.5],['G4',0.5],
+                    ['A4',1,'F4'],['D5',1,'G4'],['B4',1,'G4'],
+                    ['C5',2,'C4'],['G4',1],
+                    ['C5',1,'C4'],['C5',1],['C5',1],
+                    ['B4',2,'G4'],['B4',1],
+                    ['C5',1,'A4'],['B4',1],['A4',1],
+                    ['G4',2,'E4'],['D5',1,'G4'],
+                    ['E5',1,'C4'],['D5',1],['C5',1],
+                    ['G5',1,'G4'],['G4',1],['G4',0.5],['G4',0.5],
+                    ['A4',1,'F4'],['D5',1,'G4'],['B4',1,'G4'],
+                    ['C5',3,'C4']
+                ]
+            },
+            {
+                name: "Deck the Halls",
+                tempo: 150,
+                notes: [
+                    ['G5',1.5,'C4'],['F5',0.5],['E5',1],['D5',1],
+                    ['C5',1,'C4'],['D5',1],['E5',1],['C5',1],
+                    ['D5',0.5,'G4'],['E5',0.5],['F5',0.5],['D5',0.5],['E5',1.5,'C4'],['D5',0.5],
+                    ['C5',1,'G4'],['B4',1],['C5',2,'C4'],
+                    ['G5',1.5,'C4'],['F5',0.5],['E5',1],['D5',1],
+                    ['C5',1,'C4'],['D5',1],['E5',1],['C5',1],
+                    ['D5',0.5,'G4'],['E5',0.5],['F5',0.5],['D5',0.5],['E5',1.5,'C4'],['D5',0.5],
+                    ['C5',1,'G4'],['B4',1],['C5',2,'C4'],
+                    ['D5',1.5,'G4'],['E5',0.5],['F5',1],['D5',1],
+                    ['E5',1.5,'C4'],['F5',0.5],['G5',1],['D5',1],
+                    ['E5',0.5,'C4'],['F5',0.5],['G5',1],['A5',0.5,'F4'],['B5',0.5],['C6',1],
+                    ['B5',1,'G4'],['A5',1],['G5',2,'G4'],
+                    ['G5',1.5,'C4'],['F5',0.5],['E5',1],['D5',1],
+                    ['C5',1,'C4'],['D5',1],['E5',1],['C5',1],
+                    ['A5',0.5,'F4'],['A5',0.5],['A5',0.5],['A5',0.5],['G5',1.5,'C4'],['F5',0.5],
+                    ['E5',1,'G4'],['D5',1],['C5',2,'C4']
+                ]
+            }
+        ];
+
+        class ChristmasAudioEngine {
+            constructor() {
+                this.ctx = null;
+                this.masterGain = null;
+                this.isPlaying = false;
+                this.songIndex = 0;
+                this.noteIndex = 0;
+                this.timerId = null;
+                this.volume = 0.55;
+            }
+
+            ensureContext() {
+                try {
+                    if (!this.ctx) {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        this.ctx = new AudioCtx();
+                        this.masterGain = this.ctx.createGain();
+                        this.masterGain.gain.value = this.volume;
+                        this.masterGain.connect(this.ctx.destination);
+                    }
+                    if (this.ctx.state === 'suspended') {
+                        this.ctx.resume();
+                    }
+                } catch (e) {
+                    console.warn("AudioContext no disponible:", e);
+                }
+            }
+
+            setVolume(val) {
+                this.volume = val;
+                if (this.masterGain && this.ctx) {
+                    this.masterGain.gain.setTargetAtTime(val, this.ctx.currentTime, 0.03);
+                }
+            }
+
+            // Nota cálida estilo caja de música / celesta con ADSR suave
+            playBellNote(freq, durationSec, gainPeak = 0.24, isBass = false) {
+                if (!freq || !this.ctx || !this.masterGain) return;
+                const now = this.ctx.currentTime;
+
+                // Oscilador principal (seno puro, muy dulce)
+                const osc1 = this.ctx.createOscillator();
+                osc1.type = isBass ? 'triangle' : 'sine';
+                osc1.frequency.setValueAtTime(freq, now);
+
+                // Armónico suave tipo campanilla (solo en melodía)
+                let osc2 = null;
+                let gain2 = null;
+                if (!isBass) {
+                    osc2 = this.ctx.createOscillator();
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(freq * 2, now);
+                    gain2 = this.ctx.createGain();
+                    gain2.gain.setValueAtTime(0.0001, now);
+                    gain2.gain.linearRampToValueAtTime(gainPeak * 0.22, now + 0.015);
+                    gain2.gain.exponentialRampToValueAtTime(0.0001, now + Math.min(durationSec * 0.75, 0.45));
+                    osc2.connect(gain2);
+                    gain2.connect(this.masterGain);
+                }
+
+                // Envolvente ADSR suave
+                const env = this.ctx.createGain();
+                const peak = isBass ? gainPeak * 0.42 : gainPeak;
+                env.gain.setValueAtTime(0.0001, now);
+                env.gain.linearRampToValueAtTime(peak, now + 0.02);
+                env.gain.exponentialRampToValueAtTime(peak * 0.45, now + Math.min(0.16, durationSec * 0.4));
+                env.gain.exponentialRampToValueAtTime(0.0001, now + durationSec + 0.12);
+
+                osc1.connect(env);
+                env.connect(this.masterGain);
+
+                osc1.start(now);
+                osc1.stop(now + durationSec + 0.16);
+                if (osc2) {
+                    osc2.start(now);
+                    osc2.stop(now + durationSec + 0.16);
+                }
+            }
+
+            play() {
+                this.ensureContext();
+                if (this.isPlaying) return;
+                this.isPlaying = true;
+                this.scheduleNext();
+            }
+
+            pause() {
+                this.isPlaying = false;
+                if (this.timerId) {
+                    clearTimeout(this.timerId);
+                    this.timerId = null;
+                }
+            }
+
+            selectSong(index, autoPlay = false) {
+                this.songIndex = (index + SONGS.length) % SONGS.length;
+                this.noteIndex = 0;
+                if (this.isPlaying) {
+                    clearTimeout(this.timerId);
+                    this.scheduleNext();
+                } else if (autoPlay) {
+                    this.play();
+                }
+            }
+
+            scheduleNext() {
+                if (!this.isPlaying) return;
+                const song = SONGS[this.songIndex];
+                const [noteName, beats, bassName] = song.notes[this.noteIndex];
+                const beatMs = (60 / song.tempo) * 1000;
+                const durSec = (beats * beatMs) / 1000;
+
+                if (noteName && NOTE_FREQ[noteName]) {
+                    this.playBellNote(NOTE_FREQ[noteName], durSec * 0.98, 0.25, false);
+                }
+                if (bassName && NOTE_FREQ[bassName]) {
+                    this.playBellNote(NOTE_FREQ[bassName] / 2, durSec * 1.3, 0.18, true);
+                }
+
+                this.noteIndex++;
+                if (this.noteIndex >= song.notes.length) {
+                    this.noteIndex = 0;
+                }
+
+                this.timerId = setTimeout(() => this.scheduleNext(), beats * beatMs);
+            }
+
+            // Efecto: cascabeles y destello mágico al abrir casilla
+            playDoorOpenSfx() {
+                if (!state.sfxEnabled) return;
+                this.ensureContext();
+                const arpeggio = [523.25, 659.25, 783.99, 1046.5, 1318.5];
+                arpeggio.forEach((f, i) => {
+                    setTimeout(() => this.playBellNote(f, 0.35, 0.22, false), i * 55);
+                });
+            }
+
+            // Efecto: fanfarria festiva al superar reto o ganar ruleta
+            playFanfareSfx() {
+                if (!state.sfxEnabled) return;
+                this.ensureContext();
+                const notes = [
+                    { f: 523.25, t: 0, d: 0.18 },
+                    { f: 659.25, t: 110, d: 0.18 },
+                    { f: 783.99, t: 220, d: 0.18 },
+                    { f: 1046.50, t: 340, d: 0.65 },
+                    { f: 783.99, t: 340, d: 0.65 },
+                    { f: 1318.51, t: 480, d: 0.75 }
+                ];
+                notes.forEach(n => {
+                    setTimeout(() => this.playBellNote(n.f, n.d, 0.28, false), n.t);
+                });
+            }
+
+            // Efecto: clic suave para ruleta o reloj
+            playTickSfx(pitch = 880) {
+                if (!state.sfxEnabled) return;
+                this.ensureContext();
+                if (!this.ctx || !this.masterGain) return;
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(pitch, now);
+                gain.gain.setValueAtTime(0.001, now);
+                gain.gain.linearRampToValueAtTime(0.16, now + 0.005);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start(now);
+                osc.stop(now + 0.07);
+            }
+
+            // Efecto: campanada de fin de temporizador
+            playTimerDoneSfx() {
+                if (!state.sfxEnabled) return;
+                this.ensureContext();
+                [880, 1108.73, 1318.51].forEach((f, idx) => {
+                    setTimeout(() => this.playBellNote(f, 0.85, 0.3, false), idx * 140);
+                });
+            }
+        }
+
+        const audioEngine = new ChristmasAudioEngine();
+
+        /* =========================================================
+           ANIMACIÓN DE NIEVE Y CONFETI EN CANVAS
+           ========================================================= */
+        const snowCanvas = document.getElementById('snowCanvas');
+        const snowCtx = snowCanvas.getContext('2d');
+        let snowflakes = [];
+
+        function resizeCanvases() {
+            snowCanvas.width = window.innerWidth;
+            snowCanvas.height = window.innerHeight;
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+            initSnow();
+        }
+
+        function initSnow() {
+            const count = Math.min(95, Math.max(40, Math.floor(window.innerWidth / 16)));
+            snowflakes = Array.from({ length: count }, () => ({
+                x: Math.random() * snowCanvas.width,
+                y: Math.random() * snowCanvas.height,
+                r: 1.5 + Math.random() * 3.8,
+                speedY: 0.45 + Math.random() * 1.2,
+                drift: (Math.random() - 0.5) * 0.6,
+                opacity: 0.35 + Math.random() * 0.6
+            }));
+        }
+
+        function animateSnow() {
+            snowCtx.clearRect(0, 0, snowCanvas.width, snowCanvas.height);
+            for (const f of snowflakes) {
+                f.y += f.speedY;
+                f.x += f.drift + Math.sin(f.y * 0.015) * 0.35;
+                if (f.y > snowCanvas.height + 5) {
+                    f.y = -6;
+                    f.x = Math.random() * snowCanvas.width;
+                }
+                if (f.x > snowCanvas.width + 5) f.x = -5;
+                if (f.x < -5) f.x = snowCanvas.width + 5;
+
+                snowCtx.beginPath();
+                snowCtx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+                snowCtx.fillStyle = `rgba(255, 255, 255, ${f.opacity})`;
+                snowCtx.fill();
+            }
+            requestAnimationFrame(animateSnow);
+        }
+
+        // Sistema de confeti festivo
+        const confettiCanvas = document.getElementById('confettiCanvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+        let confettiPieces = [];
+        let confettiAnimating = false;
+
+        function launchConfetti(amount = 110) {
+            const colors = ['#fbbf24', '#ef4444', '#22c55e', '#ffffff', '#38bdf8', '#f472b6'];
+            for (let i = 0; i < amount; i++) {
+                confettiPieces.push({
+                    x: confettiCanvas.width * (0.2 + Math.random() * 0.6),
+                    y: confettiCanvas.height * 0.35,
+                    vx: (Math.random() - 0.5) * 14,
+                    vy: -6 - Math.random() * 11,
+                    size: 6 + Math.random() * 7,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * Math.PI * 2,
+                    vRot: (Math.random() - 0.5) * 0.25,
+                    life: 1
+                });
+            }
+            if (!confettiAnimating) {
+                confettiAnimating = true;
+                requestAnimationFrame(animateConfetti);
+            }
+        }
+
+        function animateConfetti() {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            confettiPieces = confettiPieces.filter(p => p.life > 0 && p.y < confettiCanvas.height + 30);
+
+            for (const p of confettiPieces) {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.28; // gravedad
+                p.vx *= 0.99;
+                p.rot += p.vRot;
+                p.life -= 0.008;
+
+                confettiCtx.save();
+                confettiCtx.translate(p.x, p.y);
+                confettiCtx.rotate(p.rot);
+                confettiCtx.globalAlpha = Math.max(0, p.life);
+                confettiCtx.fillStyle = p.color;
+                confettiCtx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                confettiCtx.restore();
+            }
+
+            if (confettiPieces.length > 0) {
+                requestAnimationFrame(animateConfetti);
+            } else {
+                confettiAnimating = false;
+            }
+        }
+
+        /* =========================================================
+           UTILIDADES DE INTERFAZ (GUIRNALDA, BOCADILLO, TOAST)
+           ========================================================= */
+        function buildGarland() {
+            const garland = document.getElementById('lightsGarland');
+            const colors = ['bulb-red', 'bulb-gold', 'bulb-green', 'bulb-blue'];
+            const count = Math.max(12, Math.floor(window.innerWidth / 52));
+            garland.innerHTML = '<div class="lights-wire"></div>';
+            for (let i = 0; i < count; i++) {
+                const bulb = document.createElement('span');
+                bulb.className = `bulb ${colors[i % colors.length]}`;
+                garland.appendChild(bulb);
+            }
+        }
+
+        function setElfSpeech(message) {
+            const el = document.getElementById('elfSpeech');
+            el.textContent = message;
+        }
+
+        let toastTimer = null;
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            container.innerHTML = `
+                <div class="toast-enter bg-slate-900/95 text-amber-200 border-2 border-amber-400 font-extrabold text-sm sm:text-base px-5 py-3 rounded-2xl shadow-2xl">
+                    ${msg}
+                </div>
+            `;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { container.innerHTML = ''; }, 2800);
+        }
+
+        /* =========================================================
+           RENDERIZADO DEL TABLERO DE 24 CASILLAS Y PROGRESO
+           ========================================================= */
+        const CARD_THEMES = ['card-theme-red', 'card-theme-green', 'card-theme-berry', 'card-theme-gold'];
+
+        function renderBoard() {
+            const grid = document.getElementById('adventGrid');
+            grid.innerHTML = '';
+
+            state.challenges.forEach((item, index) => {
+                const isDone = state.completedDays.includes(item.day);
+                const themeClass = CARD_THEMES[index % CARD_THEMES.length];
+                const isSpecial = item.day === 8 || item.day === 24;
+
+                const card = document.createElement('button');
+                card.type = 'button';
+                card.className = `advent-card ${themeClass} ${isDone ? 'completed' : ''} ${isSpecial ? 'special-day' : ''} p-3.5 sm:p-4 flex flex-col items-center justify-between min-h-[126px] sm:min-h-[146px] text-white text-center`;
+                card.setAttribute('aria-label', `Día ${item.day}: ${item.title}${isDone ? ' (Superado)' : ''}`);
+
+                card.innerHTML = `
+                    <div class="w-full flex items-center justify-between relative z-10">
+                        <span class="text-[11px] sm:text-xs font-extrabold uppercase tracking-wide bg-black/25 px-2 py-0.5 rounded-full text-amber-100">
+                            ${item.category}
+                        </span>
+                        <span class="text-xl sm:text-2xl drop-shadow" aria-hidden="true">
+                            ${isDone ? '⭐' : '🎀'}
+                        </span>
+                    </div>
+
+                    <div class="relative z-10 my-1 flex flex-col items-center">
+                        <span class="font-display text-4xl sm:text-5xl font-bold leading-none drop-shadow-md">
+                            ${item.day}
+                        </span>
+                    </div>
+
+                    <div class="w-full flex items-center justify-center gap-1.5 relative z-10">
+                        <span class="text-xl sm:text-2xl" aria-hidden="true">${item.icon}</span>
+                        <span class="text-xs sm:text-sm font-extrabold truncate max-w-[115px] text-amber-50">
+                            ${isDone ? '¡Superado!' : 'Abrir reto'}
+                        </span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    card.classList.add('door-opening');
+                    audioEngine.playDoorOpenSfx();
+                    setTimeout(() => {
+                        card.classList.remove('door-opening');
+                        openChallengeModal(item.day);
+                    }, 220);
+                });
+
+                grid.appendChild(card);
+            });
+
+            updateProgressUI();
+        }
+
+        function updateProgressUI() {
+            const done = state.completedDays.length;
+            const pct = Math.round((done / 24) * 100);
+            document.getElementById('progressText').textContent = `${done} / 24 retos superados`;
+            document.getElementById('progressPercent').textContent = `${pct}%`;
+            document.getElementById('progressBar').style.width = `${pct}%`;
+        }
+
+        /* =========================================================
+           MODAL DEL RETO DEL DÍA + TEMPORIZADOR + EDICIÓN
+           ========================================================= */
+        let activeDay = null;
+        let timerTotalSeconds = 60;
+        let timerRemaining = 60;
+        let timerInterval = null;
+
+        function openChallengeModal(day) {
+            activeDay = day;
+            const item = state.challenges.find(c => c.day === day);
+            if (!item) return;
+
+            const isDone = state.completedDays.includes(day);
+
+            document.getElementById('modalIcon').textContent = item.icon;
+            document.getElementById('modalDayBadge').textContent = `DÍA ${item.day}`;
+            const catEl = document.getElementById('modalCategoryBadge');
+            catEl.textContent = item.category;
+            catEl.className = `font-extrabold text-xs sm:text-sm px-3 py-0.5 rounded-full ${CATEGORY_STYLES[item.category] || 'bg-white/20 text-white'}`;
+
+            document.getElementById('modalDayTitle').textContent = item.title;
+            document.getElementById('modalChallengeText').textContent = item.text;
+
+            const completedPill = document.getElementById('modalCompletedPill');
+            const completeBtn = document.getElementById('completeChallengeBtn');
+            const completeLabel = document.getElementById('completeBtnLabel');
+
+            if (isDone) {
+                completedPill.classList.remove('hidden');
+                completeLabel.textContent = "Reto completado (pulsa para desmarcar)";
+                completeBtn.className = "w-full sm:w-auto flex-1 btn-festive bg-gradient-to-b from-amber-400 to-amber-600 text-slate-950 font-display font-bold px-6 py-4 rounded-2xl text-lg sm:text-xl flex items-center justify-center gap-2 border-2 border-amber-200 cursor-pointer";
+            } else {
+                completedPill.classList.add('hidden');
+                completeLabel.textContent = "¡Reto superado!";
+                completeBtn.className = "w-full sm:w-auto flex-1 btn-festive bg-gradient-to-b from-emerald-500 to-emerald-700 text-white font-display font-bold px-6 py-4 rounded-2xl text-xl sm:text-2xl flex items-center justify-center gap-2.5 border-2 border-emerald-300 cursor-pointer";
+            }
+
+            // Asegurar modo lectura
+            document.getElementById('challengeViewMode').classList.remove('hidden');
+            document.getElementById('challengeEditMode').classList.add('hidden');
+
+            // Configurar temporizador al valor sugerido del reto
+            setTimer(item.defaultSec || 60);
+
+            const modal = document.getElementById('challengeModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            setElfSpeech(`¡Día ${item.day}: ${item.title}! 🎄 ¡Ánimo, clase, que seguro que lo superáis!`);
+        }
+
+        function closeChallengeModal() {
+            stopTimer();
+            const modal = document.getElementById('challengeModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            activeDay = null;
+        }
+
+        // Funciones del temporizador
+        function formatTime(sec) {
+            const m = Math.floor(sec / 60);
+            const s = sec % 60;
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function updateTimerUI() {
+            document.getElementById('timerDisplay').textContent = formatTime(timerRemaining);
+            const pct = timerTotalSeconds > 0 ? (timerRemaining / timerTotalSeconds) * 100 : 0;
+            document.getElementById('timerProgressBar').style.width = `${pct}%`;
+        }
+
+        function setTimer(seconds) {
+            stopTimer();
+            timerTotalSeconds = seconds;
+            timerRemaining = seconds;
+            updateTimerUI();
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            document.getElementById('timerStartPauseBtn').textContent = "▶️ Iniciar";
+        }
+
+        function toggleTimer() {
+            if (timerInterval) {
+                stopTimer();
+                return;
+            }
+            if (timerRemaining <= 0) {
+                timerRemaining = timerTotalSeconds;
+            }
+            audioEngine.ensureContext();
+            document.getElementById('timerStartPauseBtn').textContent = "⏸️ Pausar";
+            timerInterval = setInterval(() => {
+                timerRemaining--;
+                updateTimerUI();
+                if (timerRemaining > 0 && timerRemaining <= 5) {
+                    audioEngine.playTickSfx(980);
+                }
+                if (timerRemaining <= 0) {
+                    stopTimer();
+                    audioEngine.playTimerDoneSfx();
+                    showToast("⏰ ¡Tiempo terminado! ¿Lo habéis conseguido?");
+                }
+            }, 1000);
+        }
+
+        // Marcar reto como superado
+        document.getElementById('completeChallengeBtn').addEventListener('click', () => {
+            if (activeDay === null) return;
+            const idx = state.completedDays.indexOf(activeDay);
+            if (idx === -1) {
+                state.completedDays.push(activeDay);
+                saveState();
+                renderBoard();
+                audioEngine.playFanfareSfx();
+                launchConfetti(140);
+                setElfSpeech(`¡BRAVO, CLASE! 🌟 ¡Habéis superado el reto del día ${activeDay}! Ya podéis quitar la casilla del elfo en la pared.`);
+                showToast(`⭐ ¡Día ${activeDay} superado! ¡Enhorabuena!`);
+                closeChallengeModal();
+            } else {
+                state.completedDays.splice(idx, 1);
+                saveState();
+                renderBoard();
+                openChallengeModal(activeDay);
+                showToast(`Día ${activeDay} marcado como pendiente.`);
+            }
+        });
+
+        // Edición de retos
+        document.getElementById('editChallengeBtn').addEventListener('click', () => {
+            const item = state.challenges.find(c => c.day === activeDay);
+            if (!item) return;
+            stopTimer();
+            document.getElementById('editTitleInput').value = item.title;
+            document.getElementById('editCategorySelect').value = item.category;
+            document.getElementById('editTextInput').value = item.text;
+            document.getElementById('challengeViewMode').classList.add('hidden');
+            document.getElementById('challengeEditMode').classList.remove('hidden');
+        });
+
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            document.getElementById('challengeEditMode').classList.add('hidden');
+            document.getElementById('challengeViewMode').classList.remove('hidden');
+        });
+
+        document.getElementById('saveEditBtn').addEventListener('click', () => {
+            const item = state.challenges.find(c => c.day === activeDay);
+            if (!item) return;
+            const newTitle = document.getElementById('editTitleInput').value.trim();
+            const newCat = document.getElementById('editCategorySelect').value;
+            const newText = document.getElementById('editTextInput').value.trim();
+            if (!newTitle || !newText) {
+                showToast("⚠️ El título y el texto del reto no pueden quedar vacíos.");
+                return;
+            }
+            item.title = newTitle;
+            item.category = newCat;
+            item.text = newText;
+            saveState();
+            renderBoard();
+            openChallengeModal(activeDay);
+            showToast("💾 ¡Reto guardado correctamente!");
+        });
+
+        document.getElementById('restoreDefaultChallengeBtn').addEventListener('click', () => {
+            const orig = DEFAULT_CHALLENGES.find(c => c.day === activeDay);
+            if (!orig) return;
+            document.getElementById('editTitleInput').value = orig.title;
+            document.getElementById('editCategorySelect').value = orig.category;
+            document.getElementById('editTextInput').value = orig.text;
+            showToast("↩️ Texto original restaurado. Pulsa «Guardar cambios» para confirmar.");
+        });
+
+        document.querySelectorAll('.timer-preset').forEach(btn => {
+            btn.addEventListener('click', () => setTimer(Number(btn.dataset.seconds)));
+        });
+        document.getElementById('timerStartPauseBtn').addEventListener('click', toggleTimer);
+        document.getElementById('timerResetBtn').addEventListener('click', () => setTimer(timerTotalSeconds));
+        document.getElementById('closeChallengeModalBtn').addEventListener('click', closeChallengeModal);
+
+        /* =========================================================
+           RULETA NAVIDEÑA: ELEGIR AYUDANTE DEL DÍA (23 ALUMNOS)
+           ========================================================= */
+        const wheelCanvas = document.getElementById('wheelCanvas');
+        const wheelCtx = wheelCanvas.getContext('2d');
+        let wheelAngle = 0;
+        let wheelSpinning = false;
+        let currentWinnerName = null;
+
+        const WHEEL_COLORS = ['#dc2626', '#15803d', '#d97706', '#991b1b', '#047857', '#b45309'];
+
+        function getAvailableStudents() {
+            return state.students.filter(s => !s.done);
+        }
+
+        function drawWheel() {
+            const size = 400;
+            if (wheelCanvas.width !== size || wheelCanvas.height !== size) {
+                wheelCanvas.width = size;
+                wheelCanvas.height = size;
+            }
+            const cx = size / 2;
+            const cy = size / 2;
+            const radius = size / 2 - 10;
+
+            wheelCtx.clearRect(0, 0, size, size);
+
+            const available = getAvailableStudents();
+            const list = available.length > 0 ? available : state.students;
+            const n = list.length;
+
+            if (n === 0) return;
+
+            const arc = (Math.PI * 2) / n;
+
+            // Dibujar sectores
+            for (let i = 0; i < n; i++) {
+                const start = wheelAngle + i * arc;
+                const end = start + arc;
+
+                wheelCtx.beginPath();
+                wheelCtx.moveTo(cx, cy);
+                wheelCtx.arc(cx, cy, radius, start, end);
+                wheelCtx.closePath();
+                wheelCtx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length];
+                wheelCtx.fill();
+                wheelCtx.lineWidth = 2;
+                wheelCtx.strokeStyle = '#fde68a';
+                wheelCtx.stroke();
+
+                // Nombre del alumno
+                wheelCtx.save();
+                wheelCtx.translate(cx, cy);
+                wheelCtx.rotate(start + arc / 2);
+                wheelCtx.textAlign = 'right';
+                wheelCtx.fillStyle = '#ffffff';
+                const fontSize = n > 18 ? 13 : n > 10 ? 15 : 18;
+                wheelCtx.font = `800 ${fontSize}px Nunito, sans-serif`;
+                wheelCtx.shadowColor = 'rgba(0,0,0,0.6)';
+                wheelCtx.shadowBlur = 3;
+                wheelCtx.fillText(list[i].name, radius - 14, fontSize * 0.35);
+                wheelCtx.restore();
+            }
+
+            // Borde dorado exterior con lucecitas
+            wheelCtx.beginPath();
+            wheelCtx.arc(cx, cy, radius, 0, Math.PI * 2);
+            wheelCtx.lineWidth = 7;
+            wheelCtx.strokeStyle = '#fbbf24';
+            wheelCtx.stroke();
+
+            // Centro festivo
+            wheelCtx.beginPath();
+            wheelCtx.arc(cx, cy, 28, 0, Math.PI * 2);
+            wheelCtx.fillStyle = '#7f1d1d';
+            wheelCtx.fill();
+            wheelCtx.lineWidth = 4;
+            wheelCtx.strokeStyle = '#fde047';
+            wheelCtx.stroke();
+
+            wheelCtx.font = '24px serif';
+            wheelCtx.textAlign = 'center';
+            wheelCtx.textBaseline = 'middle';
+            wheelCtx.fillText('⭐', cx, cy + 1);
+        }
+
+        function renderStudentsList() {
+            const container = document.getElementById('studentsListView');
+            const remaining = getAvailableStudents().length;
+            document.getElementById('remainingCount').textContent = remaining;
+
+            container.innerHTML = '';
+            state.students.forEach((student, idx) => {
+                const row = document.createElement('div');
+                row.className = `flex items-center justify-between px-3 py-1.5 rounded-xl border ${student.done ? 'bg-slate-800/40 border-slate-700/60 text-slate-400' : 'bg-emerald-900/50 border-emerald-500/40 text-white'}`;
+
+                row.innerHTML = `
+                    <span class="font-bold text-sm ${student.done ? 'line-through' : ''}">
+                        ${student.done ? '✅' : '🎄'} ${student.name}
+                    </span>
+                    <button type="button" class="text-xs font-extrabold px-2.5 py-1 rounded-lg cursor-pointer ${student.done ? 'bg-slate-700 hover:bg-slate-600 text-amber-200' : 'bg-emerald-600/80 hover:bg-emerald-500 text-white'}">
+                        ${student.done ? 'Volver a incluir' : 'Ya salió'}
+                    </button>
+                `;
+
+                row.querySelector('button').addEventListener('click', () => {
+                    state.students[idx].done = !state.students[idx].done;
+                    saveState();
+                    renderStudentsList();
+                    drawWheel();
+                });
+
+                container.appendChild(row);
+            });
+        }
+
+        function spinWheel() {
+            if (wheelSpinning) return;
+            let available = getAvailableStudents();
+            if (available.length === 0) {
+                // Si ya salieron todos, reiniciamos automáticamente para continuar
+                state.students.forEach(s => s.done = false);
+                saveState();
+                renderStudentsList();
+                available = getAvailableStudents();
+                showToast("🎉 ¡Ya habían salido todos! Turnos reiniciados para una nueva ronda.");
+            }
+            if (available.length === 0) return;
+
+            audioEngine.ensureContext();
+            wheelSpinning = true;
+            currentWinnerName = null;
+            document.getElementById('winnerActions').classList.add('hidden');
+            document.getElementById('winnerLabel').innerHTML = `<span class="text-amber-300 animate-pulse">✨ Girando la ruleta mágica... ✨</span>`;
+
+            const startAngle = wheelAngle;
+            const extraSpins = (5 + Math.random() * 3) * Math.PI * 2;
+            const targetAngle = startAngle + extraSpins + Math.random() * Math.PI * 2;
+            const duration = 4200;
+            const startTime = performance.now();
+            const n = available.length;
+            const arc = (Math.PI * 2) / n;
+            let lastSector = -1;
+
+            function frame(now) {
+                const elapsed = now - startTime;
+                const t = Math.min(1, elapsed / duration);
+                // Easing cúbico suave de desaceleración
+                const easeOut = 1 - Math.pow(1 - t, 3);
+                wheelAngle = startAngle + (targetAngle - startAngle) * easeOut;
+
+                // Sonido de clic al cambiar de sector bajo el puntero superior (-PI/2)
+                const normalized = (((-Math.PI / 2 - wheelAngle) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+                const currentSector = Math.floor(normalized / arc) % n;
+                if (currentSector !== lastSector) {
+                    lastSector = currentSector;
+                    audioEngine.playTickSfx(620 + (currentSector % 4) * 65);
+                }
+
+                drawWheel();
+
+                if (t < 1) {
+                    requestAnimationFrame(frame);
+                } else {
+                    wheelSpinning = false;
+                    const winner = available[currentSector];
+                    currentWinnerName = winner.name;
+                    audioEngine.playFanfareSfx();
+                    launchConfetti(120);
+
+                    document.getElementById('winnerLabel').innerHTML = `
+                        <span class="text-xs uppercase tracking-wider text-emerald-300 block">¡Ayudante del día!</span>
+                        <span class="font-display text-3xl sm:text-4xl font-bold text-amber-300 drop-shadow">🌟 ${winner.name} 🌟</span>
+                    `;
+                    setElfSpeech(`¡Hurra! Hoy le toca a ${winner.name} salir a destapar la casilla del elfo en la pared. 🧝‍♂️✨`);
+
+                    if (document.getElementById('autoMarkCheckbox').checked) {
+                        const targetStudent = state.students.find(s => s.name === winner.name && !s.done);
+                        if (targetStudent) {
+                            targetStudent.done = true;
+                            saveState();
+                            renderStudentsList();
+                        }
+                    } else {
+                        document.getElementById('winnerActions').classList.remove('hidden');
+                    }
+                }
+            }
+
+            requestAnimationFrame(frame);
+        }
+
+        document.getElementById('openHelperModalBtn').addEventListener('click', () => {
+            const modal = document.getElementById('helperModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            renderStudentsList();
+            drawWheel();
+        });
+
+        document.getElementById('closeHelperModalBtn').addEventListener('click', () => {
+            if (wheelSpinning) return;
+            const modal = document.getElementById('helperModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        });
+
+        document.getElementById('spinWheelBtn').addEventListener('click', spinWheel);
+
+        document.getElementById('markWinnerDoneBtn').addEventListener('click', () => {
+            if (!currentWinnerName) return;
+            const s = state.students.find(st => st.name === currentWinnerName);
+            if (s) {
+                s.done = true;
+                saveState();
+                renderStudentsList();
+                drawWheel();
+                document.getElementById('winnerActions').classList.add('hidden');
+                showToast(`✅ ${s.name} marcado/a como que ya salió.`);
+            }
+        });
+
+        document.getElementById('resetStudentsTurnBtn').addEventListener('click', () => {
+            if (wheelSpinning) return;
+            state.students.forEach(s => s.done = false);
+            saveState();
+            renderStudentsList();
+            drawWheel();
+            showToast("🔄 ¡Todos los alumnos vuelven a estar en la ruleta!");
+        });
+
+        document.getElementById('toggleEditStudentsBtn').addEventListener('click', () => {
+            if (wheelSpinning) return;
+            const editView = document.getElementById('studentsEditView');
+            const listView = document.getElementById('studentsListView');
+            if (editView.classList.contains('hidden')) {
+                document.getElementById('studentsTextarea').value = state.students.map(s => s.name).join('\n');
+                listView.classList.add('hidden');
+                editView.classList.remove('hidden');
+            } else {
+                editView.classList.add('hidden');
+                listView.classList.remove('hidden');
+            }
+        });
+
+        document.getElementById('cancelStudentsEditBtn').addEventListener('click', () => {
+            document.getElementById('studentsEditView').classList.add('hidden');
+            document.getElementById('studentsListView').classList.remove('hidden');
+        });
+
+        document.getElementById('saveStudentsEditBtn').addEventListener('click', () => {
+            const lines = document.getElementById('studentsTextarea').value
+                .split('\n')
+                .map(l => l.trim())
+                .filter(Boolean);
+            if (lines.length < 2) {
+                showToast("⚠️ Añade al menos 2 nombres en la lista.");
+                return;
+            }
+            const doneMap = new Map(state.students.map(s => [s.name, s.done]));
+            state.students = lines.map(name => ({ name, done: doneMap.get(name) || false }));
+            saveState();
+            document.getElementById('studentsEditView').classList.add('hidden');
+            document.getElementById('studentsListView').classList.remove('hidden');
+            renderStudentsList();
+            drawWheel();
+            showToast("💾 ¡Lista de clase actualizada!");
+        });
+
+        /* =========================================================
+           CONTROLES DE MÚSICA, EFECTOS, ELFO Y REINICIO
+           ========================================================= */
+        function updateMusicUI() {
+            document.getElementById('playPauseIcon').textContent = audioEngine.isPlaying ? '⏸️' : '▶️';
+            document.getElementById('playPauseText').textContent = audioEngine.isPlaying ? 'Pausar' : 'Música';
+            document.getElementById('songSelect').value = String(audioEngine.songIndex);
+        }
+
+        function updateSfxUI() {
+            document.getElementById('sfxIcon').textContent = state.sfxEnabled ? '🔔' : '🔕';
+            document.getElementById('sfxLabel').textContent = state.sfxEnabled ? 'Efectos ON' : 'Efectos OFF';
+        }
+
+        document.getElementById('playPauseBtn').addEventListener('click', () => {
+            if (audioEngine.isPlaying) {
+                audioEngine.pause();
+            } else {
+                audioEngine.play();
+                setElfSpeech(`🎵 ¡Suena «${SONGS[audioEngine.songIndex].name}»! ¡Qué ambiente tan navideño!`);
+            }
+            updateMusicUI();
+        });
+
+        document.getElementById('prevSongBtn').addEventListener('click', () => {
+            audioEngine.selectSong(audioEngine.songIndex - 1, true);
+            updateMusicUI();
+            setElfSpeech(`🎵 Ahora suena: «${SONGS[audioEngine.songIndex].name}».`);
+        });
+
+        document.getElementById('nextSongBtn').addEventListener('click', () => {
+            audioEngine.selectSong(audioEngine.songIndex + 1, true);
+            updateMusicUI();
+            setElfSpeech(`🎵 Ahora suena: «${SONGS[audioEngine.songIndex].name}».`);
+        });
+
+        document.getElementById('songSelect').addEventListener('change', (e) => {
+            audioEngine.selectSong(Number(e.target.value), true);
+            updateMusicUI();
+            setElfSpeech(`🎵 Ahora suena: «${SONGS[audioEngine.songIndex].name}».`);
+        });
+
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            audioEngine.setVolume(Number(e.target.value));
+        });
+
+        document.getElementById('toggleSfxBtn').addEventListener('click', () => {
+            state.sfxEnabled = !state.sfxEnabled;
+            saveState();
+            updateSfxUI();
+            if (state.sfxEnabled) audioEngine.playTickSfx(1046.5);
+        });
+
+        // Interacción con el elfo al hacer clic
+        let quoteIdx = 0;
+        document.getElementById('elfAvatar').addEventListener('click', () => {
+            quoteIdx = (quoteIdx + 1) % ELF_QUOTES.length;
+            setElfSpeech(ELF_QUOTES[quoteIdx]);
+            audioEngine.playDoorOpenSfx();
+        });
+
+        // Modal de confirmación para reiniciar progreso
+        document.getElementById('resetProgressBtn').addEventListener('click', () => {
+            const m = document.getElementById('confirmModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+        });
+
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+            const m = document.getElementById('confirmModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        });
+
+        document.getElementById('confirmAcceptBtn').addEventListener('click', () => {
+            state.completedDays = [];
+            saveState();
+            renderBoard();
+            const m = document.getElementById('confirmModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+            setElfSpeech("¡Calendario listo para empezar de nuevo! 🎄 ¿Cuál será el primer reto?");
+            showToast("🔄 Progreso reiniciado a 0 / 24.");
+        });
+
+        // Cerrar modales con tecla Escape o clic fuera
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeChallengeModal();
+                if (!wheelSpinning) {
+                    document.getElementById('helperModal').classList.add('hidden');
+                    document.getElementById('helperModal').classList.remove('flex');
+                }
+                document.getElementById('confirmModal').classList.add('hidden');
+                document.getElementById('confirmModal').classList.remove('flex');
+            }
+        });
+
+        document.getElementById('challengeModal').addEventListener('click', (e) => {
+            if (e.target.id === 'challengeModal') closeChallengeModal();
+        });
+        document.getElementById('helperModal').addEventListener('click', (e) => {
+            if (e.target.id === 'helperModal' && !wheelSpinning) {
+                e.target.classList.add('hidden');
+                e.target.classList.remove('flex');
+            }
+        });
+
+        /* =========================================================
+           INICIALIZACIÓN AL CARGAR LA PÁGINA
+           ========================================================= */
+        window.addEventListener('resize', () => {
+            resizeCanvases();
+            buildGarland();
+        });
+
+        window.onload = function () {
+            loadState();
+            resizeCanvases();
+            buildGarland();
+            animateSnow();
+            renderBoard();
+            updateMusicUI();
+            updateSfxUI();
+        };
+    </script>
+</body>
+</html>
